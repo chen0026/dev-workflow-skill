@@ -92,9 +92,10 @@ description: Use this skill when development should follow a lightweight traceab
 3. 建立最小追踪文档。
 4. 编码或修复。
 5. 验证结果。
-6. 回填 TASK / BUG / ACC 的实际事实。
-7. 更新 `docs/index.md`。
-8. 提交本次相关代码和文档。
+6. 执行代码审查。
+7. 回填 TASK / BUG / ACC 的实际事实。
+8. 更新 `docs/index.md`。
+9. 提交本次相关代码和文档。
 
 可用脚本：
 
@@ -107,6 +108,7 @@ description: Use this skill when development should follow a lightweight traceab
 
 - 关联文档已创建或更新。
 - TASK 写明实际改动和验证结果。
+- TASK 或 ACC 写明代码审查结论。
 - ACC 写明验收结论。
 - ADR / design / ops 已处理，或明确不需要。
 - `docs/index.md` 已更新。
@@ -122,6 +124,15 @@ description: Use this skill when development should follow a lightweight traceab
 - 避开用户已有的无关改动。
 - commit message 引用主编号。
 - 如果项目启用了 `.githooks`，必须确保 hooks 通过。
+
+## 代码审查规则
+
+代码审查是完成前门禁，但保持轻量：
+
+- 小任务：执行自查，重点看需求偏离、无关改动、错误处理、测试缺口、文档同步。
+- 复杂 / 高风险任务：使用 subagent 或人工做独立 review。
+- 审查发现的问题必须先修复，或记录为遗留问题并关联后续 TASK。
+- 审查结论必须回填到 TASK 或 ACC。
 
 ## Subagent 使用规则
 

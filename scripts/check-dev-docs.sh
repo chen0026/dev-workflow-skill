@@ -40,6 +40,7 @@ for task in docs/tasks/TASK-*.md; do
   [ -e "$task" ] || continue
   grep -q "关联验收" "$task" || fail "$task 缺少关联验收"
   grep -q "验证" "$task" || fail "$task 缺少验证记录"
+  grep -q "代码审查" "$task" || fail "$task 缺少代码审查记录"
 done
 
 for acc in docs/acceptance/ACC-*.md; do
