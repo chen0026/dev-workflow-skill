@@ -34,8 +34,8 @@ description: Use this skill when development should follow a lightweight traceab
 如果项目内还没有脚本，使用本 Skill 自带脚本：
 
 ```bash
-/Users/imc/.codex/skills/dev-workflow/scripts/init-dev-workflow.sh
-/Users/imc/.codex/skills/dev-workflow/scripts/check-dev-docs.sh
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/init-dev-workflow.sh"
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/check-dev-docs.sh"
 ```
 
 ## 默认闭环

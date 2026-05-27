@@ -14,7 +14,8 @@
 推荐把本仓库作为源码目录，再同步安装到 Codex：
 
 ```bash
-rsync -a --delete --exclude .git ./ /Users/imc/.codex/skills/dev-workflow/
+CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
+rsync -a --delete --exclude .git ./ "$CODEX_HOME/skills/dev-workflow/"
 ```
 
 安装后，Codex 可以通过以下提示触发：
@@ -164,5 +165,6 @@ git add .
 git commit -m "docs: update dev-workflow usage"
 git tag v0.1.1
 git push --tags
-rsync -a --delete --exclude .git ./ /Users/imc/.codex/skills/dev-workflow/
+CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
+rsync -a --delete --exclude .git ./ "$CODEX_HOME/skills/dev-workflow/"
 ```
