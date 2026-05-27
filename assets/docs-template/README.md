@@ -1,0 +1,73 @@
+# 项目文档
+
+本目录用于沉淀项目开发历史，保证每次新功能、Bug 修复、重构、维护都能追踪到需求、任务、决策、验收和提交记录。
+
+## 目录导航
+
+| 目录 | 放什么 | 谁来写 |
+|------|--------|--------|
+| `workflow.md` | 开发工作流、门禁规则、完成标准 | 开发负责人 |
+| `index.md` | PRD / TASK / BUG / ADR / ACC 总索引 | 开发 |
+| `prd/` | 产品需求文档，含变更记录 | 产品 + 开发补充 |
+| `design/` | 架构设计、技术方案 | 开发 |
+| `design/decisions/` | ADR，重要技术决策记录 | 开发 |
+| `tasks/` | 任务拆解、开发日志、AI 协作记录 | 开发 |
+| `bugs/` | Bug 复盘、根因分析 | 开发 |
+| `acceptance/` | 验收记录、验证结果、完成结论 | 开发 / 测试 |
+| `ops/` | 部署、监控、应急手册 | 开发 / 运维 |
+| `legacy/` | 已有项目接入时的现状快照和补录记录 | 开发 |
+| `archive/` | 接入 workflow 前的旧文档归档，只作历史参考 | 开发 |
+
+## 文档维护原则
+
+1. **代码改了，文档跟着改**：跟随 PR 一起提交
+2. **决策只追加不覆盖**：ADR 是历史记录，不是当前状态
+3. **PRD 变更走变更记录**：保留原始版本，追加变更日志
+4. **AI 协作有痕迹**：关键 prompt 和决策过程要记录
+5. **完成必须有验收**：没有 ACC 验收记录，不算任务完成
+6. **完成后必须提交**：验证和文档同步通过后，提交一个只包含本次任务相关文件的 commit
+7. **优先级排序**：ADR > Bug 复盘 > 任务文档 > 验收文档 > 其他
+
+## Git hooks
+
+`.githooks/` 是可选门禁模板，默认不自动启用。正式项目建议启用，临时项目可以不启用。
+
+启用方式见 [`workflow.md`](workflow.md) 的“Git hooks 门禁”。
+
+## 脚本
+
+- `scripts/init-dev-workflow.sh`：初始化 `AGENTS.md`、`docs/`、`.githooks/` 和检查脚本。
+- `scripts/check-dev-docs.sh`：检查必要目录、索引编号、任务验收关联和代码变更是否同步文档。
+- `scripts/check-dev-workflow.sh`：供 Git hooks 调用的提交门禁脚本。
+
+也可以让 Codex 使用快捷提示：
+
+```text
+/dev-workflow init
+/dev-workflow init --hooks
+/dev-workflow check
+/dev-workflow 初始化项目
+/dev-workflow 初始化项目并启用 hooks
+/dev-workflow 检查文档
+```
+
+## 何时写文档
+
+- 项目首次接入：检查 `AGENTS.md` 和 `docs/`，必要时归档旧文档并初始化目录
+- 启动新模块：写 PRD 理解 + 任务拆解 + 关键 ADR
+- 合并 PR 前：更新对应的任务文档和架构文档
+- 修复 Bug 后：写 Bug 复盘
+- 需求变更时：在原文档追加变更记录，必要时新建 ADR
+- 技术选型时：写 ADR
+- 每次任务完成前：补齐 TASK / BUG / ADR / ACC / ops，并更新 `index.md`
+
+## 命名规范
+
+统一使用 `类型-四位序号-英文短标题.md`：
+
+- `prd/PRD-0001-user-login.md`
+- `tasks/TASK-0001-login-api.md`
+- `bugs/BUG-0001-token-expired.md`
+- `design/decisions/ADR-0001-use-jwt-auth.md`
+- `acceptance/ACC-0001-user-login.md`
+- `legacy/LEGACY-0001-current-system-summary.md`
