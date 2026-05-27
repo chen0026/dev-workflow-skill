@@ -134,6 +134,20 @@ description: Use this skill when development should follow a lightweight traceab
 - 审查发现的问题必须先修复，或记录为遗留问题并关联后续 TASK。
 - 审查结论必须回填到 TASK 或 ACC。
 
+## 与 Superpowers 配合
+
+如果当前环境有 Superpowers，可以按阶段配合使用：
+
+- 需求澄清：`brainstorming`，结论写入 PRD / TASK。
+- 计划制定：`writing-plans`，任务拆解写入 TASK。
+- Bug 定位：`systematic-debugging`，复现、路径、根因写入 BUG。
+- 实现：`test-driven-development`，验证方式写入 TASK / ACC。
+- 并行执行：`subagent-driven-development`，各 subagent 结论写入 TASK / BUG / ADR / ACC。
+- 完成验证：`verification-before-completion`，验证结果写入 ACC。
+- 代码审查：`requesting-code-review`，审查结论写入 TASK / ACC。
+
+dev-workflow 不替代 Superpowers，只负责建立追踪链路、沉淀关键结论、完成前检查文档和提交。
+
 ## Subagent 使用规则
 
 默认不使用 subagent。满足以下任一条件时才使用：

@@ -140,7 +140,28 @@ Git hooks 只做最低限度检查：
 - Git hooks 默认不自动启用，避免影响临时项目。
 - subagent 默认不使用，只在复杂、并行、高风险或需要独立 review 时使用。
 
-## 七、版本管理
+## 七、与 Superpowers 配合
+
+`dev-workflow` 可以和 Superpowers 一起用：
+
+```text
+Superpowers 负责方法
+dev-workflow 负责追踪和门禁
+```
+
+建议搭配：
+
+- 需求澄清：`brainstorming` → 写入 PRD / TASK。
+- 计划制定：`writing-plans` → 写入 TASK。
+- Bug 定位：`systematic-debugging` → 写入 BUG。
+- 实现：`test-driven-development` → 写入 TASK / ACC。
+- 并行执行：`subagent-driven-development` → 结论写入 TASK / BUG / ADR / ACC。
+- 完成验证：`verification-before-completion` → 写入 ACC。
+- 代码审查：`requesting-code-review` → 写入 TASK / ACC。
+
+dev-workflow 不替代 Superpowers，只负责建立追踪链路、沉淀关键结论、完成前检查文档和提交。
+
+## 八、版本管理
 
 当前版本见：
 
