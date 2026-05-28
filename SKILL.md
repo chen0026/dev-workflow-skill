@@ -1,6 +1,6 @@
 ---
 name: dev-workflow
-description: "Use this skill when development should follow a lightweight traceable workflow for requirements, tasks, bug fixes, design decisions, acceptance, documentation sync, and final git commit. Trigger for prompts like /dev-workflow init, /dev-workflow init --hooks, /dev-workflow check, /dev-workflow 初始化项目, /dev-workflow 接入项目, /dev-workflow 启用 hooks, new features, bug fixes, refactors, maintenance, PRD/task planning, acceptance checks, docs workflow setup, or requests to prevent code changes from drifting away from requirements."
+description: "Use this skill when development should follow a lightweight traceable workflow for requirements, tasks, bug fixes, design decisions, acceptance, documentation sync, human review before commit, and optional approved git commit. Trigger for prompts like /dev-workflow init, /dev-workflow init --hooks, /dev-workflow check, /dev-workflow 初始化项目, /dev-workflow 接入项目, /dev-workflow 启用 hooks, new features, bug fixes, refactors, maintenance, PRD/task planning, acceptance checks, docs workflow setup, or requests to prevent code changes from drifting away from requirements."
 ---
 
 # Dev Workflow
@@ -95,7 +95,8 @@ description: "Use this skill when development should follow a lightweight tracea
 6. 执行代码审查。
 7. 回填 TASK / BUG / ACC 的实际事实。
 8. 更新 `docs/index.md`。
-9. 提交本次相关代码和文档。
+9. 进入提交前人工审核，等待用户明确批准。
+10. 仅在收到“批准提交”后，提交本次相关代码和文档。
 
 可用脚本：
 
@@ -112,11 +113,19 @@ description: "Use this skill when development should follow a lightweight tracea
 - ACC 写明验收结论。
 - ADR / design / ops 已处理，或明确不需要。
 - `docs/index.md` 已更新。
-- 已提交聚焦 commit。
+- 已列出待人工审核的变更和待提交文件。
 
 如果项目存在 `scripts/check-dev-docs.sh`，最终回复前运行它。
 
-没有完成文档同步和提交，不声明任务完成。
+没有完成人工审核前，不提交代码；没有完成文档同步和人工审核，不声明任务最终完成。
+
+## 提交前人工审核
+
+- 默认不自动 commit。
+- 完成开发、验证、代码审查、文档同步后，最终回复必须列出待审核内容和待提交文件。
+- 只有用户明确回复“批准提交”或“确认提交”后，才执行 commit。
+- 如果用户要求调整，先修改并重新验证、审查、同步文档，再回到人工审核。
+- 如果用户要求不提交，保留变更并说明当前状态。
 
 ## 提交规则
 
@@ -146,7 +155,7 @@ description: "Use this skill when development should follow a lightweight tracea
 - 完成验证：`verification-before-completion`，验证结果写入 ACC。
 - 代码审查：`requesting-code-review`，审查结论写入 TASK / ACC。
 
-dev-workflow 不替代 Superpowers，只负责建立追踪链路、沉淀关键结论、完成前检查文档和提交。
+dev-workflow 不替代 Superpowers，只负责建立追踪链路、沉淀关键结论、完成前检查文档，并在人工审核通过后提交。
 
 ## Subagent 使用规则
 
@@ -180,7 +189,10 @@ PRD-0001 add user login workflow
 - 代码变更
 - 验证结果
 - 文档同步
-- 提交记录
+- 代码审查
+- 待人工审核事项
+- 待提交文件
+- 提交状态
 - 未完成事项
 
 ## 可选硬门禁

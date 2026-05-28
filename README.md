@@ -7,6 +7,7 @@
 - 为什么做？
 - 改了什么？
 - 怎么验证？
+- 是否通过人工审核？
 - 文档和提交在哪里？
 
 ## 一、安装
@@ -100,9 +101,9 @@ ADR / design / ops / LEGACY
 - `ACC` 写明验收结论。
 - 必要的 `ADR / design / ops` 已处理，或明确不需要。
 - `docs/index.md` 已更新。
-- 已提交聚焦 commit。
+- 已进入提交前人工审核，并列出待提交文件。
 
-没有完成文档同步和提交，不声明任务完成。
+默认不自动提交代码。只有用户明确回复“批准提交”或“确认提交”后，才提交聚焦 commit。
 
 ## 五、Git hooks
 
@@ -137,6 +138,7 @@ Git hooks 只做最低限度检查：
 - 旧文档归档后只作为历史参考，不作为当前实现依据。
 - `ADR` 只记录重要决策，不要把每个小选择都写成 ADR。
 - 代码审查默认先自查，复杂或高风险任务再使用 subagent / 人工独立 review。
+- 提交前必须人工审核，未经明确批准不自动 commit。
 - Git hooks 默认不自动启用，避免影响临时项目。
 - subagent 默认不使用，只在复杂、并行、高风险或需要独立 review 时使用。
 
@@ -159,7 +161,7 @@ dev-workflow 负责追踪和门禁
 - 完成验证：`verification-before-completion` → 写入 ACC。
 - 代码审查：`requesting-code-review` → 写入 TASK / ACC。
 
-dev-workflow 不替代 Superpowers，只负责建立追踪链路、沉淀关键结论、完成前检查文档和提交。
+dev-workflow 不替代 Superpowers，只负责建立追踪链路、沉淀关键结论、完成前检查文档，并在人工审核通过后提交。
 
 ## 八、版本管理
 

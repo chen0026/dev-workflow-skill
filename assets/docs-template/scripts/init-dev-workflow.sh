@@ -53,7 +53,7 @@ if [ ! -f "AGENTS.md" ]; then
 7. `docs/archive/`
 8. 代码和测试
 
-没有完成文档同步和提交，不得声明任务完成。
+没有完成文档同步和人工审核，不得声明任务最终完成；未经用户批准，不得提交代码。
 EOF
   echo "dev-workflow: 已创建 AGENTS.md"
 elif ! grep -q "开发工作流强约束" "AGENTS.md"; then
@@ -63,7 +63,7 @@ elif ! grep -q "开发工作流强约束" "AGENTS.md"; then
 ## 开发工作流强约束
 
 所有新功能、Bug 修复、重构、维护任务必须遵守 `docs/workflow.md`。
-没有完成文档同步和提交，不得声明任务完成。
+没有完成文档同步和人工审核，不得声明任务最终完成；未经用户批准，不得提交代码。
 EOF
   echo "dev-workflow: 已追加 AGENTS.md 规则"
 fi
