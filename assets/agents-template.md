@@ -47,7 +47,9 @@
 项目建议启用 `.githooks`：
 
 - `pre-commit`：代码变更必须伴随 `docs/` 或 `AGENTS.md` 变更。
-- `commit-msg`：提交信息必须包含追踪编号，例如 `TASK-0001` 或 `BUG-0001`。
+- `commit-msg`：提交信息必须包含追踪编号，例如 `TASK-20260528-153500-b2c3` 或 `BUG-20260528-154000-c3d4`。
+
+新文档追踪编号统一使用 `TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md`，旧项目中的 `TASK-0001` 这类编号继续有效。
 
 hooks 只做最低限度拦截，不能替代 PRD、TASK、BUG、ADR、ACC 的内容质量检查。
 

@@ -1,10 +1,10 @@
 # 任务: [任务名]
 
-> 文件命名：`TASK-0001-login-api.md`
+> 文件命名：`TASK-20260528-153500-b2c3-login-api.md`
 
 ## 基本信息
 
-- **编号**：TASK-0001
+- **编号**：TASK-20260528-153500-b2c3
 - **状态**：draft / ready / in_progress / accepted / deprecated
 - **关联 PRD**：
 - **关联 BUG**：

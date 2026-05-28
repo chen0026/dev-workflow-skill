@@ -73,7 +73,7 @@ rsync -a --ignore-existing "$template_dir/.githooks/" .githooks/
 rsync -a --ignore-existing "$template_dir/scripts/" scripts/
 
 chmod +x .githooks/pre-commit .githooks/commit-msg scripts/check-dev-workflow.sh 2>/dev/null || true
-chmod +x scripts/init-dev-workflow.sh scripts/check-dev-docs.sh 2>/dev/null || true
+chmod +x scripts/init-dev-workflow.sh scripts/check-dev-docs.sh scripts/new-doc-id.sh 2>/dev/null || true
 
 if [ "$enable_hooks" = "1" ]; then
   if git rev-parse --git-dir >/dev/null 2>&1; then

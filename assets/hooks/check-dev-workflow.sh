@@ -2,6 +2,7 @@
 set -euo pipefail
 
 mode="${1:-pre-commit}"
+tracking_id_regex='(PRD|TASK|BUG|ADR|ACC|OPS|LEGACY)-(([0-9]{8}-[0-9]{6}-[a-z0-9]{4})|([0-9]{4}))'
 
 if [ "$mode" = "pre-commit" ]; then
   if [ -x "scripts/check-dev-docs.sh" ]; then
@@ -25,8 +26,8 @@ fi
 if [ "$mode" = "commit-msg" ]; then
   msg_file="${2:?commit message file is required}"
 
-  if ! grep -Eq '(PRD|TASK|BUG|ADR|ACC|OPS|LEGACY)-[0-9]{4}' "$msg_file"; then
-    echo "dev-workflow: commit message 必须包含追踪编号，例如 TASK-0001 或 BUG-0001。"
+  if ! grep -Eq "$tracking_id_regex" "$msg_file"; then
+    echo "dev-workflow: commit message 必须包含追踪编号，例如 TASK-20260528-153012-a7f3 或 BUG-20260528-153012-a7f3。"
     exit 1
   fi
 

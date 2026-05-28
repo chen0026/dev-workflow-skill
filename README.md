@@ -91,7 +91,37 @@ ADR / design / ops / LEGACY
 
 只有在影响架构、接口、数据模型、部署、监控、回滚或长期维护时，才补充这些文档。
 
-## 四、完成标准
+## 四、命名规则
+
+新文档统一使用时间戳编号，避免多电脑、多分支并行时产生序号冲突：
+
+```text
+TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md
+```
+
+示例：
+
+```text
+PRD-20260528-153000-a1b2-user-login.md
+TASK-20260528-153500-b2c3-login-api.md
+BUG-20260528-154000-c3d4-token-expired.md
+ACC-20260528-155000-e5f6-user-login.md
+```
+
+说明：
+
+- `YYYYMMDD-HHMMSS` 使用创建文档时的本地时间。
+- `XXXX` 使用 4 位小写随机码。
+- 合并后按文件名即可看出大致创建顺序。
+- 旧项目中的 `TASK-0001` 这类编号继续有效，但新文档一律使用时间戳编号。
+
+可以用脚本生成编号：
+
+```bash
+scripts/new-doc-id.sh TASK login-api
+```
+
+## 五、完成标准
 
 任务完成前必须确认：
 
@@ -105,7 +135,7 @@ ADR / design / ops / LEGACY
 
 默认不自动提交代码。只有用户明确回复“批准提交”或“确认提交”后，才提交聚焦 commit。
 
-## 五、Git hooks
+## 六、Git hooks
 
 模板位于：
 
@@ -129,9 +159,9 @@ git config --unset core.hooksPath
 Git hooks 只做最低限度检查：
 
 - 代码变更必须伴随 `docs/` 或 `AGENTS.md` 变更。
-- commit message 必须包含追踪编号，例如 `TASK-0001` 或 `BUG-0001`。
+- commit message 必须包含追踪编号，例如 `TASK-20260528-153500-b2c3` 或 `BUG-20260528-154000-c3d4`。
 
-## 六、注意事项
+## 七、注意事项
 
 - 不要为了“完整”补全所有历史。已有项目只从当前变更开始追踪。
 - 小任务只写必要信息，不补无关文档。
@@ -142,7 +172,7 @@ Git hooks 只做最低限度检查：
 - Git hooks 默认不自动启用，避免影响临时项目。
 - subagent 默认不使用，只在复杂、并行、高风险或需要独立 review 时使用。
 
-## 七、与 Superpowers 配合
+## 八、与 Superpowers 配合
 
 `dev-workflow` 可以和 Superpowers 一起用：
 
@@ -163,7 +193,7 @@ dev-workflow 负责追踪和门禁
 
 dev-workflow 不替代 Superpowers，只负责建立追踪链路、沉淀关键结论、完成前检查文档，并在人工审核通过后提交。
 
-## 八、版本管理
+## 九、版本管理
 
 当前版本见：
 

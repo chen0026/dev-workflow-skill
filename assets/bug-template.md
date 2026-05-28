@@ -1,10 +1,10 @@
 # Bug 复盘: [Bug 简述]
 
-> 文件命名：`BUG-0001-token-expired.md`
+> 文件命名：`BUG-20260528-154000-c3d4-token-expired.md`
 
 ## 基本信息
 
-- **编号**：BUG-0001
+- **编号**：BUG-20260528-154000-c3d4
 - **状态**：draft / in_progress / fixed / accepted / deprecated
 - **严重程度**：P0 / P1 / P2 / P3
 - **影响范围**：

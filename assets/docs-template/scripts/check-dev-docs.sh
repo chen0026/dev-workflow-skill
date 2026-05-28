@@ -2,6 +2,7 @@
 set -euo pipefail
 
 mode="${1:-working}"
+tracking_id_regex='(PRD|TASK|BUG|ADR|ACC|OPS|LEGACY)-(([0-9]{8}-[0-9]{6}-[a-z0-9]{4})|([0-9]{4}))'
 
 fail() {
   echo "dev-workflow: $1"
@@ -17,7 +18,7 @@ for dir in docs/prd docs/tasks docs/bugs docs/design/decisions docs/acceptance d
   [ -d "$dir" ] || fail "缺少目录：$dir"
 done
 
-if ! grep -Eq '(PRD|TASK|BUG|ADR|ACC|OPS|LEGACY)-[0-9]{4}' "docs/index.md"; then
+if ! grep -Eq "$tracking_id_regex" "docs/index.md"; then
   fail "docs/index.md 缺少追踪编号"
 fi
 

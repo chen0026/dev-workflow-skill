@@ -1,10 +1,10 @@
 # 历史补录: [标题]
 
-> 文件命名：`LEGACY-0001-current-system-summary.md`
+> 文件命名：`LEGACY-20260528-160000-a7b8-current-system-summary.md`
 
 ## 基本信息
 
-- **编号**：LEGACY-0001
+- **编号**：LEGACY-20260528-160000-a7b8
 - **状态**：draft / active / deprecated
 - **覆盖范围**：
 - **证据来源**：代码 / 日志 / 线上行为 / 历史沟通

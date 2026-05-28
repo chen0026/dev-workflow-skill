@@ -1,10 +1,10 @@
 # 验收记录: [标题]
 
-> 文件命名：`ACC-0001-user-login.md`
+> 文件命名：`ACC-20260528-155000-e5f6-user-login.md`
 
 ## 基本信息
 
-- **编号**：ACC-0001
+- **编号**：ACC-20260528-155000-e5f6
 - **状态**：draft / passed / failed / deprecated
 - **关联 PRD**：
 - **关联 TASK**：

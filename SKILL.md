@@ -45,6 +45,29 @@ description: "Use this skill when development should follow a lightweight tracea
 - 维护 / 重构：`TASK + ACC`
 - 按需补充：`ADR / design / ops / LEGACY`
 
+## 命名规则
+
+新文档统一使用时间戳编号，避免多电脑、多分支并行时产生序号冲突：
+
+```text
+TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md
+```
+
+- `TYPE`：`PRD / TASK / BUG / ADR / ACC / OPS / LEGACY`。
+- `YYYYMMDD-HHMMSS`：创建文档时的本地时间。
+- `XXXX`：4 位小写随机码。
+- `short-title`：英文短标题，使用小写和连字符。
+
+示例：`TASK-20260528-153500-b2c3-login-api.md`。
+
+旧项目中的 `TASK-0001` 这类编号继续有效，但新文档一律使用时间戳编号。
+
+项目内如存在 `scripts/new-doc-id.sh`，优先用它生成编号：
+
+```bash
+scripts/new-doc-id.sh TASK login-api
+```
+
 ## 使用前接入检查
 
 执行本 Skill 前先检查当前项目：
@@ -177,9 +200,9 @@ subagent 输出必须沉淀到文档：
 示例：
 
 ```text
-TASK-0001 implement login api
-BUG-0001 fix token refresh failure
-PRD-0001 add user login workflow
+TASK-20260528-153500-b2c3 implement login api
+BUG-20260528-154000-c3d4 fix token refresh failure
+PRD-20260528-153000-a1b2 add user login workflow
 ```
 
 ## 最终回复

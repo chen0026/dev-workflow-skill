@@ -70,7 +70,30 @@ Codex 快捷提示：
 
 如果当前代码与 `docs/archive/` 中的旧文档冲突，以当前代码和当前链路文档为准。
 
-## 四、最小闭环
+## 四、命名规则
+
+统一使用时间戳编号，避免多电脑、多分支并行时产生序号冲突：
+
+```text
+TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md
+```
+
+- `TYPE`：`PRD / TASK / BUG / ADR / ACC / OPS / LEGACY`。
+- `YYYYMMDD-HHMMSS`：创建文档时的本地时间。
+- `XXXX`：4 位小写随机码。
+- `short-title`：英文短标题，使用小写和连字符。
+
+示例：
+
+```text
+tasks/TASK-20260528-153500-b2c3-login-api.md
+bugs/BUG-20260528-154000-c3d4-token-expired.md
+acceptance/ACC-20260528-155000-e5f6-user-login.md
+```
+
+旧项目中的 `TASK-0001` 这类编号继续有效，但新文档一律使用时间戳编号。
+
+## 五、最小闭环
 
 ### 新功能
 
@@ -124,7 +147,7 @@ Codex 快捷提示：
 6. 进入提交前人工审核。
 7. 用户批准后提交代码和文档。
 
-## 五、什么时候写 ADR
+## 六、什么时候写 ADR
 
 满足任一条件才写：
 
@@ -134,7 +157,7 @@ Codex 快捷提示：
 - 放弃过一个看似合理的方案，未来可能再次被提出。
 - Bug 根因来自历史设计问题。
 
-## 六、什么时候更新 ops
+## 七、什么时候更新 ops
 
 满足任一条件才更新：
 
@@ -144,17 +167,17 @@ Codex 快捷提示：
 - 回滚方式变化。
 - 应急处理步骤变化。
 
-## 七、已有项目接入
+## 八、已有项目接入
 
 首次接入只需要一份现状快照：
 
 ```text
-legacy/LEGACY-0001-current-system-summary.md
+legacy/LEGACY-20260528-160000-a7b8-current-system-summary.md
 ```
 
 之后从当前任务开始追踪。当前改到哪个模块，就补哪个模块需要的历史，不做全量补档。
 
-## 八、完成前检查
+## 九、完成前检查
 
 最终回复前必须确认：
 
@@ -179,7 +202,7 @@ Codex 快捷提示：
 /dev-workflow 检查文档
 ```
 
-## 九、代码审查规则
+## 十、代码审查规则
 
 代码审查是完成前门禁，但保持轻量：
 
@@ -188,7 +211,7 @@ Codex 快捷提示：
 - 审查发现的问题必须先修复，或记录为遗留问题并关联后续 TASK。
 - 审查结论必须回填到 TASK 或 ACC。
 
-## 十、提交前人工审核
+## 十一、提交前人工审核
 
 默认不自动提交代码。
 
@@ -203,19 +226,19 @@ Codex 快捷提示：
 
 只有收到明确批准后，才提交代码和文档。
 
-## 十一、提交规则
+## 十二、提交规则
 
 提交必须聚焦，只包含本次任务相关文件。
 
 commit message 引用主编号：
 
 ```text
-TASK-0001 implement login api
-BUG-0001 fix token refresh failure
-PRD-0001 add user login workflow
+TASK-20260528-153500-b2c3 implement login api
+BUG-20260528-154000-c3d4 fix token refresh failure
+PRD-20260528-153000-a1b2 add user login workflow
 ```
 
-## 十二、Subagent 使用规则
+## 十三、Subagent 使用规则
 
 默认不使用 subagent。满足以下任一条件时才使用：
 
@@ -232,14 +255,14 @@ subagent 的结论必须回填到对应文档：
 - 验收结果写入 ACC。
 - 被否决方案写入 TASK 或 ADR。
 
-## 十三、Git hooks 门禁
+## 十四、Git hooks 门禁
 
 `.githooks/` 是可选门禁模板，默认不自动启用。正式项目建议启用，临时项目可以不启用。
 
 启用后，每次 `git commit` 都会执行轻量检查，防止忘记补文档：
 
 - `pre-commit`：如果提交包含代码变更，必须同时包含 `docs/` 或 `AGENTS.md` 变更。
-- `commit-msg`：提交信息必须包含 `PRD-0001`、`TASK-0001`、`BUG-0001`、`ADR-0001`、`ACC-0001`、`OPS-0001` 之一。
+- `commit-msg`：提交信息必须包含 `PRD-20260528-153000-a1b2`、`TASK-20260528-153500-b2c3`、`BUG-20260528-154000-c3d4`、`ADR-20260528-154500-d4e5`、`ACC-20260528-155000-e5f6`、`OPS-20260528-155500-f6a7` 之一。
 
 启用方式：
 

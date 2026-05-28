@@ -39,6 +39,7 @@
 - `scripts/init-dev-workflow.sh`：初始化 `AGENTS.md`、`docs/`、`.githooks/` 和检查脚本。
 - `scripts/check-dev-docs.sh`：检查必要目录、索引编号、任务验收关联和代码变更是否同步文档。
 - `scripts/check-dev-workflow.sh`：供 Git hooks 调用的提交门禁脚本。
+- `scripts/new-doc-id.sh`：生成时间戳文档编号，例如 `scripts/new-doc-id.sh TASK login-api`。
 
 也可以让 Codex 使用快捷提示：
 
@@ -63,11 +64,19 @@
 
 ## 命名规范
 
-统一使用 `类型-四位序号-英文短标题.md`：
+统一使用 `类型-创建时间-随机码-英文短标题.md`：
 
-- `prd/PRD-0001-user-login.md`
-- `tasks/TASK-0001-login-api.md`
-- `bugs/BUG-0001-token-expired.md`
-- `design/decisions/ADR-0001-use-jwt-auth.md`
-- `acceptance/ACC-0001-user-login.md`
-- `legacy/LEGACY-0001-current-system-summary.md`
+```text
+TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md
+```
+
+- `YYYYMMDD-HHMMSS` 使用创建文档时的本地时间。
+- `XXXX` 使用 4 位小写随机码，避免多电脑、多分支同秒创建时冲突。
+- 合并后按文件名即可看出大致创建顺序。
+
+- `prd/PRD-20260528-153000-a1b2-user-login.md`
+- `tasks/TASK-20260528-153500-b2c3-login-api.md`
+- `bugs/BUG-20260528-154000-c3d4-token-expired.md`
+- `design/decisions/ADR-20260528-154500-d4e5-use-jwt-auth.md`
+- `acceptance/ACC-20260528-155000-e5f6-user-login.md`
+- `legacy/LEGACY-20260528-160000-a7b8-current-system-summary.md`
