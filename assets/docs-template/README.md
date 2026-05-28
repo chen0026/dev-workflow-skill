@@ -40,6 +40,7 @@
 - `scripts/check-dev-docs.sh`：检查必要目录、索引编号、任务验收关联和代码变更是否同步文档。
 - `scripts/check-dev-workflow.sh`：供 Git hooks 调用的提交门禁脚本。
 - `scripts/new-doc-id.sh`：生成时间戳文档编号，例如 `scripts/new-doc-id.sh TASK login-api`。
+- `scripts/new-doc.sh`：从模板创建新文档，例如 `scripts/new-doc.sh TASK login-api`。
 
 也可以让 Codex 使用快捷提示：
 
@@ -80,3 +81,15 @@ TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md
 - `design/decisions/ADR-20260528-154500-d4e5-use-jwt-auth.md`
 - `acceptance/ACC-20260528-155000-e5f6-user-login.md`
 - `legacy/LEGACY-20260528-160000-a7b8-current-system-summary.md`
+
+## 模板保护
+
+`docs/**/TEMPLATE.md` 是母版，只能复制，不能作为任务文档直接填写。
+
+新建文档时使用：
+
+```bash
+scripts/new-doc.sh TASK login-api
+```
+
+只有明确提出“修改模板”或“升级 dev-workflow 模板”时，才允许改 `TEMPLATE.md`。

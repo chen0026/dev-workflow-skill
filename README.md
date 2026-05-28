@@ -121,6 +121,14 @@ ACC-20260528-155000-e5f6-user-login.md
 scripts/new-doc-id.sh TASK login-api
 ```
 
+也可以直接从模板创建新文档：
+
+```bash
+scripts/new-doc.sh TASK login-api
+```
+
+`docs/**/TEMPLATE.md` 是母版。日常任务只能复制模板创建新文档，禁止直接填写或修改 `TEMPLATE.md`；只有明确要求修改模板时例外。
+
 ## 五、完成标准
 
 任务完成前必须确认：

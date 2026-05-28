@@ -68,6 +68,21 @@ TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md
 scripts/new-doc-id.sh TASK login-api
 ```
 
+## 模板保护规则
+
+`docs/**/TEMPLATE.md` 是母版，只能复制，不能作为任务文档直接填写。
+
+- 新建文档时，优先使用 `scripts/new-doc.sh TYPE short-title`。
+- 如果没有脚本，先复制对应 `TEMPLATE.md` 到带编号的新文件，再填写新文件。
+- 日常开发、Bug 修复、验收、改版时，禁止直接修改任何 `TEMPLATE.md`。
+- 只有明确提出“修改模板”或“升级 dev-workflow 模板”时，才允许改 `TEMPLATE.md`。
+
+示例：
+
+```bash
+scripts/new-doc.sh TASK login-api
+```
+
 ## 使用前接入检查
 
 执行本 Skill 前先检查当前项目：
@@ -125,6 +140,7 @@ scripts/new-doc-id.sh TASK login-api
 
 - `scripts/init-dev-workflow.sh`：初始化项目工作流。
 - `scripts/check-dev-docs.sh`：完成前检查文档结构和追踪链路。
+- `scripts/new-doc.sh`：从模板复制并创建带时间戳编号的新文档。
 
 ## 完成前检查
 

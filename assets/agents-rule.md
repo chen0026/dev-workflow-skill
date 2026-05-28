@@ -49,6 +49,8 @@
 
 新文档追踪编号统一使用 `TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md`，旧项目中的 `TASK-0001` 这类编号继续有效。
 
+`docs/**/TEMPLATE.md` 是母版。日常任务只能复制模板创建新文档，禁止直接填写或修改 `TEMPLATE.md`；只有明确要求修改模板时例外。
+
 hooks 只做最低限度拦截，不能替代 PRD、TASK、BUG、ADR、ACC 的内容质量检查。
 
 ## 代码审查规则
