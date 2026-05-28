@@ -1,6 +1,6 @@
 ---
 name: dev-workflow
-description: Use this skill when development should follow a lightweight traceable workflow: requirements, tasks, bug fixes, design decisions, acceptance, documentation sync, and final git commit. Trigger for prompts like "/dev-workflow init", "/dev-workflow init --hooks", "/dev-workflow check", "/dev-workflow 初始化项目", "/dev-workflow 接入项目", "/dev-workflow 启用 hooks", new features, bug fixes, refactors, maintenance, PRD/task planning, acceptance checks, docs workflow setup, or requests to prevent code changes from drifting away from requirements.
+description: "Use this skill when development should follow a lightweight traceable workflow for requirements, tasks, bug fixes, design decisions, acceptance, documentation sync, and final git commit. Trigger for prompts like /dev-workflow init, /dev-workflow init --hooks, /dev-workflow check, /dev-workflow 初始化项目, /dev-workflow 接入项目, /dev-workflow 启用 hooks, new features, bug fixes, refactors, maintenance, PRD/task planning, acceptance checks, docs workflow setup, or requests to prevent code changes from drifting away from requirements."
 ---
 
 # Dev Workflow

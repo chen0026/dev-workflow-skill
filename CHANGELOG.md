@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.2 - 2026-05-28
+
+- 修复 `SKILL.md` frontmatter 中 `description` 未加引号导致 YAML 解析失败的问题。
+
 ## 0.2.1 - 2026-05-27
 
 - 增加与 Superpowers 配合的使用说明。
