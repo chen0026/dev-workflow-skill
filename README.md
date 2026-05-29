@@ -78,7 +78,7 @@ scripts/check-dev-docs.sh
 默认最小闭环：
 
 ```text
-新功能：PRD + TASK + ACC
+新功能 / PRD 改版：PRD + REQ + TASK + ACC
 Bug 修复：BUG + TASK + ACC
 维护 / 重构：TASK + ACC
 ```
@@ -106,6 +106,7 @@ PRD-20260528-153000-a1b2-user-login.md
 TASK-20260528-153500-b2c3-login-api.md
 BUG-20260528-154000-c3d4-token-expired.md
 ACC-20260528-155000-e5f6-user-login.md
+REQ-20260529-101500-a1b2-member-revamp.md
 ```
 
 说明：
@@ -129,21 +130,42 @@ scripts/new-doc.sh TASK login-api
 
 `docs/**/TEMPLATE.md` 是母版。日常任务只能复制模板创建新文档，禁止直接填写或修改 `TEMPLATE.md`；只有明确要求修改模板时例外。
 
-## 五、完成标准
+## 五、PRD 追踪矩阵和 TDD
+
+当任务来自 PRD、新功能、现有功能改版或产品文档时，不能直接编码。
+
+必须先建立 REQ 需求追踪矩阵：
+
+```text
+| 需求项 | PRD 原文依据 | 当前实现 | 目标行为 | 关联任务 | 验收方式 | 测试状态 | 状态 |
+```
+
+门禁：
+
+- 没有 REQ，不编码。
+- REQ 未经人工确认，不编码。
+- 每个 TASK 必须关联一个或多个 REQ。
+- 每个 ACC 必须验收对应 REQ。
+- 有测试框架时优先 TDD；没有测试框架时记录原因并写手工验收项。
+
+## 六、完成标准
 
 任务完成前必须确认：
 
 - 关联文档已创建或更新。
+- PRD / 改版任务已建立并确认 REQ 需求追踪矩阵。
 - `TASK` 写明实际改动和验证结果。
+- `TASK` 关联 REQ 或 BUG。
 - `TASK` 或 `ACC` 写明代码审查结论。
-- `ACC` 写明验收结论。
+- `ACC` 写明验收结论，并覆盖对应 REQ / BUG。
+- 有测试框架时已优先使用 TDD；无法自动化时已记录原因和手工验收项。
 - 必要的 `ADR / design / ops` 已处理，或明确不需要。
 - `docs/index.md` 已更新。
 - 已进入提交前人工审核，并列出待提交文件。
 
 默认不自动提交代码。只有用户明确回复“批准提交”或“确认提交”后，才提交聚焦 commit。
 
-## 六、Git hooks
+## 七、Git hooks
 
 模板位于：
 
@@ -169,18 +191,19 @@ Git hooks 只做最低限度检查：
 - 代码变更必须伴随 `docs/` 或 `AGENTS.md` 变更。
 - commit message 必须包含追踪编号，例如 `TASK-20260528-153500-b2c3` 或 `BUG-20260528-154000-c3d4`。
 
-## 七、注意事项
+## 八、注意事项
 
 - 不要为了“完整”补全所有历史。已有项目只从当前变更开始追踪。
 - 小任务只写必要信息，不补无关文档。
 - 旧文档归档后只作为历史参考，不作为当前实现依据。
 - `ADR` 只记录重要决策，不要把每个小选择都写成 ADR。
+- PRD / 改版类任务必须先做 REQ 追踪矩阵和 TDD 计划。
 - 代码审查默认先自查，复杂或高风险任务再使用 subagent / 人工独立 review。
 - 提交前必须人工审核，未经明确批准不自动 commit。
 - Git hooks 默认不自动启用，避免影响临时项目。
 - subagent 默认不使用，只在复杂、并行、高风险或需要独立 review 时使用。
 
-## 八、与 Superpowers 配合
+## 九、与 Superpowers 配合
 
 `dev-workflow` 可以和 Superpowers 一起用：
 
@@ -194,14 +217,14 @@ dev-workflow 负责追踪和门禁
 - 需求澄清：`brainstorming` → 写入 PRD / TASK。
 - 计划制定：`writing-plans` → 写入 TASK。
 - Bug 定位：`systematic-debugging` → 写入 BUG。
-- 实现：`test-driven-development` → 写入 TASK / ACC。
+- 实现：`test-driven-development` → 写入 REQ / TASK / ACC。
 - 并行执行：`subagent-driven-development` → 结论写入 TASK / BUG / ADR / ACC。
 - 完成验证：`verification-before-completion` → 写入 ACC。
 - 代码审查：`requesting-code-review` → 写入 TASK / ACC。
 
 dev-workflow 不替代 Superpowers，只负责建立追踪链路、沉淀关键结论、完成前检查文档，并在人工审核通过后提交。
 
-## 九、版本管理
+## 十、版本管理
 
 当前版本见：
 

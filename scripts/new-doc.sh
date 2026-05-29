@@ -13,6 +13,10 @@ case "$type" in
     dir="docs/tasks"
     template="$dir/TEMPLATE.md"
     ;;
+  REQ)
+    dir="docs/requirements"
+    template="$dir/TEMPLATE.md"
+    ;;
   BUG)
     dir="docs/bugs"
     template="$dir/TEMPLATE.md"
@@ -34,7 +38,7 @@ case "$type" in
     template="$dir/TEMPLATE.md"
     ;;
   *)
-    echo "dev-workflow: TYPE 必须是 PRD/TASK/BUG/ADR/ACC/OPS/LEGACY"
+    echo "dev-workflow: TYPE 必须是 PRD/REQ/TASK/BUG/ADR/ACC/OPS/LEGACY"
     exit 1
     ;;
 esac

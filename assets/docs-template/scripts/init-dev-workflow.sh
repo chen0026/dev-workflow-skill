@@ -89,6 +89,7 @@ rsync -a --ignore-existing \
   "$docs_source/workflow.md" \
   "$docs_source/index.md" \
   "$docs_source/prd" \
+  "$docs_source/requirements" \
   "$docs_source/tasks" \
   "$docs_source/bugs" \
   "$docs_source/design" \

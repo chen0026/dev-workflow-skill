@@ -62,7 +62,7 @@ Codex 快捷提示：
 1. `AGENTS.md`
 2. `docs/workflow.md`
 3. `docs/index.md`
-4. 当前任务关联的 `PRD / TASK / BUG / ADR / ACC`
+4. 当前任务关联的 `PRD / REQ / TASK / BUG / ADR / ACC`
 5. `docs/design/` 和 `docs/ops/`
 6. `docs/legacy/`
 7. `docs/archive/`
@@ -78,7 +78,7 @@ Codex 快捷提示：
 TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md
 ```
 
-- `TYPE`：`PRD / TASK / BUG / ADR / ACC / OPS / LEGACY`。
+- `TYPE`：`PRD / REQ / TASK / BUG / ADR / ACC / OPS / LEGACY`。
 - `YYYYMMDD-HHMMSS`：创建文档时的本地时间。
 - `XXXX`：4 位小写随机码。
 - `short-title`：英文短标题，使用小写和连字符。
@@ -87,6 +87,7 @@ TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md
 
 ```text
 tasks/TASK-20260528-153500-b2c3-login-api.md
+requirements/REQ-20260529-101500-a1b2-member-revamp.md
 bugs/BUG-20260528-154000-c3d4-token-expired.md
 acceptance/ACC-20260528-155000-e5f6-user-login.md
 ```
@@ -111,21 +112,52 @@ scripts/new-doc.sh TASK login-api
 
 ### 新功能
 
-必需：`PRD + TASK + ACC`
+必需：`PRD + REQ + TASK + ACC`
 
 按需：`ADR / design / ops`
 
 流程：
 
 1. 写清 PRD 的目标、边界、验收标准。
-2. 创建 TASK，明确改动范围。
-3. 开发并验证。
-4. 执行代码审查。
-5. 更新 TASK 实际改动。
-6. 创建 ACC 记录验收结果。
-7. 更新 `index.md`。
-8. 进入提交前人工审核。
-9. 用户批准后提交代码和文档。
+2. 拆出 REQ 需求追踪矩阵。
+3. 为每个 REQ 写验收方式和 TDD 计划。
+4. 人工确认 REQ 矩阵。
+5. 创建 TASK，明确改动范围。
+6. 先写测试或手工验收项。
+7. 确认测试失败或记录无法自动化原因。
+8. 开发并验证。
+9. 执行代码审查。
+10. 更新 REQ / TASK 实际改动。
+11. 创建 ACC 记录验收结果。
+12. 更新 `index.md`。
+13. 进入提交前人工审核。
+14. 用户批准后提交代码和文档。
+
+### PRD 改版 / 已有功能改版
+
+必需：`PRD + REQ + TASK + ACC`
+
+按需：`ADR / design / ops / LEGACY`
+
+门禁：
+
+- 没有 REQ 需求追踪矩阵，不编码。
+- REQ 未经人工确认，不编码。
+- 每个 TASK 必须关联一个或多个 REQ。
+- 每个 ACC 必须验收对应 REQ。
+- 有测试框架时优先 TDD；没有测试框架时必须写手工验收项和无法自动化原因。
+
+流程：
+
+1. 阅读 PRD 原文，保留原文依据。
+2. 查找历史 PRD / REQ / TASK / BUG / ADR / ACC。
+3. 阅读现有代码，定位当前实现路径。
+4. 输出当前实现与 PRD 目标行为差异。
+5. 创建 REQ 需求追踪矩阵。
+6. 为每个 REQ 写验收方式和测试计划。
+7. 列出待确认问题。
+8. 等待人工确认。
+9. 确认后再创建 TASK 并进入 TDD 实现。
 
 ### Bug 修复
 
@@ -137,13 +169,15 @@ scripts/new-doc.sh TASK login-api
 
 1. 写清 BUG 现象、复现、根因。
 2. 创建 TASK，明确修复范围。
-3. 修复并验证。
-4. 执行代码审查。
-5. 更新 BUG 修复结果。
-6. 创建 ACC 记录验收结果。
-7. 更新 `index.md`。
-8. 进入提交前人工审核。
-9. 用户批准后提交代码和文档。
+3. 先写复现测试，或记录无法自动化原因。
+4. 确认测试失败。
+5. 修复并验证。
+6. 执行代码审查。
+7. 更新 BUG 修复结果。
+8. 创建 ACC 记录验收结果。
+9. 更新 `index.md`。
+10. 进入提交前人工审核。
+11. 用户批准后提交代码和文档。
 
 ### 维护 / 重构
 
@@ -196,9 +230,12 @@ legacy/LEGACY-20260528-160000-a7b8-current-system-summary.md
 最终回复前必须确认：
 
 - 关联文档已创建或更新。
+- PRD / 改版任务已建立并确认 REQ 需求追踪矩阵。
 - TASK 写明实际改动和验证结果。
+- TASK 关联 REQ 或 BUG。
 - TASK 或 ACC 写明代码审查结论。
-- ACC 写明验收结论。
+- ACC 写明验收结论，并覆盖对应 REQ / BUG。
+- 有测试框架时已优先使用 TDD；无法自动化时已记录原因和手工验收项。
 - 必要的 ADR / design / ops 已处理，或明确“不需要”。
 - `index.md` 已更新。
 - 已列出待人工审核内容和待提交文件。
@@ -225,7 +262,19 @@ Codex 快捷提示：
 - 审查发现的问题必须先修复，或记录为遗留问题并关联后续 TASK。
 - 审查结论必须回填到 TASK 或 ACC。
 
-## 十二、提交前人工审核
+## 十二、TDD 规则
+
+新功能、PRD 改版、Bug 修复默认优先使用 TDD：
+
+- 编码前先写测试或手工验收项。
+- 每个测试或验收项必须关联 REQ / BUG。
+- 有测试框架时，先确认目标测试失败，再编码让测试通过。
+- 已有功能改版时，先记录当前行为，再写 PRD 目标行为测试。
+- 没有测试框架或不适合自动化时，必须在 REQ / TASK / ACC 里记录原因，并写手工验收项。
+
+PRD 改版时，TDD 的输入必须来自 REQ 需求追踪矩阵，而不是模糊摘要。
+
+## 十三、提交前人工审核
 
 默认不自动提交代码。
 
@@ -240,7 +289,7 @@ Codex 快捷提示：
 
 只有收到明确批准后，才提交代码和文档。
 
-## 十三、提交规则
+## 十四、提交规则
 
 提交必须聚焦，只包含本次任务相关文件。
 
@@ -252,7 +301,7 @@ BUG-20260528-154000-c3d4 fix token refresh failure
 PRD-20260528-153000-a1b2 add user login workflow
 ```
 
-## 十四、Subagent 使用规则
+## 十五、Subagent 使用规则
 
 默认不使用 subagent。满足以下任一条件时才使用：
 
@@ -269,7 +318,7 @@ subagent 的结论必须回填到对应文档：
 - 验收结果写入 ACC。
 - 被否决方案写入 TASK 或 ADR。
 
-## 十五、Git hooks 门禁
+## 十六、Git hooks 门禁
 
 `.githooks/` 是可选门禁模板，默认不自动启用。正式项目建议启用，临时项目可以不启用。
 

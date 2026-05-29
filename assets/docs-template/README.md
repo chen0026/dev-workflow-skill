@@ -7,8 +7,9 @@
 | 目录 | 放什么 | 谁来写 |
 |------|--------|--------|
 | `workflow.md` | 开发工作流、门禁规则、完成标准 | 开发负责人 |
-| `index.md` | PRD / TASK / BUG / ADR / ACC 总索引 | 开发 |
+| `index.md` | PRD / REQ / TASK / BUG / ADR / ACC 总索引 | 开发 |
 | `prd/` | 产品需求文档，含变更记录 | 产品 + 开发补充 |
+| `requirements/` | PRD 需求项追踪矩阵，连接原文、任务、验收和测试 | 产品 + 开发 |
 | `design/` | 架构设计、技术方案 | 开发 |
 | `design/decisions/` | ADR，重要技术决策记录 | 开发 |
 | `tasks/` | 任务拆解、开发日志、AI 协作记录 | 开发 |
@@ -57,6 +58,7 @@
 
 - 项目首次接入：检查 `AGENTS.md` 和 `docs/`，必要时归档旧文档并初始化目录
 - 启动新模块：写 PRD 理解 + 任务拆解 + 关键 ADR
+- PRD 改版 / 新功能：先写 REQ 需求追踪矩阵，人工确认后再编码
 - 合并 PR 前：更新对应的任务文档和架构文档
 - 修复 Bug 后：写 Bug 复盘
 - 需求变更时：在原文档追加变更记录，必要时新建 ADR
@@ -76,6 +78,7 @@ TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md
 - 合并后按文件名即可看出大致创建顺序。
 
 - `prd/PRD-20260528-153000-a1b2-user-login.md`
+- `requirements/REQ-20260529-101500-a1b2-member-revamp.md`
 - `tasks/TASK-20260528-153500-b2c3-login-api.md`
 - `bugs/BUG-20260528-154000-c3d4-token-expired.md`
 - `design/decisions/ADR-20260528-154500-d4e5-use-jwt-auth.md`

@@ -40,7 +40,7 @@ description: "Use this skill when development should follow a lightweight tracea
 
 ## 默认闭环
 
-- 新功能：`PRD + TASK + ACC`
+- 新功能 / PRD 改版：`PRD + REQ + TASK + ACC`
 - Bug 修复：`BUG + TASK + ACC`
 - 维护 / 重构：`TASK + ACC`
 - 按需补充：`ADR / design / ops / LEGACY`
@@ -53,7 +53,7 @@ description: "Use this skill when development should follow a lightweight tracea
 TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md
 ```
 
-- `TYPE`：`PRD / TASK / BUG / ADR / ACC / OPS / LEGACY`。
+- `TYPE`：`PRD / REQ / TASK / BUG / ADR / ACC / OPS / LEGACY`。
 - `YYYYMMDD-HHMMSS`：创建文档时的本地时间。
 - `XXXX`：4 位小写随机码。
 - `short-title`：英文短标题，使用小写和连字符。
@@ -123,18 +123,45 @@ scripts/new-doc.sh TASK login-api
 - ops：部署、配置、监控、告警、回滚、应急步骤变化。
 - LEGACY：已有项目中，当前任务必须理解历史但没有文档。
 
+## PRD 追踪矩阵门禁
+
+当任务来自 PRD、新功能、现有功能改版或产品文档时，不能直接编码。
+
+必须先完成：
+
+1. 拆出 `REQ` 需求追踪矩阵。
+2. 每个 REQ 保留 PRD 原文依据。
+3. 对比当前实现和目标行为。
+4. 标注影响范围、风险和待确认问题。
+5. 为每个 REQ 绑定 TASK、验收方式和测试计划。
+6. 等待人工确认 REQ 矩阵。
+
+REQ 未确认前，不创建实现代码，不修改业务代码。
+
+## TDD 门禁
+
+新功能、PRD 改版、Bug 修复默认优先使用 TDD：
+
+- 编码前先写测试或手工验收项。
+- 每个测试或验收项必须关联 REQ / BUG。
+- 有测试框架时，先确认目标测试失败，再编码让测试通过。
+- 已有功能改版时，先记录当前行为，再写 PRD 目标行为测试。
+- 没有测试框架或不适合自动化时，必须在 REQ / TASK / ACC 里记录原因，并写手工验收项。
+
 ## 执行顺序
 
 1. 执行项目接入检查。
 2. 判断任务类型。
-3. 建立最小追踪文档。
-4. 编码或修复。
-5. 验证结果。
-6. 执行代码审查。
-7. 回填 TASK / BUG / ACC 的实际事实。
-8. 更新 `docs/index.md`。
-9. 进入提交前人工审核，等待用户明确批准。
-10. 仅在收到“批准提交”后，提交本次相关代码和文档。
+3. PRD / 改版任务先建立并确认 REQ 需求追踪矩阵。
+4. 建立最小追踪文档。
+5. 先写测试或手工验收项。
+6. 编码或修复。
+7. 验证结果。
+8. 执行代码审查。
+9. 回填 REQ / TASK / BUG / ACC 的实际事实。
+10. 更新 `docs/index.md`。
+11. 进入提交前人工审核，等待用户明确批准。
+12. 仅在收到“批准提交”后，提交本次相关代码和文档。
 
 可用脚本：
 
@@ -147,9 +174,12 @@ scripts/new-doc.sh TASK login-api
 最终回复前必须确认：
 
 - 关联文档已创建或更新。
+- PRD / 改版任务已建立并确认 REQ 需求追踪矩阵。
 - TASK 写明实际改动和验证结果。
+- TASK 关联 REQ 或 BUG。
 - TASK 或 ACC 写明代码审查结论。
-- ACC 写明验收结论。
+- ACC 写明验收结论，并覆盖对应 REQ / BUG。
+- 有测试框架时已优先使用 TDD；无法自动化时已记录原因和手工验收项。
 - ADR / design / ops 已处理，或明确不需要。
 - `docs/index.md` 已更新。
 - 已列出待人工审核的变更和待提交文件。

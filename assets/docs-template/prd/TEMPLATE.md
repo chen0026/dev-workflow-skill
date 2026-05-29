@@ -8,6 +8,7 @@
 - **状态**：draft / ready / accepted / changed / deprecated
 - **负责人**：
 - **创建日期**：YYYY-MM-DD
+- **关联需求矩阵**：REQ-20260529-101500-a1b2
 - **关联任务**：TASK-20260528-153500-b2c3
 - **关联验收**：ACC-20260528-155000-e5f6
 

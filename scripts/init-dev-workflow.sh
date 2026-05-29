@@ -60,6 +60,7 @@ rsync -a --ignore-existing \
   "$template_dir/workflow.md" \
   "$template_dir/index.md" \
   "$template_dir/prd" \
+  "$template_dir/requirements" \
   "$template_dir/tasks" \
   "$template_dir/bugs" \
   "$template_dir/design" \
