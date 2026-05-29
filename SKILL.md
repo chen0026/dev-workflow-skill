@@ -19,6 +19,7 @@ description: "Use this skill when development should follow a lightweight tracea
 /dev-workflow init
 /dev-workflow init --hooks
 /dev-workflow check
+/dev-workflow clean-templates
 /dev-workflow 修复这个 Bug：...
 /dev-workflow 开发这个功能：...
 ```
@@ -30,6 +31,7 @@ description: "Use this skill when development should follow a lightweight tracea
 - `init --hooks` / `初始化项目并启用 hooks` / `启用 hooks`：运行 `scripts/init-dev-workflow.sh --enable-hooks`。
 - `init --with-templates`：初始化项目并把模板复制到项目内。默认不复制模板。
 - `check` / `检查文档`：运行 `scripts/check-dev-docs.sh`。
+- `clean-templates` / `清理模板`：预览项目内 `docs/**/TEMPLATE.md`，确认后用 `scripts/clean-templates.sh --apply` 删除。
 - `开发 / 修复 / 维护`：按本 workflow 执行完整任务闭环。
 
 如果项目内还没有脚本，使用本 Skill 自带脚本：
@@ -171,6 +173,7 @@ REQ 未确认前，不创建实现代码，不修改业务代码。
 - `scripts/init-dev-workflow.sh`：初始化项目工作流。
 - `scripts/check-dev-docs.sh`：完成前检查文档结构和追踪链路。
 - `scripts/new-doc.sh`：从模板复制并创建带时间戳编号的新文档。
+- `scripts/clean-templates.sh`：清理旧项目中已经复制进去的 `docs/**/TEMPLATE.md`。
 
 ## 完成前检查
 

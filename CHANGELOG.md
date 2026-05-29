@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.1 - 2026-05-29
+
+- 新增 `scripts/clean-templates.sh`，用于清理旧项目中已经复制进去的 `docs/**/TEMPLATE.md`。
+- 清理脚本默认只预览，传入 `--apply` 才删除。
+
 ## 0.6.0 - 2026-05-29
 
 - 初始化项目时默认不再复制 `docs/**/TEMPLATE.md`。

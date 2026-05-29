@@ -42,6 +42,7 @@
 - `scripts/check-dev-workflow.sh`：供 Git hooks 调用的提交门禁脚本。
 - `scripts/new-doc-id.sh`：生成时间戳文档编号，例如 `scripts/new-doc-id.sh TASK login-api`。
 - `scripts/new-doc.sh`：从模板创建新文档，例如 `scripts/new-doc.sh TASK login-api`。
+- `scripts/clean-templates.sh`：清理旧项目中已经复制进去的 `docs/**/TEMPLATE.md`，默认只预览。
 
 也可以让 Codex 使用快捷提示：
 
@@ -49,6 +50,7 @@
 /dev-workflow init
 /dev-workflow init --hooks
 /dev-workflow check
+/dev-workflow clean-templates
 /dev-workflow 初始化项目
 /dev-workflow 初始化项目并启用 hooks
 /dev-workflow 检查文档

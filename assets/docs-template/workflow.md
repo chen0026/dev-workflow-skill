@@ -118,6 +118,13 @@ scripts/new-doc.sh TASK login-api
 
 如果项目需要自包含模板，使用 `scripts/init-dev-workflow.sh --with-templates`。
 
+已经初始化过的旧项目如需清理模板：
+
+```bash
+scripts/clean-templates.sh
+scripts/clean-templates.sh --apply
+```
+
 日常开发、Bug 修复、验收、改版时，禁止直接修改任何 `TEMPLATE.md`。只有明确提出“修改模板”或“升级 dev-workflow 模板”时，才允许改模板。
 
 ## 六、最小闭环

@@ -25,6 +25,7 @@ rsync -a --delete --exclude .git ./ "$CODEX_HOME/skills/dev-workflow/"
 /dev-workflow init
 /dev-workflow init --hooks
 /dev-workflow check
+/dev-workflow clean-templates
 /dev-workflow feature 用户登录功能
 /dev-workflow bug 登录态过期后没有刷新
 /dev-workflow refactor auth 模块
@@ -82,6 +83,20 @@ scripts/check-dev-docs.sh
 ```
 
 检查必要目录、索引编号、任务验收关联，以及代码变更是否同步文档。
+
+### 清理旧模板
+
+```text
+/dev-workflow clean-templates
+```
+
+默认只预览项目内的 `docs/**/TEMPLATE.md`，不会删除。
+
+确认后执行：
+
+```bash
+scripts/clean-templates.sh --apply
+```
 
 ## 三、工作流闭环
 
