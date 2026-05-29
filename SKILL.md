@@ -40,9 +40,21 @@ description: "Use this skill for lightweight traceable development: project init
 - `standard`：普通 Bug、普通功能调整、单模块功能。使用 `TASK/BUG + ACC`，验证和代码审查。
 - `strict`：PRD、产品文档、现有功能改版、多模块、高风险、接口/数据/权限/支付/订单/登录/部署变化。必须 `PRD + REQ + TASK + ACC`。
 
-如果任务类型不确定，默认 `standard`；遇到风险条件自动升级，并说明原因。
+优先级：硬门禁 > 风险自动升级 > 用户指定 > 默认判断。
+
+如果用户指定 `quick` 但出现 PRD、改版、接口、数据、核心链路等风险，必须自动升级并说明原因。如果任务类型不确定，默认 `standard`，不要用 `quick`。
 
 详细分级见 `references/flow-levels.md`。
+
+## Session State
+
+- `quick` 默认不用 session 状态文件。
+- `standard` 超过一轮、涉及多个文件、或上下文可能变长时，使用 `.dev-workflow/session/*-working.json`。
+- `strict` 默认使用 session 状态文件；REQ 是正式文档，不清理。
+- session 文件只存结构化摘要、路径和结论，不存完整 PRD 或大段代码。
+- 完成后，确认内容已合并到 TASK / BUG / ACC，再清理 session，并在最终回复列出。
+
+脚本：`scripts/session-state.sh create|list|clean [--apply]`。详见 `references/workflow-details.md`。
 
 ## Context Budget
 

@@ -124,9 +124,19 @@ ADR / design / ops / LEGACY
 - `standard`：普通 Bug、普通功能调整、单模块功能。
 - `strict`：PRD、产品文档、现有功能改版、多模块、高风险、接口/数据/权限/支付/订单/登录/部署变化。
 
+优先级：
+
+```text
+硬门禁 > 风险自动升级 > 用户指定 > 默认判断
+```
+
+用户指定 `quick` 时，如果检测到 PRD、改版、接口、数据或核心链路风险，会自动升级并说明原因。
+
 默认禁止全量读取历史文档：先读 `AGENTS.md`、`docs/workflow.md`、`docs/index.md`，再按当前任务读取相关文档。
 
 `SKILL.md` 只保留硬规则，详细规则按需读取 `references/`。
+
+长任务可使用 `.dev-workflow/session/*-working.json` 保存结构化状态，减少上下文占用。完成后确认已合并到正式文档再清理。
 
 ## 五、命名规则
 

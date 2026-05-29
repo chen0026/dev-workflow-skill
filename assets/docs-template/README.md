@@ -43,6 +43,7 @@
 - `scripts/new-doc-id.sh`：生成时间戳文档编号，例如 `scripts/new-doc-id.sh TASK login-api`。
 - `scripts/new-doc.sh`：从模板创建新文档，例如 `scripts/new-doc.sh TASK login-api`。
 - `scripts/clean-templates.sh`：清理旧项目中已经复制进去的 `docs/**/TEMPLATE.md`，默认只预览。
+- `scripts/session-state.sh`：管理长任务临时状态文件，减少上下文占用。
 
 也可以让 Codex 使用快捷提示：
 
@@ -71,6 +72,7 @@
 
 - 默认自动分级：`quick / standard / strict`，不要求用户手动选择。
 - PRD、产品文档、现有功能改版、多模块、高风险、接口/数据/权限/支付/订单/登录/部署变化，自动使用 `strict`。
+- 分级优先级：硬门禁 > 风险自动升级 > 用户指定 > 默认判断。
 - 默认禁止全量读取历史文档；先读 `index.md`，再按当前任务读取相关文档。
 
 ## 命名规范

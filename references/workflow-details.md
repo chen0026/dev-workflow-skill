@@ -81,3 +81,43 @@ REQ 未确认前，不创建实现代码，不修改业务代码。
 - 只有用户明确回复“批准提交”或“确认提交”后，才执行 commit。
 - 如果用户要求调整，先修改并重新验证、审查、同步文档，再回到人工审核。
 - 如果用户要求不提交，保留变更并说明当前状态。
+
+## Session 状态文件
+
+为减少长任务占用上下文，可以使用 `.dev-workflow/session/*-working.json`。
+
+默认规则：
+
+- quick：不用 session 状态文件。
+- standard：超过一轮、涉及多个文件、或上下文可能变长时使用。
+- strict：默认使用 session 状态文件，同时 REQ 作为正式文档先落地。
+
+状态文件只存结构化摘要，不存完整 PRD 或大段代码：
+
+```json
+{
+  "id": "TASK-xxx",
+  "flow": "strict",
+  "source": "REQ-xxx",
+  "changed_files": [],
+  "verification": [],
+  "review": [],
+  "doc_updates": [],
+  "open_questions": []
+}
+```
+
+清理规则：
+
+- 完成验证、代码审查、文档同步，并确认 session 内容已合并到 TASK / BUG / ACC 后，可以清理。
+- 清理必须在最终回复中列出。
+- 如果存在 `open_questions`、文档未同步、或无法确认已合并，不清理，列为未完成事项。
+
+脚本：
+
+```bash
+scripts/session-state.sh create TASK-xxx
+scripts/session-state.sh list
+scripts/session-state.sh clean
+scripts/session-state.sh clean --apply
+```
