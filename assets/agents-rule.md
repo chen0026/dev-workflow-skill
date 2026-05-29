@@ -11,13 +11,25 @@
 1. `AGENTS.md`
 2. `docs/workflow.md`
 3. `docs/index.md`
-4. 当前任务关联的 `PRD / TASK / BUG / ADR / ACC`
+4. 当前任务关联的 `PRD / REQ / TASK / BUG / ADR / ACC`
 5. `docs/design/` 和 `docs/ops/`
 6. `docs/legacy/`
 7. `docs/archive/`
 8. 代码和测试
 
 如果当前代码与 `docs/archive/` 中的旧文档冲突，以当前代码和当前链路文档为准。`docs/archive/` 只作为历史参考，不作为当前实现依据。
+
+## 文档读取预算
+
+默认只读取：
+
+- `AGENTS.md`
+- `docs/workflow.md`
+- `docs/index.md`
+- 用户当前提供的 PRD / 需求 / Bug 描述
+- 与当前任务直接相关的文档
+
+默认禁止全量读取 `docs/archive/**`、全部 PRD、全部 REQ、全部 TASK、全部 BUG、全部 ACC、全部 ADR。必须先根据 `docs/index.md`、当前任务关键词、模块名、功能名、编号筛选候选文档；候选过多时，先列候选和选择依据。
 
 完成代码变更前，必须同步更新对应文档：
 

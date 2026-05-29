@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.0 - 2026-05-29
+
+- 瘦身 `SKILL.md`，只保留入口、硬门禁、自动分级和文档读取预算。
+- 新增 `references/`，按需承载 workflow 细节、上下文预算、流程分级和 Superpowers 配合。
+- 增加自动流程分级：`quick / standard / strict`，并支持风险自动升级。
+- 增加文档读取预算，默认禁止全量读取历史文档。
+
 ## 0.6.1 - 2026-05-29
 
 - 新增 `scripts/clean-templates.sh`，用于清理旧项目中已经复制进去的 `docs/**/TEMPLATE.md`。

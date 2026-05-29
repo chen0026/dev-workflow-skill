@@ -51,13 +51,19 @@ if [ ! -f "AGENTS.md" ]; then
 1. `AGENTS.md`
 2. `docs/workflow.md`
 3. `docs/index.md`
-4. 当前任务关联的 `PRD / TASK / BUG / ADR / ACC`
+4. 当前任务关联的 `PRD / REQ / TASK / BUG / ADR / ACC`
 5. `docs/design/` 和 `docs/ops/`
 6. `docs/legacy/`
 7. `docs/archive/`
 8. 代码和测试
 
 没有完成文档同步和人工审核，不得声明任务最终完成；未经用户批准，不得提交代码。
+
+## 文档读取预算
+
+默认只读取 `AGENTS.md`、`docs/workflow.md`、`docs/index.md`、用户当前提供的 PRD / 需求 / Bug 描述、与当前任务直接相关的文档。
+
+默认禁止全量读取 `docs/archive/**`、全部 PRD、全部 REQ、全部 TASK、全部 BUG、全部 ACC、全部 ADR。必须先根据 `docs/index.md`、当前任务关键词、模块名、功能名、编号筛选候选文档。
 EOF
   echo "dev-workflow: 已创建 AGENTS.md"
 elif ! grep -q "开发工作流强约束" "AGENTS.md"; then
@@ -68,6 +74,10 @@ elif ! grep -q "开发工作流强约束" "AGENTS.md"; then
 
 所有新功能、Bug 修复、重构、维护任务必须遵守 `docs/workflow.md`。
 没有完成文档同步和人工审核，不得声明任务最终完成；未经用户批准，不得提交代码。
+
+## 文档读取预算
+
+默认只读取 `AGENTS.md`、`docs/workflow.md`、`docs/index.md`、用户当前提供的 PRD / 需求 / Bug 描述、与当前任务直接相关的文档。默认禁止全量读取历史文档。
 EOF
   echo "dev-workflow: 已追加 AGENTS.md 规则"
 fi

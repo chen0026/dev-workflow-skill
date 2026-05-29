@@ -116,7 +116,19 @@ ADR / design / ops / LEGACY
 
 只有在影响架构、接口、数据模型、部署、监控、回滚或长期维护时，才补充这些文档。
 
-## 四、命名规则
+## 四、省 token 策略
+
+`dev-workflow` 默认自动分级，不要求用户手动选择：
+
+- `quick`：文案、样式、小配置、单文件无业务逻辑改动。
+- `standard`：普通 Bug、普通功能调整、单模块功能。
+- `strict`：PRD、产品文档、现有功能改版、多模块、高风险、接口/数据/权限/支付/订单/登录/部署变化。
+
+默认禁止全量读取历史文档：先读 `AGENTS.md`、`docs/workflow.md`、`docs/index.md`，再按当前任务读取相关文档。
+
+`SKILL.md` 只保留硬规则，详细规则按需读取 `references/`。
+
+## 五、命名规则
 
 新文档统一使用时间戳编号，避免多电脑、多分支并行时产生序号冲突：
 
@@ -161,7 +173,7 @@ scripts/new-doc.sh TASK login-api
 scripts/init-dev-workflow.sh --with-templates
 ```
 
-## 五、PRD 追踪矩阵和 TDD
+## 六、PRD 追踪矩阵和 TDD
 
 当任务来自 PRD、新功能、现有功能改版或产品文档时，不能直接编码。
 
@@ -179,7 +191,7 @@ scripts/init-dev-workflow.sh --with-templates
 - 每个 ACC 必须验收对应 REQ。
 - 有测试框架时优先 TDD；没有测试框架时记录原因并写手工验收项。
 
-## 六、完成标准
+## 七、完成标准
 
 任务完成前必须确认：
 
@@ -196,7 +208,7 @@ scripts/init-dev-workflow.sh --with-templates
 
 默认不自动提交代码。只有用户明确回复“批准提交”或“确认提交”后，才提交聚焦 commit。
 
-## 七、Git hooks
+## 八、Git hooks
 
 模板位于：
 
@@ -222,7 +234,7 @@ Git hooks 只做最低限度检查：
 - 代码变更必须伴随 `docs/` 或 `AGENTS.md` 变更。
 - commit message 必须包含追踪编号，例如 `TASK-20260528-153500-b2c3` 或 `BUG-20260528-154000-c3d4`。
 
-## 八、注意事项
+## 九、注意事项
 
 - 不要为了“完整”补全所有历史。已有项目只从当前变更开始追踪。
 - 小任务只写必要信息，不补无关文档。
@@ -234,7 +246,7 @@ Git hooks 只做最低限度检查：
 - Git hooks 默认不自动启用，避免影响临时项目。
 - subagent 默认不使用，只在复杂、并行、高风险或需要独立 review 时使用。
 
-## 九、与 Superpowers 配合
+## 十、与 Superpowers 配合
 
 `dev-workflow` 可以和 Superpowers 一起用：
 
@@ -255,7 +267,7 @@ dev-workflow 负责追踪和门禁
 
 dev-workflow 不替代 Superpowers，只负责建立追踪链路、沉淀关键结论、完成前检查文档，并在人工审核通过后提交。
 
-## 十、版本管理
+## 十一、版本管理
 
 当前版本见：
 

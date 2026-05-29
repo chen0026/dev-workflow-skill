@@ -1,266 +1,89 @@
 ---
 name: dev-workflow
-description: "Use this skill when development should follow a lightweight traceable workflow for requirements, tasks, bug fixes, design decisions, acceptance, documentation sync, human review before commit, and optional approved git commit. Trigger for prompts like /dev-workflow init, /dev-workflow init --hooks, /dev-workflow check, /dev-workflow 初始化项目, /dev-workflow 接入项目, /dev-workflow 启用 hooks, new features, bug fixes, refactors, maintenance, PRD/task planning, acceptance checks, docs workflow setup, or requests to prevent code changes from drifting away from requirements."
+description: "Use this skill for lightweight traceable development: project init, docs workflow, PRD/REQ traceability, TDD, bug fixes, acceptance, human review before commit, and optional approved git commit. Triggers: /dev-workflow init, /dev-workflow init --hooks, /dev-workflow check, /dev-workflow clean-templates, PRD implementation, feature work, bug fix, refactor, maintenance, or requests to prevent code from drifting away from requirements."
 ---
 
 # Dev Workflow
 
-目标：用最少文档建立开发追踪链路，不让流程成为开发阻碍。
+用最少文档建立开发追踪链路，避免实现偏离需求。
 
-## 快捷用法
+## Commands
 
-用户可以直接输入：
+- `/dev-workflow init`：运行 `scripts/init-dev-workflow.sh`，补齐 `AGENTS.md`、`docs/`、`scripts/`、`.githooks/`。
+- `/dev-workflow init --hooks`：初始化并启用 Git hooks。
+- `/dev-workflow init --with-templates`：初始化并把模板复制进项目。默认不复制模板。
+- `/dev-workflow check`：运行 `scripts/check-dev-docs.sh`。
+- `/dev-workflow clean-templates`：预览项目内 `docs/**/TEMPLATE.md`；确认后运行 `scripts/clean-templates.sh --apply`。
 
-```text
-/dev-workflow 初始化项目
-/dev-workflow 接入项目
-/dev-workflow 初始化项目并启用 hooks
-/dev-workflow 检查文档
-/dev-workflow init
-/dev-workflow init --hooks
-/dev-workflow check
-/dev-workflow clean-templates
-/dev-workflow 修复这个 Bug：...
-/dev-workflow 开发这个功能：...
-```
-
-对应行为：
-
-- `初始化项目` / `接入项目`：运行 `scripts/init-dev-workflow.sh`，检查并补齐 `AGENTS.md`、`docs/`、`scripts/`、`.githooks/`。
-- `init` / `初始化项目` / `接入项目`：运行 `scripts/init-dev-workflow.sh`，检查并补齐 `AGENTS.md`、`docs/`、`scripts/`、`.githooks/`。
-- `init --hooks` / `初始化项目并启用 hooks` / `启用 hooks`：运行 `scripts/init-dev-workflow.sh --enable-hooks`。
-- `init --with-templates`：初始化项目并把模板复制到项目内。默认不复制模板。
-- `check` / `检查文档`：运行 `scripts/check-dev-docs.sh`。
-- `clean-templates` / `清理模板`：预览项目内 `docs/**/TEMPLATE.md`，确认后用 `scripts/clean-templates.sh --apply` 删除。
-- `开发 / 修复 / 维护`：按本 workflow 执行完整任务闭环。
-
-如果项目内还没有脚本，使用本 Skill 自带脚本：
+项目内没有脚本时，使用 Skill 自带脚本：
 
 ```bash
 "${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/init-dev-workflow.sh"
 "${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/check-dev-docs.sh"
 ```
 
-## 默认闭环
+## Hard Rules
 
-- 新功能 / PRD 改版：`PRD + REQ + TASK + ACC`
-- Bug 修复：`BUG + TASK + ACC`
-- 维护 / 重构：`TASK + ACC`
-- 按需补充：`ADR / design / ops / LEGACY`
+- 默认不自动 commit。完成后进入人工审核；只有用户明确说“批准提交”或“确认提交”才提交。
+- PRD、新功能、现有功能改版、产品文档类任务必须走 `strict`：先建立 `REQ` 需求追踪矩阵，人工确认后再编码。
+- 新功能、PRD 改版、Bug 修复优先 TDD；无法自动化时，记录原因并写手工验收项。
+- `docs/**/TEMPLATE.md` 是母版，日常任务禁止直接修改；用 `scripts/new-doc.sh TYPE short-title` 创建新文档。
+- 新文档使用 `TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md`，例如 `TASK-20260529-101500-a1b2-login-api.md`。
+- 默认禁止全量读取历史文档；先读 `AGENTS.md`、`docs/workflow.md`、`docs/index.md`，再按关联读取少量文档。
+- 完成前必须验证、代码审查、文档同步、更新 `docs/index.md`，并列出待人工审核内容和待提交文件。
 
-## 命名规则
+## Auto Flow Level
 
-新文档统一使用时间戳编号，避免多电脑、多分支并行时产生序号冲突：
+自动选择流程强度，不要求用户手动指定：
 
-```text
-TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md
-```
+- `quick`：文案、样式、小配置、单文件无业务逻辑改动。少读历史，完成前做最小记录。
+- `standard`：普通 Bug、普通功能调整、单模块功能。使用 `TASK/BUG + ACC`，验证和代码审查。
+- `strict`：PRD、产品文档、现有功能改版、多模块、高风险、接口/数据/权限/支付/订单/登录/部署变化。必须 `PRD + REQ + TASK + ACC`。
 
-- `TYPE`：`PRD / REQ / TASK / BUG / ADR / ACC / OPS / LEGACY`。
-- `YYYYMMDD-HHMMSS`：创建文档时的本地时间。
-- `XXXX`：4 位小写随机码。
-- `short-title`：英文短标题，使用小写和连字符。
+如果任务类型不确定，默认 `standard`；遇到风险条件自动升级，并说明原因。
 
-示例：`TASK-20260528-153500-b2c3-login-api.md`。
+详细分级见 `references/flow-levels.md`。
 
-旧项目中的 `TASK-0001` 这类编号继续有效，但新文档一律使用时间戳编号。
+## Context Budget
 
-项目内如存在 `scripts/new-doc-id.sh`，优先用它生成编号：
+默认只读：
 
-```bash
-scripts/new-doc-id.sh TASK login-api
-```
+- `AGENTS.md`
+- `docs/workflow.md`
+- `docs/index.md`
+- 用户当前提供的 PRD / 需求 / Bug 描述
+- 与当前任务直接相关的文档
 
-## 模板保护规则
+不要默认读取 `docs/archive/**` 或全部历史 PRD/TASK/BUG/ACC。候选文档过多时，先列候选和选择依据。
 
-`docs/**/TEMPLATE.md` 是母版，只能复制，不能作为任务文档直接填写。
+详细规则见 `references/context-budget.md`。
 
-- 新建文档时，优先使用 `scripts/new-doc.sh TYPE short-title`。
-- 默认情况下，模板保存在已安装的 dev-workflow Skill 中，不放进项目目录。
-- 如果项目需要自包含模板，使用 `scripts/init-dev-workflow.sh --with-templates`。
-- 如果没有脚本，先复制对应 `TEMPLATE.md` 到带编号的新文件，再填写新文件。
-- 日常开发、Bug 修复、验收、改版时，禁止直接修改任何 `TEMPLATE.md`。
-- 只有明确提出“修改模板”或“升级 dev-workflow 模板”时，才允许改 `TEMPLATE.md`。
+## PRD / TDD Gate
 
-示例：
+PRD / 改版类任务编码前必须：
 
-```bash
-scripts/new-doc.sh TASK login-api
-```
-
-## 使用前接入检查
-
-执行本 Skill 前先检查当前项目：
-
-1. 是否存在 `AGENTS.md`。
-2. 是否存在 `docs/`。
-3. `docs/` 是否已有旧文档。
-4. 是否已有 `docs/workflow.md`、`docs/index.md` 和必要子目录。
-
-处理规则：
-
-- 没有 `AGENTS.md`：创建，并写入 dev-workflow 规则和文档查找优先级。
-- 已有 `AGENTS.md`：保留原内容，只追加 dev-workflow 规则；如已有同类规则，先更新，不重复堆叠。
-- 没有 `docs/`：创建标准目录骨架。
-- 已有 `docs/` 但不是 dev-workflow 结构：把旧文档移动到 `docs/archive/legacy-docs-YYYYMMDD/`，再创建新结构。
-- 已有 dev-workflow 结构：沿用，不覆盖已有文档。
-- 归档旧文档前，先确认这些文件属于文档资料；不要移动代码、配置、脚本或构建产物。
-
-`AGENTS.md` 中必须写明文档查找优先级：
-
-1. `AGENTS.md`
-2. `docs/workflow.md`
-3. `docs/index.md`
-4. 当前任务关联的 `PRD / TASK / BUG / ADR / ACC`
-5. `docs/design/` 和 `docs/ops/`
-6. `docs/legacy/`
-7. `docs/archive/`
-8. 代码和测试
-
-如果当前代码与旧归档文档冲突，以当前代码和当前链路文档为准；`docs/archive/` 只作为历史参考。
-
-## 什么时候补充文档
-
-只在满足条件时补：
-
-- ADR：架构、接口契约、数据模型、技术选型、重要取舍、历史设计问题。
-- design：当前架构说明已经变化，或未来维护必须理解新结构。
-- ops：部署、配置、监控、告警、回滚、应急步骤变化。
-- LEGACY：已有项目中，当前任务必须理解历史但没有文档。
-
-## PRD 追踪矩阵门禁
-
-当任务来自 PRD、新功能、现有功能改版或产品文档时，不能直接编码。
-
-必须先完成：
-
-1. 拆出 `REQ` 需求追踪矩阵。
-2. 每个 REQ 保留 PRD 原文依据。
-3. 对比当前实现和目标行为。
-4. 标注影响范围、风险和待确认问题。
-5. 为每个 REQ 绑定 TASK、验收方式和测试计划。
-6. 等待人工确认 REQ 矩阵。
+1. 创建或更新 `REQ` 需求追踪矩阵。
+2. 每个 REQ 保留 PRD 原文依据、当前实现、目标行为、验收方式和测试计划。
+3. 等待人工确认 REQ。
 
 REQ 未确认前，不创建实现代码，不修改业务代码。
 
-## TDD 门禁
+详细规则见 `references/workflow-details.md`。
 
-新功能、PRD 改版、Bug 修复默认优先使用 TDD：
+## References
 
-- 编码前先写测试或手工验收项。
-- 每个测试或验收项必须关联 REQ / BUG。
-- 有测试框架时，先确认目标测试失败，再编码让测试通过。
-- 已有功能改版时，先记录当前行为，再写 PRD 目标行为测试。
-- 没有测试框架或不适合自动化时，必须在 REQ / TASK / ACC 里记录原因，并写手工验收项。
+按需读取：
 
-## 执行顺序
+- `references/workflow-details.md`：项目接入、命名、REQ、TDD、代码审查、人工审核细节。
+- `references/context-budget.md`：文档读取预算，避免全量读取历史。
+- `references/flow-levels.md`：quick / standard / strict 自动分级和升级规则。
+- `references/superpowers.md`：与 Superpowers、subagent 的配合方式。
 
-1. 执行项目接入检查。
-2. 判断任务类型。
-3. PRD / 改版任务先建立并确认 REQ 需求追踪矩阵。
-4. 建立最小追踪文档。
-5. 先写测试或手工验收项。
-6. 编码或修复。
-7. 验证结果。
-8. 执行代码审查。
-9. 回填 REQ / TASK / BUG / ACC 的实际事实。
-10. 更新 `docs/index.md`。
-11. 进入提交前人工审核，等待用户明确批准。
-12. 仅在收到“批准提交”后，提交本次相关代码和文档。
-
-可用脚本：
-
-- `scripts/init-dev-workflow.sh`：初始化项目工作流。
-- `scripts/check-dev-docs.sh`：完成前检查文档结构和追踪链路。
-- `scripts/new-doc.sh`：从模板复制并创建带时间戳编号的新文档。
-- `scripts/clean-templates.sh`：清理旧项目中已经复制进去的 `docs/**/TEMPLATE.md`。
-
-## 完成前检查
-
-最终回复前必须确认：
-
-- 关联文档已创建或更新。
-- PRD / 改版任务已建立并确认 REQ 需求追踪矩阵。
-- TASK 写明实际改动和验证结果。
-- TASK 关联 REQ 或 BUG。
-- TASK 或 ACC 写明代码审查结论。
-- ACC 写明验收结论，并覆盖对应 REQ / BUG。
-- 有测试框架时已优先使用 TDD；无法自动化时已记录原因和手工验收项。
-- ADR / design / ops 已处理，或明确不需要。
-- `docs/index.md` 已更新。
-- 已列出待人工审核的变更和待提交文件。
-
-如果项目存在 `scripts/check-dev-docs.sh`，最终回复前运行它。
-
-没有完成人工审核前，不提交代码；没有完成文档同步和人工审核，不声明任务最终完成。
-
-## 提交前人工审核
-
-- 默认不自动 commit。
-- 完成开发、验证、代码审查、文档同步后，最终回复必须列出待审核内容和待提交文件。
-- 只有用户明确回复“批准提交”或“确认提交”后，才执行 commit。
-- 如果用户要求调整，先修改并重新验证、审查、同步文档，再回到人工审核。
-- 如果用户要求不提交，保留变更并说明当前状态。
-
-## 提交规则
-
-- 只提交本次任务相关文件。
-- 避开用户已有的无关改动。
-- commit message 引用主编号。
-- 如果项目启用了 `.githooks`，必须确保 hooks 通过。
-
-## 代码审查规则
-
-代码审查是完成前门禁，但保持轻量：
-
-- 小任务：执行自查，重点看需求偏离、无关改动、错误处理、测试缺口、文档同步。
-- 复杂 / 高风险任务：使用 subagent 或人工做独立 review。
-- 审查发现的问题必须先修复，或记录为遗留问题并关联后续 TASK。
-- 审查结论必须回填到 TASK 或 ACC。
-
-## 与 Superpowers 配合
-
-如果当前环境有 Superpowers，可以按阶段配合使用：
-
-- 需求澄清：`brainstorming`，结论写入 PRD / TASK。
-- 计划制定：`writing-plans`，任务拆解写入 TASK。
-- Bug 定位：`systematic-debugging`，复现、路径、根因写入 BUG。
-- 实现：`test-driven-development`，验证方式写入 TASK / ACC。
-- 并行执行：`subagent-driven-development`，各 subagent 结论写入 TASK / BUG / ADR / ACC。
-- 完成验证：`verification-before-completion`，验证结果写入 ACC。
-- 代码审查：`requesting-code-review`，审查结论写入 TASK / ACC。
-
-dev-workflow 不替代 Superpowers，只负责建立追踪链路、沉淀关键结论、完成前检查文档，并在人工审核通过后提交。
-
-## Subagent 使用规则
-
-默认不使用 subagent。满足以下任一条件时才使用：
-
-- 任务涉及多个独立模块。
-- Bug 根因不明确。
-- 需要并行调查代码路径、测试、文档或影响范围。
-- 改动影响范围较大。
-- 完成前需要独立 review 或 QA 检查。
-
-subagent 输出必须沉淀到文档：
-
-- 调研结论写入 TASK。
-- 根因证据写入 BUG。
-- 验收结果写入 ACC。
-- 被否决方案写入 TASK 或 ADR。
-
-示例：
-
-```text
-TASK-20260528-153500-b2c3 implement login api
-BUG-20260528-154000-c3d4 fix token refresh failure
-PRD-20260528-153000-a1b2 add user login workflow
-```
-
-## 最终回复
+## Final Response
 
 用简体中文简短列出：
 
+- 流程级别和原因
 - 代码变更
 - 验证结果
 - 文档同步
@@ -269,25 +92,3 @@ PRD-20260528-153000-a1b2 add user login workflow
 - 待提交文件
 - 提交状态
 - 未完成事项
-
-## 可选硬门禁
-
-项目可以启用轻量 Git hooks：
-
-- `pre-commit`：代码变更必须伴随 `docs/` 或 `AGENTS.md` 变更。
-- `commit-msg`：提交信息必须包含追踪编号。
-
-hooks 只做最低限度检查，不推断业务语义；具体文档质量仍由本 workflow 和验收记录保证。
-
-默认只提供 hooks 模板，不自动启用。只有用户明确要求启用，或项目被明确标记为正式接入 dev-workflow，才执行：
-
-```bash
-git config core.hooksPath .githooks
-chmod +x .githooks/pre-commit .githooks/commit-msg scripts/check-dev-workflow.sh
-```
-
-关闭：
-
-```bash
-git config --unset core.hooksPath
-```
