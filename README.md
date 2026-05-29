@@ -45,6 +45,8 @@ rsync -a --delete --exclude .git ./ "$CODEX_HOME/skills/dev-workflow/"
 - `scripts/`
 - `.githooks/`
 
+默认不会把 `TEMPLATE.md` 复制到项目目录。模板保存在已安装的 Skill 中，`scripts/new-doc.sh` 会从 Skill 模板创建新文档。
+
 如果项目已有旧 `docs/`，会归档到：
 
 ```text
@@ -58,6 +60,14 @@ docs/archive/legacy-docs-YYYYMMDD-HHMMSS/
 ```
 
 Git hooks 是项目级门禁，只对当前项目生效。正式项目建议启用，临时项目可以不启用。
+
+### 初始化并复制模板
+
+```text
+/dev-workflow init --with-templates
+```
+
+只有项目需要完全自包含模板时才使用。一般项目不建议复制模板，避免误改 `TEMPLATE.md`。
 
 ### 检查文档
 
@@ -129,6 +139,12 @@ scripts/new-doc.sh TASK login-api
 ```
 
 `docs/**/TEMPLATE.md` 是母版。日常任务只能复制模板创建新文档，禁止直接填写或修改 `TEMPLATE.md`；只有明确要求修改模板时例外。
+
+默认初始化不把模板放进项目目录。需要项目自包含模板时，使用：
+
+```bash
+scripts/init-dev-workflow.sh --with-templates
+```
 
 ## 五、PRD 追踪矩阵和 TDD
 

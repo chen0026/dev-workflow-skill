@@ -3,11 +3,15 @@ set -euo pipefail
 
 target_dir="$(pwd)"
 enable_hooks="0"
+with_templates="0"
 
 for arg in "$@"; do
   case "$arg" in
     --enable-hooks)
       enable_hooks="1"
+      ;;
+    --with-templates)
+      with_templates="1"
       ;;
     *)
       target_dir="$arg"
@@ -59,17 +63,35 @@ rsync -a --ignore-existing \
   "$template_dir/README.md" \
   "$template_dir/workflow.md" \
   "$template_dir/index.md" \
-  "$template_dir/prd" \
-  "$template_dir/requirements" \
-  "$template_dir/tasks" \
-  "$template_dir/bugs" \
-  "$template_dir/design" \
-  "$template_dir/acceptance" \
-  "$template_dir/ops" \
-  "$template_dir/legacy" \
   docs/
 
-mkdir -p docs/archive .githooks scripts
+mkdir -p \
+  docs/prd \
+  docs/requirements \
+  docs/tasks \
+  docs/bugs \
+  docs/design/decisions \
+  docs/acceptance \
+  docs/ops \
+  docs/legacy \
+  docs/archive \
+  .githooks \
+  scripts
+
+if [ "$with_templates" = "1" ]; then
+  rsync -a --ignore-existing \
+    "$template_dir/prd" \
+    "$template_dir/requirements" \
+    "$template_dir/tasks" \
+    "$template_dir/bugs" \
+    "$template_dir/design" \
+    "$template_dir/acceptance" \
+    "$template_dir/ops" \
+    "$template_dir/legacy" \
+    docs/
+  echo "dev-workflow: 已复制模板到项目 docs/"
+fi
+
 rsync -a --ignore-existing "$template_dir/.githooks/" .githooks/
 rsync -a --ignore-existing "$template_dir/scripts/" scripts/
 

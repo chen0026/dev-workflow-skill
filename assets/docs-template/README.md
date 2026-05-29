@@ -89,6 +89,14 @@ TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md
 
 `docs/**/TEMPLATE.md` 是母版，只能复制，不能作为任务文档直接填写。
 
+默认初始化不会把模板复制到项目目录。模板保存在已安装的 dev-workflow Skill 中，`scripts/new-doc.sh` 会从 Skill 模板创建新文档。
+
+如果项目需要自包含模板，使用：
+
+```bash
+scripts/init-dev-workflow.sh --with-templates
+```
+
 新建文档时使用：
 
 ```bash

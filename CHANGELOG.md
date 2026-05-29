@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.0 - 2026-05-29
+
+- 初始化项目时默认不再复制 `docs/**/TEMPLATE.md`。
+- `new-doc.sh` 默认从已安装的 dev-workflow Skill 模板创建新文档。
+- 新增 `--with-templates` 选项，用于需要项目自包含模板的场景。
+
 ## 0.5.0 - 2026-05-29
 
 - 增加 REQ 需求追踪矩阵，约束 PRD / 改版类任务不能直接编码。

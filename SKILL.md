@@ -28,6 +28,7 @@ description: "Use this skill when development should follow a lightweight tracea
 - `初始化项目` / `接入项目`：运行 `scripts/init-dev-workflow.sh`，检查并补齐 `AGENTS.md`、`docs/`、`scripts/`、`.githooks/`。
 - `init` / `初始化项目` / `接入项目`：运行 `scripts/init-dev-workflow.sh`，检查并补齐 `AGENTS.md`、`docs/`、`scripts/`、`.githooks/`。
 - `init --hooks` / `初始化项目并启用 hooks` / `启用 hooks`：运行 `scripts/init-dev-workflow.sh --enable-hooks`。
+- `init --with-templates`：初始化项目并把模板复制到项目内。默认不复制模板。
 - `check` / `检查文档`：运行 `scripts/check-dev-docs.sh`。
 - `开发 / 修复 / 维护`：按本 workflow 执行完整任务闭环。
 
@@ -73,6 +74,8 @@ scripts/new-doc-id.sh TASK login-api
 `docs/**/TEMPLATE.md` 是母版，只能复制，不能作为任务文档直接填写。
 
 - 新建文档时，优先使用 `scripts/new-doc.sh TYPE short-title`。
+- 默认情况下，模板保存在已安装的 dev-workflow Skill 中，不放进项目目录。
+- 如果项目需要自包含模板，使用 `scripts/init-dev-workflow.sh --with-templates`。
 - 如果没有脚本，先复制对应 `TEMPLATE.md` 到带编号的新文件，再填写新文件。
 - 日常开发、Bug 修复、验收、改版时，禁止直接修改任何 `TEMPLATE.md`。
 - 只有明确提出“修改模板”或“升级 dev-workflow 模板”时，才允许改 `TEMPLATE.md`。

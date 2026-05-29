@@ -35,6 +35,14 @@
 scripts/init-dev-workflow.sh
 ```
 
+默认初始化不会把 `TEMPLATE.md` 复制到项目目录，只创建文档目录和脚本。
+
+如果项目需要自包含模板：
+
+```bash
+scripts/init-dev-workflow.sh --with-templates
+```
+
 Codex 快捷提示：
 
 ```text
@@ -98,6 +106,8 @@ acceptance/ACC-20260528-155000-e5f6-user-login.md
 
 `docs/**/TEMPLATE.md` 是母版，只能复制，不能作为任务文档直接填写。
 
+默认模板保存在已安装的 dev-workflow Skill 中，不放进项目目录。
+
 新建文档时优先使用：
 
 ```bash
@@ -105,6 +115,8 @@ scripts/new-doc.sh TASK login-api
 ```
 
 如果没有脚本，先复制对应 `TEMPLATE.md` 到带编号的新文件，再填写新文件。
+
+如果项目需要自包含模板，使用 `scripts/init-dev-workflow.sh --with-templates`。
 
 日常开发、Bug 修复、验收、改版时，禁止直接修改任何 `TEMPLATE.md`。只有明确提出“修改模板”或“升级 dev-workflow 模板”时，才允许改模板。
 
