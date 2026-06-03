@@ -50,7 +50,7 @@ if [ ! -f "AGENTS.md" ]; then
 
 1. `AGENTS.md`
 2. `docs/workflow.md`
-3. `docs/index.md`
+3. `scripts/search-dev-docs.sh` 的候选结果，或 `.dev-workflow/index/docs.jsonl`
 4. 当前任务关联的 `PRD / REQ / TASK / BUG / ADR / ACC`
 5. `docs/design/` 和 `docs/ops/`
 6. `docs/legacy/`
@@ -61,9 +61,11 @@ if [ ! -f "AGENTS.md" ]; then
 
 ## 文档读取预算
 
-默认只读取 `AGENTS.md`、`docs/workflow.md`、`docs/index.md`、用户当前提供的 PRD / 需求 / Bug 描述、与当前任务直接相关的文档。
+默认只读取 `AGENTS.md`、`docs/workflow.md`、`scripts/search-dev-docs.sh` 的候选结果、用户当前提供的 PRD / 需求 / Bug 描述、与当前任务直接相关的文档。
 
-默认禁止全量读取 `docs/archive/**`、全部 PRD、全部 REQ、全部 TASK、全部 BUG、全部 ACC、全部 ADR。必须先根据 `docs/index.md`、当前任务关键词、模块名、功能名、编号筛选候选文档。
+默认禁止全量读取 `docs/archive/**`、全部 PRD、全部 REQ、全部 TASK、全部 BUG、全部 ACC、全部 ADR。必须先根据本地索引、当前任务关键词、模块名、功能名、编号筛选候选文档。
+
+`.dev-workflow/index/` 是可重建的本地机器索引，默认不提交。`docs/index.md` 只作为人类入口说明，不再作为每次任务必须手工更新的共享索引。
 EOF
   echo "dev-workflow: 已创建 AGENTS.md"
 elif ! grep -q "开发工作流强约束" "AGENTS.md"; then
@@ -77,7 +79,9 @@ elif ! grep -q "开发工作流强约束" "AGENTS.md"; then
 
 ## 文档读取预算
 
-默认只读取 `AGENTS.md`、`docs/workflow.md`、`docs/index.md`、用户当前提供的 PRD / 需求 / Bug 描述、与当前任务直接相关的文档。默认禁止全量读取历史文档。
+默认只读取 `AGENTS.md`、`docs/workflow.md`、`scripts/search-dev-docs.sh` 的候选结果、用户当前提供的 PRD / 需求 / Bug 描述、与当前任务直接相关的文档。默认禁止全量读取历史文档。
+
+`.dev-workflow/index/` 是可重建的本地机器索引，默认不提交。`docs/index.md` 只作为人类入口说明，不再作为每次任务必须手工更新的共享索引。
 EOF
   echo "dev-workflow: 已追加 AGENTS.md 规则"
 fi
@@ -114,6 +118,7 @@ mkdir -p \
   docs/ops \
   docs/legacy \
   docs/archive \
+  .dev-workflow/index \
   .dev-workflow/session \
   .githooks \
   scripts
@@ -136,7 +141,13 @@ fi
 [ -d "$scripts_source" ] && rsync -a --ignore-existing "$scripts_source/" scripts/
 
 chmod +x .githooks/pre-commit .githooks/commit-msg scripts/check-dev-workflow.sh 2>/dev/null || true
-chmod +x scripts/init-dev-workflow.sh scripts/check-dev-docs.sh scripts/new-doc-id.sh scripts/new-doc.sh scripts/clean-templates.sh scripts/session-state.sh 2>/dev/null || true
+chmod +x scripts/init-dev-workflow.sh scripts/check-dev-docs.sh scripts/new-doc-id.sh scripts/new-doc.sh scripts/clean-templates.sh scripts/session-state.sh scripts/reindex-dev-docs.sh scripts/search-dev-docs.sh 2>/dev/null || true
+
+touch .gitignore
+if ! grep -qxF ".dev-workflow/index/" .gitignore; then
+  printf '\n.dev-workflow/index/\n' >> .gitignore
+  echo "dev-workflow: 已把 .dev-workflow/index/ 加入 .gitignore"
+fi
 
 if [ "$enable_hooks" = "1" ]; then
   if git rev-parse --git-dir >/dev/null 2>&1; then

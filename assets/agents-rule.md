@@ -10,7 +10,7 @@
 
 1. `AGENTS.md`
 2. `docs/workflow.md`
-3. `docs/index.md`
+3. `scripts/search-dev-docs.sh` 的候选结果，或 `.dev-workflow/index/docs.jsonl`
 4. 当前任务关联的 `PRD / REQ / TASK / BUG / ADR / ACC`
 5. `docs/design/` 和 `docs/ops/`
 6. `docs/legacy/`
@@ -25,11 +25,11 @@
 
 - `AGENTS.md`
 - `docs/workflow.md`
-- `docs/index.md`
+- `scripts/search-dev-docs.sh` 的候选结果，或 `.dev-workflow/index/docs.jsonl` 中的少量匹配行
 - 用户当前提供的 PRD / 需求 / Bug 描述
 - 与当前任务直接相关的文档
 
-默认禁止全量读取 `docs/archive/**`、全部 PRD、全部 REQ、全部 TASK、全部 BUG、全部 ACC、全部 ADR。必须先根据 `docs/index.md`、当前任务关键词、模块名、功能名、编号筛选候选文档；候选过多时，先列候选和选择依据。
+默认禁止全量读取 `docs/archive/**`、全部 PRD、全部 REQ、全部 TASK、全部 BUG、全部 ACC、全部 ADR。必须先根据本地索引、当前任务关键词、模块名、功能名、编号筛选候选文档；候选过多时，先列候选和选择依据。
 
 完成代码变更前，必须同步更新对应文档：
 
@@ -48,7 +48,7 @@
 - PRD 是否追加需求变更记录。
 - ADR / design / ops 是否已按影响范围更新。
 - ACC 是否记录验收标准、验证结果和结论。
-- `docs/index.md` 是否已更新。
+- 本地索引是否已重建或可重建。
 
 验证和文档同步通过后，必须先进入提交前人工审核，列出待审核内容和待提交文件。只有用户明确回复“批准提交”或“确认提交”后，才能提交一个只包含本次任务相关代码和文档的聚焦 commit，并在提交后列出 commit hash。
 
@@ -70,6 +70,8 @@ PRD、新功能、现有功能改版或产品文档类任务，必须先建立 R
 流程强度默认自动判断。优先级：硬门禁 > 风险自动升级 > 用户指定 > 默认判断。用户指定 `quick` 但出现 PRD、改版、接口、数据、核心链路等风险时，必须自动升级并说明原因。
 
 长任务可使用 `.dev-workflow/session/*-working.json` 保存结构化状态，减少上下文占用。完成后确认已合并到 TASK / BUG / ACC，再清理并在最终回复中列出。
+
+`.dev-workflow/index/` 是可重建的本地机器索引，默认不提交。`docs/index.md` 只作为人类入口说明，不再作为每次任务必须手工更新的共享索引。
 
 hooks 只做最低限度拦截，不能替代 PRD、TASK、BUG、ADR、ACC 的内容质量检查。
 

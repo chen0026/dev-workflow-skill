@@ -75,6 +75,7 @@ mkdir -p \
   docs/ops \
   docs/legacy \
   docs/archive \
+  .dev-workflow/index \
   .dev-workflow/session \
   .githooks \
   scripts
@@ -97,7 +98,13 @@ rsync -a --ignore-existing "$template_dir/.githooks/" .githooks/
 rsync -a --ignore-existing "$template_dir/scripts/" scripts/
 
 chmod +x .githooks/pre-commit .githooks/commit-msg scripts/check-dev-workflow.sh 2>/dev/null || true
-chmod +x scripts/init-dev-workflow.sh scripts/check-dev-docs.sh scripts/new-doc-id.sh scripts/new-doc.sh scripts/clean-templates.sh scripts/session-state.sh 2>/dev/null || true
+chmod +x scripts/init-dev-workflow.sh scripts/check-dev-docs.sh scripts/new-doc-id.sh scripts/new-doc.sh scripts/clean-templates.sh scripts/session-state.sh scripts/reindex-dev-docs.sh scripts/search-dev-docs.sh 2>/dev/null || true
+
+touch .gitignore
+if ! grep -qxF ".dev-workflow/index/" .gitignore; then
+  printf '\n.dev-workflow/index/\n' >> .gitignore
+  echo "dev-workflow: 已把 .dev-workflow/index/ 加入 .gitignore"
+fi
 
 if [ "$enable_hooks" = "1" ]; then
   if git rev-parse --git-dir >/dev/null 2>&1; then

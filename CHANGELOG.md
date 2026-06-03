@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.0 - 2026-06-03
+
+- 将 `docs/index.md` 从每次任务必须手工更新的共享索引，改为人类入口说明，减少多分支合并冲突。
+- 新增 `.dev-workflow/index/docs.jsonl` 本地机器索引，默认不提交、可随时重建。
+- 新增 `scripts/reindex-dev-docs.sh` 和 `scripts/search-dev-docs.sh`，用于重建和检索文档索引。
+- 初始化时创建 `.dev-workflow/index/`，并把它加入 `.gitignore`。
+- 文档读取规则改为优先检索本地索引，再打开少量相关文档，降低 token 消耗。
+
 ## 0.8.0 - 2026-05-29
 
 - 明确自动分级优先级：硬门禁 > 风险自动升级 > 用户指定 > 默认判断。

@@ -2,7 +2,6 @@
 set -euo pipefail
 
 mode="${1:-working}"
-tracking_id_regex='(PRD|REQ|TASK|BUG|ADR|ACC|OPS|LEGACY)-(([0-9]{8}-[0-9]{6}-[a-z0-9]{4})|([0-9]{4}))'
 
 fail() {
   echo "dev-workflow: $1"
@@ -18,8 +17,12 @@ for dir in docs/prd docs/requirements docs/tasks docs/bugs docs/design/decisions
   [ -d "$dir" ] || fail "缺少目录：$dir"
 done
 
-if ! grep -Eq "$tracking_id_regex" "docs/index.md"; then
-  fail "docs/index.md 缺少追踪编号"
+mkdir -p .dev-workflow/index
+if [ -x "scripts/reindex-dev-docs.sh" ]; then
+  scripts/reindex-dev-docs.sh >/dev/null
+  [ -f ".dev-workflow/index/docs.jsonl" ] || fail "无法生成 .dev-workflow/index/docs.jsonl"
+else
+  echo "dev-workflow: 未找到 scripts/reindex-dev-docs.sh，跳过本地索引重建"
 fi
 
 if git rev-parse --git-dir >/dev/null 2>&1; then
@@ -29,7 +32,7 @@ if git rev-parse --git-dir >/dev/null 2>&1; then
     changed="$(git status --porcelain | sed 's/^...//')"
   fi
 
-  code_changed="$(printf '%s\n' "$changed" | grep -Ev '^(docs/|AGENTS\.md$|README\.md$|\.githooks/|scripts/)' || true)"
+  code_changed="$(printf '%s\n' "$changed" | grep -Ev '^(docs/|AGENTS\.md$|README\.md$|\.gitignore$|\.dev-workflow/|\.githooks/|scripts/)' || true)"
   docs_changed="$(printf '%s\n' "$changed" | grep -E '^(docs/|AGENTS\.md$)' || true)"
 
   if [ -n "$code_changed" ] && [ -z "$docs_changed" ]; then

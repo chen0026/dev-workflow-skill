@@ -11,7 +11,7 @@ if [ "$mode" = "pre-commit" ]; then
 
   changed="$(git diff --cached --name-only --diff-filter=ACMR)"
 
-  code_changed="$(printf '%s\n' "$changed" | grep -Ev '^(docs/|AGENTS\.md$|README\.md$|\.githooks/|scripts/check-dev-workflow\.sh$)' || true)"
+  code_changed="$(printf '%s\n' "$changed" | grep -Ev '^(docs/|AGENTS\.md$|README\.md$|\.gitignore$|\.dev-workflow/|\.githooks/|scripts/)' || true)"
   docs_changed="$(printf '%s\n' "$changed" | grep -E '^(docs/|AGENTS\.md$)' || true)"
 
   if [ -n "$code_changed" ] && [ -z "$docs_changed" ]; then

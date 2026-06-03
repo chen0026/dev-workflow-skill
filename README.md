@@ -45,6 +45,7 @@ rsync -a --delete --exclude .git ./ "$CODEX_HOME/skills/dev-workflow/"
 - `docs/`
 - `scripts/`
 - `.githooks/`
+- `.dev-workflow/index/`
 
 默认不会把 `TEMPLATE.md` 复制到项目目录。模板保存在已安装的 Skill 中，`scripts/new-doc.sh` 会从 Skill 模板创建新文档。
 
@@ -82,7 +83,7 @@ Git hooks 是项目级门禁，只对当前项目生效。正式项目建议启�
 scripts/check-dev-docs.sh
 ```
 
-检查必要目录、索引编号、任务验收关联，以及代码变更是否同步文档。
+检查必要目录、任务验收关联、代码变更是否同步文档，并重建本地索引。
 
 ### 清理旧模板
 
@@ -132,11 +133,20 @@ ADR / design / ops / LEGACY
 
 用户指定 `quick` 时，如果检测到 PRD、改版、接口、数据或核心链路风险，会自动升级并说明原因。
 
-默认禁止全量读取历史文档：先读 `AGENTS.md`、`docs/workflow.md`、`docs/index.md`，再按当前任务读取相关文档。
+默认禁止全量读取历史文档：先读 `AGENTS.md`、`docs/workflow.md`，再用 `scripts/search-dev-docs.sh` 查候选文档。
 
 `SKILL.md` 只保留硬规则，详细规则按需读取 `references/`。
 
 长任务可使用 `.dev-workflow/session/*-working.json` 保存结构化状态，减少上下文占用。完成后确认已合并到正式文档再清理。
+
+本地文档索引用 `.dev-workflow/index/docs.jsonl`，默认不提交。它由脚本重建：
+
+```bash
+scripts/reindex-dev-docs.sh
+scripts/search-dev-docs.sh login
+```
+
+`docs/index.md` 只作为人类入口说明，不再作为每次任务必须手工更新的共享索引，避免多分支合并冲突。
 
 ## 五、命名规则
 
@@ -213,7 +223,7 @@ scripts/init-dev-workflow.sh --with-templates
 - `ACC` 写明验收结论，并覆盖对应 REQ / BUG。
 - 有测试框架时已优先使用 TDD；无法自动化时已记录原因和手工验收项。
 - 必要的 `ADR / design / ops` 已处理，或明确不需要。
-- `docs/index.md` 已更新。
+- 本地索引已重建或可重建。
 - 已进入提交前人工审核，并列出待提交文件。
 
 默认不自动提交代码。只有用户明确回复“批准提交”或“确认提交”后，才提交聚焦 commit。

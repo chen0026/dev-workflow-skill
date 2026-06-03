@@ -14,7 +14,7 @@
 1. 是否存在 `AGENTS.md`。
 2. 是否存在 `docs/`。
 3. `docs/` 是否已有旧文档。
-4. 是否已有 `docs/workflow.md`、`docs/index.md` 和必要子目录。
+4. 是否已有 `docs/workflow.md`、`docs/index.md`、必要子目录和本地索引脚本。
 
 处理规则：
 
@@ -24,6 +24,13 @@
 - 已有 `docs/` 但不是 dev-workflow 结构：把旧文档移动到 `docs/archive/legacy-docs-YYYYMMDD/`，再创建新结构。
 - 已有 dev-workflow 结构：沿用，不覆盖已有文档。
 - 归档旧文档前，先确认这些文件属于文档资料；不要移动代码、配置、脚本或构建产物。
+
+## 本地索引
+
+- `.dev-workflow/index/docs.jsonl` 是可重建机器索引，默认不提交。
+- 完成文档同步后运行 `scripts/reindex-dev-docs.sh`。
+- 查历史文档先用 `scripts/search-dev-docs.sh 关键词`，只打开最相关的少量文档。
+- `docs/index.md` 只作为人类入口说明，不作为每次任务必须手工更新的共享索引。
 
 ## 命名规则
 

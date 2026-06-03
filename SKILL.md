@@ -29,8 +29,8 @@ description: "Use this skill for lightweight traceable development: project init
 - 新功能、PRD 改版、Bug 修复优先 TDD；无法自动化时，记录原因并写手工验收项。
 - `docs/**/TEMPLATE.md` 是母版，日常任务禁止直接修改；用 `scripts/new-doc.sh TYPE short-title` 创建新文档。
 - 新文档使用 `TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md`，例如 `TASK-20260529-101500-a1b2-login-api.md`。
-- 默认禁止全量读取历史文档；先读 `AGENTS.md`、`docs/workflow.md`、`docs/index.md`，再按关联读取少量文档。
-- 完成前必须验证、代码审查、文档同步、更新 `docs/index.md`，并列出待人工审核内容和待提交文件。
+- 默认禁止全量读取历史文档；先读 `AGENTS.md`、`docs/workflow.md`，再用 `scripts/search-dev-docs.sh` 或 `.dev-workflow/index/docs.jsonl` 检索候选文档。
+- 完成前必须验证、代码审查、文档同步、重建本地索引，并列出待人工审核内容和待提交文件。
 
 ## Auto Flow Level
 
@@ -62,7 +62,7 @@ description: "Use this skill for lightweight traceable development: project init
 
 - `AGENTS.md`
 - `docs/workflow.md`
-- `docs/index.md`
+- `scripts/search-dev-docs.sh` 的候选结果，或 `.dev-workflow/index/docs.jsonl`
 - 用户当前提供的 PRD / 需求 / Bug 描述
 - 与当前任务直接相关的文档
 

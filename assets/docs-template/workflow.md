@@ -17,7 +17,7 @@
 - 是否存在 `AGENTS.md`。
 - 是否存在 `docs/`。
 - `docs/` 是否已有旧文档。
-- 是否已有 `docs/workflow.md`、`docs/index.md` 和必要子目录。
+- 是否已有 `docs/workflow.md`、`docs/index.md`、必要子目录和本地索引脚本。
 
 处理规则：
 
@@ -69,7 +69,7 @@ Codex 快捷提示：
 
 1. `AGENTS.md`
 2. `docs/workflow.md`
-3. `docs/index.md`
+3. `scripts/search-dev-docs.sh` 的候选结果，或 `.dev-workflow/index/docs.jsonl`
 4. 当前任务关联的 `PRD / REQ / TASK / BUG / ADR / ACC`
 5. `docs/design/` 和 `docs/ops/`
 6. `docs/legacy/`
@@ -84,7 +84,7 @@ Codex 快捷提示：
 
 - `AGENTS.md`
 - `docs/workflow.md`
-- `docs/index.md`
+- `scripts/search-dev-docs.sh` 的候选结果，或 `.dev-workflow/index/docs.jsonl` 中的少量匹配行
 - 用户当前提供的 PRD / 需求 / Bug 描述
 - 与当前任务直接相关的文档
 
@@ -98,9 +98,33 @@ Codex 快捷提示：
 - 全部 ACC
 - 全部 ADR
 
-先根据 `docs/index.md`、当前任务关键词、模块名、功能名、编号筛选候选文档。候选过多时，先列候选和选择依据。
+先用 `scripts/search-dev-docs.sh` 根据当前任务关键词、模块名、功能名、编号筛选候选文档。候选过多时，先列候选和选择依据。
 
-## 五、自动流程分级
+## 五、本地索引
+
+`.dev-workflow/index/docs.jsonl` 是可重建机器索引，默认不提交。
+
+重建索引：
+
+```bash
+scripts/reindex-dev-docs.sh
+```
+
+检索文档：
+
+```bash
+scripts/search-dev-docs.sh login
+```
+
+`docs/index.md` 只作为人类入口说明，不再作为每次任务必须手工更新的共享索引。如果需要临时生成可读索引，可执行：
+
+```bash
+scripts/reindex-dev-docs.sh --write-md
+```
+
+日常开发不要求提交生成后的 `docs/index.md`，避免多分支合并冲突。
+
+## 六、自动流程分级
 
 默认自动选择流程强度，不要求用户手动指定：
 
@@ -112,7 +136,7 @@ Codex 快捷提示：
 
 如果用户指定 `quick` 但出现 PRD、改版、接口、数据、核心链路等风险，必须自动升级并说明原因。如果任务类型不确定，默认 `standard`，不要用 `quick`。
 
-## 六、命名规则
+## 七、命名规则
 
 统一使用时间戳编号，避免多电脑、多分支并行时产生序号冲突：
 
@@ -136,7 +160,7 @@ acceptance/ACC-20260528-155000-e5f6-user-login.md
 
 旧项目中的 `TASK-0001` 这类编号继续有效，但新文档一律使用时间戳编号。
 
-## 七、模板保护
+## 八、模板保护
 
 `docs/**/TEMPLATE.md` 是母版，只能复制，不能作为任务文档直接填写。
 
@@ -161,7 +185,7 @@ scripts/clean-templates.sh --apply
 
 日常开发、Bug 修复、验收、改版时，禁止直接修改任何 `TEMPLATE.md`。只有明确提出“修改模板”或“升级 dev-workflow 模板”时，才允许改模板。
 
-## 八、最小闭环
+## 九、最小闭环
 
 ### 新功能
 
@@ -182,7 +206,7 @@ scripts/clean-templates.sh --apply
 9. 执行代码审查。
 10. 更新 REQ / TASK 实际改动。
 11. 创建 ACC 记录验收结果。
-12. 更新 `index.md`。
+12. 重建本地索引。
 13. 进入提交前人工审核。
 14. 用户批准后提交代码和文档。
 
@@ -228,7 +252,7 @@ scripts/clean-templates.sh --apply
 6. 执行代码审查。
 7. 更新 BUG 修复结果。
 8. 创建 ACC 记录验收结果。
-9. 更新 `index.md`。
+9. 重建本地索引。
 10. 进入提交前人工审核。
 11. 用户批准后提交代码和文档。
 
@@ -244,11 +268,11 @@ scripts/clean-templates.sh --apply
 2. 修改并验证。
 3. 执行代码审查。
 4. 创建 ACC。
-5. 更新 `index.md`。
+5. 重建本地索引。
 6. 进入提交前人工审核。
 7. 用户批准后提交代码和文档。
 
-## 九、什么时候写 ADR
+## 十、什么时候写 ADR
 
 满足任一条件才写：
 
@@ -258,7 +282,7 @@ scripts/clean-templates.sh --apply
 - 放弃过一个看似合理的方案，未来可能再次被提出。
 - Bug 根因来自历史设计问题。
 
-## 十、什么时候更新 ops
+## 十一、什么时候更新 ops
 
 满足任一条件才更新：
 
@@ -268,7 +292,7 @@ scripts/clean-templates.sh --apply
 - 回滚方式变化。
 - 应急处理步骤变化。
 
-## 十一、已有项目接入
+## 十二、已有项目接入
 
 首次接入只需要一份现状快照：
 
@@ -278,7 +302,7 @@ legacy/LEGACY-20260528-160000-a7b8-current-system-summary.md
 
 之后从当前任务开始追踪。当前改到哪个模块，就补哪个模块需要的历史，不做全量补档。
 
-## 十二、完成前检查
+## 十三、完成前检查
 
 最终回复前必须确认：
 
@@ -290,7 +314,7 @@ legacy/LEGACY-20260528-160000-a7b8-current-system-summary.md
 - ACC 写明验收结论，并覆盖对应 REQ / BUG。
 - 有测试框架时已优先使用 TDD；无法自动化时已记录原因和手工验收项。
 - 必要的 ADR / design / ops 已处理，或明确“不需要”。
-- `index.md` 已更新。
+- 本地索引已重建或可重建。
 - 已列出待人工审核内容和待提交文件。
 
 可执行脚本检查：
@@ -306,7 +330,7 @@ Codex 快捷提示：
 /dev-workflow 检查文档
 ```
 
-## 十三、代码审查规则
+## 十四、代码审查规则
 
 代码审查是完成前门禁，但保持轻量：
 

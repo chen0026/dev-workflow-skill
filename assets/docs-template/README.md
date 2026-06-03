@@ -7,7 +7,7 @@
 | 目录 | 放什么 | 谁来写 |
 |------|--------|--------|
 | `workflow.md` | 开发工作流、门禁规则、完成标准 | 开发负责人 |
-| `index.md` | PRD / REQ / TASK / BUG / ADR / ACC 总索引 | 开发 |
+| `index.md` | 人类入口说明；机器索引由脚本生成 | 开发 |
 | `prd/` | 产品需求文档，含变更记录 | 产品 + 开发补充 |
 | `requirements/` | PRD 需求项追踪矩阵，连接原文、任务、验收和测试 | 产品 + 开发 |
 | `design/` | 架构设计、技术方案 | 开发 |
@@ -27,7 +27,7 @@
 4. **AI 协作有痕迹**：关键 prompt 和决策过程要记录
 5. **完成必须有验收**：没有 ACC 验收记录，不算任务完成
 6. **提交前必须人工审核**：验证和文档同步通过后，先等待人工审核；用户批准后才提交
-7. **优先级排序**：ADR > Bug 复盘 > 任务文档 > 验收文档 > 其他
+7. **索引可重建**：多分支开发时不要手工维护共享索引，使用本地索引脚本检索
 
 ## Git hooks
 
@@ -38,12 +38,14 @@
 ## 脚本
 
 - `scripts/init-dev-workflow.sh`：初始化 `AGENTS.md`、`docs/`、`.githooks/` 和检查脚本。
-- `scripts/check-dev-docs.sh`：检查必要目录、索引编号、任务验收关联和代码变更是否同步文档。
+- `scripts/check-dev-docs.sh`：检查必要目录、任务验收关联、代码变更是否同步文档，并重建本地索引。
 - `scripts/check-dev-workflow.sh`：供 Git hooks 调用的提交门禁脚本。
 - `scripts/new-doc-id.sh`：生成时间戳文档编号，例如 `scripts/new-doc-id.sh TASK login-api`。
 - `scripts/new-doc.sh`：从模板创建新文档，例如 `scripts/new-doc.sh TASK login-api`。
 - `scripts/clean-templates.sh`：清理旧项目中已经复制进去的 `docs/**/TEMPLATE.md`，默认只预览。
 - `scripts/session-state.sh`：管理长任务临时状态文件，减少上下文占用。
+- `scripts/reindex-dev-docs.sh`：生成 `.dev-workflow/index/docs.jsonl` 本地机器索引。
+- `scripts/search-dev-docs.sh`：按关键词检索本地文档索引，避免全量读取历史。
 
 也可以让 Codex 使用快捷提示：
 
@@ -66,14 +68,30 @@
 - 修复 Bug 后：写 Bug 复盘
 - 需求变更时：在原文档追加变更记录，必要时新建 ADR
 - 技术选型时：写 ADR
-- 每次任务完成前：补齐 TASK / BUG / ADR / ACC / ops，并更新 `index.md`
+- 每次任务完成前：补齐 TASK / BUG / ADR / ACC / ops，并重建本地索引
 
 ## 执行策略
 
 - 默认自动分级：`quick / standard / strict`，不要求用户手动选择。
 - PRD、产品文档、现有功能改版、多模块、高风险、接口/数据/权限/支付/订单/登录/部署变化，自动使用 `strict`。
 - 分级优先级：硬门禁 > 风险自动升级 > 用户指定 > 默认判断。
-- 默认禁止全量读取历史文档；先读 `index.md`，再按当前任务读取相关文档。
+- 默认禁止全量读取历史文档；先用 `search-dev-docs.sh` 检索候选，再按当前任务读取相关文档。
+
+## 本地索引和多分支合并
+
+`docs/index.md` 不再作为人工维护的总索引。多电脑、多分支并行时，每个任务只新增或更新自己的文档，完成前运行：
+
+```bash
+scripts/reindex-dev-docs.sh
+```
+
+机器索引写入：
+
+```text
+.dev-workflow/index/docs.jsonl
+```
+
+该目录默认加入 `.gitignore`，不提交。这样合并代码时不会因为所有分支都修改同一个索引文件而频繁冲突。
 
 ## 命名规范
 
