@@ -1,13 +1,4 @@
-# Workflow Details
-
-## 文档类型
-
-- quick：默认不创建正式文档；必要时一个 `TASK`
-- standard Bug：默认一个 `BUG`
-- standard 功能 / 维护 / 重构：默认一个 `TASK`
-- strict 新功能 / PRD 改版：`PRD + REQ + TASK + ACC`
-- strict 高风险 Bug：`BUG + TASK + ACC`
-- 按需补充：`ADR / design / ops / LEGACY`
+# Details
 
 ## 项目接入
 
@@ -26,28 +17,6 @@
 - 已有 `docs/` 但不是 dev-workflow 结构：把旧文档移动到 `docs/archive/legacy-docs-YYYYMMDD/`，再创建新结构。
 - 已有 dev-workflow 结构：沿用，不覆盖已有文档。
 - 归档旧文档前，先确认这些文件属于文档资料；不要移动代码、配置、脚本或构建产物。
-
-## 本地索引
-
-- `.dev-workflow/index/docs.jsonl` 是可重建机器索引，默认不提交。
-- 完成文档同步后运行 `scripts/reindex-dev-docs.sh`。
-- 查历史文档先用 `scripts/search-dev-docs.sh 关键词`，只打开最相关的少量文档。
-- `docs/index.md` 只作为人类入口说明，不作为每次任务必须手工更新的共享索引。
-
-## 命名规则
-
-新文档统一使用：
-
-```text
-TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md
-```
-
-- `TYPE`：`PRD / REQ / TASK / BUG / ADR / ACC / OPS / LEGACY`。
-- `YYYYMMDD-HHMMSS`：创建文档时的本地时间。
-- `XXXX`：4 位小写随机码。
-- `short-title`：英文短标题，使用小写和连字符。
-
-项目内如存在 `scripts/new-doc-id.sh`，优先用它生成编号。
 
 ## PRD 追踪矩阵
 
@@ -99,7 +68,7 @@ REQ 未确认前，不创建实现代码，不修改业务代码。
 
 - quick：不用 session 状态文件。
 - standard：超过一轮、涉及多个文件、或上下文可能变长时使用。
-- strict：默认使用 session 状态文件，同时 REQ 作为正式文档先落地。
+- strict：默认使用 session 状态文件，同时 REQ 是正式文档，不清理。
 
 状态文件只存结构化摘要，不存完整 PRD 或大段代码：
 
@@ -130,3 +99,33 @@ scripts/session-state.sh list
 scripts/session-state.sh clean
 scripts/session-state.sh clean --apply
 ```
+
+## Superpowers Integration
+
+如果当前环境有 Superpowers，可以按阶段配合使用：
+
+- 需求澄清：`brainstorming`，结论写入 PRD / REQ / TASK。
+- 计划制定：`writing-plans`，任务拆解写入 TASK。
+- Bug 定位：`systematic-debugging`，复现、路径、根因写入 BUG。
+- 实现：`test-driven-development`，验证方式写入最终摘要、主记录或 strict 的 ACC。
+- 并行执行：`subagent-driven-development`，各 subagent 结论写入主记录或 strict 文档链路。
+- 完成验证：`verification-before-completion`，验证结果写入最终摘要、主记录或 strict 的 ACC。
+- 代码审查：`requesting-code-review`，审查结论写入最终摘要、主记录或 strict 的 ACC。
+
+dev-workflow 不替代 Superpowers，只负责建立追踪链路、沉淀关键结论、完成前检查文档，并在人工审核通过后提交。
+
+## Subagent 使用规则
+
+默认不使用 subagent。满足以下任一条件时才使用：
+
+- 任务涉及多个独立模块。
+- Bug 根因不明确。
+- 需要并行调查代码路径、测试、文档或影响范围。
+- 改动影响范围较大。
+- 完成前需要独立 review 或 QA 检查。
+
+subagent 输出按流程级别沉淀：
+
+- quick：最终回复列出关键结论。
+- standard：结论写入 TASK 或 BUG 主记录。
+- strict：结论写入 PRD / REQ / TASK / BUG / ACC / ADR 中的对应位置。

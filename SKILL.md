@@ -1,6 +1,6 @@
 ---
 name: dev-workflow
-description: "Use this skill for lightweight traceable development: project init, docs workflow, PRD/REQ traceability, TDD, bug fixes, acceptance, human review before commit, and optional approved git commit. Triggers: /dev-workflow init, /dev-workflow init --hooks, /dev-workflow check, /dev-workflow clean-templates, PRD implementation, feature work, bug fix, refactor, maintenance, or requests to prevent code from drifting away from requirements."
+description: "Lightweight traceable dev workflow for project init, PRD/REQ docs, TDD, bug/feature/refactor records, and human review before commit. Triggers: /dev-workflow, PRD, feature, bug, refactor."
 ---
 
 # Dev Workflow
@@ -24,85 +24,38 @@ description: "Use this skill for lightweight traceable development: project init
 
 ## Hard Rules
 
-- 默认不自动 commit。完成后进入人工审核；只有用户明确说“批准提交”或“确认提交”才提交。
-- PRD、新功能、现有功能改版、产品文档类任务必须走 `strict`：先建立 `REQ` 需求追踪矩阵，人工确认后再编码。
-- `quick` 不强制创建正式文档；`standard` 默认只创建或更新一个主记录；`strict` 才拆完整链路。
-- 新功能、PRD 改版、Bug 修复优先 TDD；`quick` 只做必要验证，无法自动化时在摘要或主记录里说明。
-- `docs/**/TEMPLATE.md` 是母版，日常任务禁止直接修改；用 `scripts/new-doc.sh TYPE short-title` 创建新文档。
-- 新文档使用 `TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md`，例如 `TASK-20260529-101500-a1b2-login-api.md`。
-- 默认禁止全量读取历史文档；先读 `AGENTS.md`、`docs/workflow.md`，再用 `scripts/search-dev-docs.sh` 或 `.dev-workflow/index/docs.jsonl` 检索候选文档。
+- 默认不自动 commit；只有用户明确说“批准提交”或“确认提交”才提交，细节见 `references/details.md`。
+- PRD、新功能、现有功能改版、产品文档类任务必须走 `strict`；REQ 未确认前不编码。
+- `quick` 默认无正式文档，`standard` 默认一个主记录，`strict` 才拆完整链路。
+- `docs/**/TEMPLATE.md` 是母版，日常任务禁止直接修改；新文档用 `TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md`。
 - 默认不在聊天中展开完整文档内容；只列文件路径、追踪编号、验证结果和待人工审核事项。
-- 完成前必须验证、必要自查、按流程级别同步文档，并列出待人工审核内容和待提交文件。
 
-## Auto Flow Level
+## Flow Level
 
-自动选择流程强度，不要求用户手动指定：
+- `quick`：文案、样式、小配置、单文件无业务逻辑改动；默认只写最终摘要。
+- `standard`：普通 Bug、普通功能调整、单模块功能；默认一个 `TASK` 或 `BUG` 主记录。
+- `strict`：PRD、改版、多模块、高风险、接口/数据/权限/支付/订单/登录/部署变化；使用完整链路。
 
-- `quick`：文案、样式、小配置、单文件无业务逻辑改动。默认不创建文档，只在最终回复摘要留痕。
-- `standard`：普通 Bug、普通功能调整、单模块功能。默认一个 `TASK` 或 `BUG` 主记录，验收和审查写在同一文档。
-- `strict`：PRD、产品文档、现有功能改版、多模块、高风险、接口/数据/权限/支付/订单/登录/部署变化。必须 `PRD + REQ + TASK + ACC`。
-
-优先级：硬门禁 > 风险自动升级 > 用户指定 > 默认判断。
-
-如果用户指定 `quick` 但出现 PRD、改版、接口、数据、核心链路等风险，必须自动升级并说明原因。如果任务类型不确定，默认 `standard`，不要用 `quick`。
-
-详细分级见 `references/flow-levels.md`。
-
-## Session State
-
-- `quick` 默认不用 session 状态文件。
-- `standard` 超过一轮、涉及多个文件、或上下文可能变长时，使用 `.dev-workflow/session/*-working.json`。
-- `strict` 默认使用 session 状态文件；REQ 是正式文档，不清理。
-- session 文件只存结构化摘要、路径和结论，不存完整 PRD 或大段代码。
-- 完成后，确认内容已合并到主记录或 strict 文档链路，再清理 session，并在最终回复列出。
-
-脚本：`scripts/session-state.sh create|list|clean [--apply]`。详见 `references/workflow-details.md`。
+优先级：硬门禁 > 风险自动升级 > 用户指定 > 默认判断。完整定义见 `references/flow.md`。
 
 ## Context Budget
 
-默认只读：
+默认只读 `AGENTS.md` / `docs/workflow.md` / `scripts/search-dev-docs.sh` 候选；细节见 `references/flow.md`。
 
-- `AGENTS.md`
-- `docs/workflow.md`
-- `scripts/search-dev-docs.sh` 的候选结果，或 `.dev-workflow/index/docs.jsonl`
-- 用户当前提供的 PRD / 需求 / Bug 描述
-- 与当前任务直接相关的文档
+## PRD / TDD / Session
 
-不要默认读取 `docs/archive/**` 或全部历史 PRD/TASK/BUG/ACC。候选文档过多时，先列候选和选择依据。
-
-详细规则见 `references/context-budget.md`。
-
-## PRD / TDD Gate
-
-PRD / 改版类任务编码前必须：
-
-1. 创建或更新 `REQ` 需求追踪矩阵。
-2. 每个 REQ 保留 PRD 原文依据、当前实现、目标行为、验收方式和测试计划。
-3. 等待人工确认 REQ。
-
-REQ 未确认前，不创建实现代码，不修改业务代码。
-
-详细规则见 `references/workflow-details.md`。
+- PRD / 改版编码前必须先建 REQ 并等待确认；TDD、代码审查和人工审核细节见 `references/details.md`。
+- 长任务可用 `.dev-workflow/session/*-working.json` 保存结构化状态；清理规则见 `references/details.md`。
 
 ## References
 
 按需读取：
 
-- `references/workflow-details.md`：项目接入、命名、REQ、TDD、代码审查、人工审核细节。
-- `references/context-budget.md`：文档读取预算，避免全量读取历史。
-- `references/flow-levels.md`：quick / standard / strict 自动分级和升级规则。
-- `references/superpowers.md`：与 Superpowers、subagent 的配合方式。
+- `references/flow.md`：流程分级、自动升级、上下文预算、本地索引、archive、写入策略。
+- `references/details.md`：项目接入、REQ、TDD、代码审查、人工审核、session、Superpowers / subagent。
 
 ## Final Response
 
-用简体中文简短列出：
-
-- 流程级别和原因
-- 代码变更
-- 验证结果
-- 文档同步
-- 代码审查
-- 待人工审核事项
-- 待提交文件
-- 提交状态
-- 未完成事项
+- `quick`：流程级别和原因、代码变更、验证结果、待提交文件。
+- `standard`：在 quick 基础上加文档同步、代码审查、待人工审核事项。
+- `strict`：完整列出流程级别、代码变更、验证结果、文档同步、代码审查、待人工审核、待提交文件、提交状态、未完成事项。

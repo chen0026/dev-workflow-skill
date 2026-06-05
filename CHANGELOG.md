@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.11.0 - 2026-06-05
+
+- 瘦身 `SKILL.md`，只保留最小硬规则、触发入口和 reference 指针。
+- 将 4 个 reference 合并为 `references/flow.md` 和 `references/details.md`，消除重复规则。
+- 将上下文预算、流程分级、本地索引和命名规则集中到 `references/flow.md`。
+- 将 REQ、TDD、代码审查、人工审核、session、Superpowers / subagent 集中到 `references/details.md`。
+- Final Response 改为按 `quick / standard / strict` 分级输出，减少 quick 任务 token 消耗。
+
 ## 0.10.0 - 2026-06-05
 
 - 将流程改为分级留痕：quick 默认不创建正式文档，standard 默认一个主记录，strict 才拆完整链路。
