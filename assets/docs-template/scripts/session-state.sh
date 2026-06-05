@@ -46,7 +46,7 @@ EOF
       echo "dev-workflow: 将清理以下 session 状态文件（预览，不会删除）："
       printf '%s\n' "$files"
       echo
-      echo "dev-workflow: 确认已合并到 TASK / BUG / ACC 后执行 scripts/session-state.sh clean --apply"
+      echo "dev-workflow: 确认已合并到主记录或 strict 文档链路后执行 scripts/session-state.sh clean --apply"
       exit 0
     fi
     printf '%s\n' "$files" | while IFS= read -r file; do

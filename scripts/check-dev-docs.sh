@@ -32,20 +32,26 @@ if git rev-parse --git-dir >/dev/null 2>&1; then
     changed="$(git status --porcelain | sed 's/^...//')"
   fi
 
-  code_changed="$(printf '%s\n' "$changed" | grep -Ev '^(docs/|AGENTS\.md$|README\.md$|\.gitignore$|\.dev-workflow/|\.githooks/|scripts/)' || true)"
-  docs_changed="$(printf '%s\n' "$changed" | grep -E '^(docs/|AGENTS\.md$)' || true)"
+  if [ "${DEV_WORKFLOW_REQUIRE_DOCS:-0}" = "1" ]; then
+    code_changed="$(printf '%s\n' "$changed" | grep -Ev '^(docs/|AGENTS\.md$|README\.md$|\.gitignore$|\.dev-workflow/|\.githooks/|scripts/)' || true)"
+    docs_changed="$(printf '%s\n' "$changed" | grep -E '^(docs/|AGENTS\.md$)' || true)"
 
-  if [ -n "$code_changed" ] && [ -z "$docs_changed" ]; then
-    fail "检测到代码变更，但没有同步 docs/ 或 AGENTS.md"
+    if [ -n "$code_changed" ] && [ -z "$docs_changed" ]; then
+      fail "检测到代码变更，但没有同步 docs/ 或 AGENTS.md；quick 可不设置 DEV_WORKFLOW_REQUIRE_DOCS"
+    fi
   fi
 fi
 
 for task in docs/tasks/TASK-*.md; do
   [ -e "$task" ] || continue
-  grep -q "关联验收" "$task" || fail "$task 缺少关联验收"
   grep -q "验证" "$task" || fail "$task 缺少验证记录"
-  grep -q "TDD / 验收映射" "$task" || fail "$task 缺少 TDD / 验收映射"
   grep -q "代码审查" "$task" || fail "$task 缺少代码审查记录"
+done
+
+for bug in docs/bugs/BUG-*.md; do
+  [ -e "$bug" ] || continue
+  grep -q "根因" "$bug" || fail "$bug 缺少根因记录"
+  grep -q "验证" "$bug" || fail "$bug 缺少验证记录"
 done
 
 for acc in docs/acceptance/ACC-*.md; do

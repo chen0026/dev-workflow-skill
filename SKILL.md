@@ -26,18 +26,20 @@ description: "Use this skill for lightweight traceable development: project init
 
 - 默认不自动 commit。完成后进入人工审核；只有用户明确说“批准提交”或“确认提交”才提交。
 - PRD、新功能、现有功能改版、产品文档类任务必须走 `strict`：先建立 `REQ` 需求追踪矩阵，人工确认后再编码。
-- 新功能、PRD 改版、Bug 修复优先 TDD；无法自动化时，记录原因并写手工验收项。
+- `quick` 不强制创建正式文档；`standard` 默认只创建或更新一个主记录；`strict` 才拆完整链路。
+- 新功能、PRD 改版、Bug 修复优先 TDD；`quick` 只做必要验证，无法自动化时在摘要或主记录里说明。
 - `docs/**/TEMPLATE.md` 是母版，日常任务禁止直接修改；用 `scripts/new-doc.sh TYPE short-title` 创建新文档。
 - 新文档使用 `TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md`，例如 `TASK-20260529-101500-a1b2-login-api.md`。
 - 默认禁止全量读取历史文档；先读 `AGENTS.md`、`docs/workflow.md`，再用 `scripts/search-dev-docs.sh` 或 `.dev-workflow/index/docs.jsonl` 检索候选文档。
-- 完成前必须验证、代码审查、文档同步、重建本地索引，并列出待人工审核内容和待提交文件。
+- 默认不在聊天中展开完整文档内容；只列文件路径、追踪编号、验证结果和待人工审核事项。
+- 完成前必须验证、必要自查、按流程级别同步文档，并列出待人工审核内容和待提交文件。
 
 ## Auto Flow Level
 
 自动选择流程强度，不要求用户手动指定：
 
-- `quick`：文案、样式、小配置、单文件无业务逻辑改动。少读历史，完成前做最小记录。
-- `standard`：普通 Bug、普通功能调整、单模块功能。使用 `TASK/BUG + ACC`，验证和代码审查。
+- `quick`：文案、样式、小配置、单文件无业务逻辑改动。默认不创建文档，只在最终回复摘要留痕。
+- `standard`：普通 Bug、普通功能调整、单模块功能。默认一个 `TASK` 或 `BUG` 主记录，验收和审查写在同一文档。
 - `strict`：PRD、产品文档、现有功能改版、多模块、高风险、接口/数据/权限/支付/订单/登录/部署变化。必须 `PRD + REQ + TASK + ACC`。
 
 优先级：硬门禁 > 风险自动升级 > 用户指定 > 默认判断。
@@ -52,7 +54,7 @@ description: "Use this skill for lightweight traceable development: project init
 - `standard` 超过一轮、涉及多个文件、或上下文可能变长时，使用 `.dev-workflow/session/*-working.json`。
 - `strict` 默认使用 session 状态文件；REQ 是正式文档，不清理。
 - session 文件只存结构化摘要、路径和结论，不存完整 PRD 或大段代码。
-- 完成后，确认内容已合并到 TASK / BUG / ACC，再清理 session，并在最终回复列出。
+- 完成后，确认内容已合并到主记录或 strict 文档链路，再清理 session，并在最终回复列出。
 
 脚本：`scripts/session-state.sh create|list|clean [--apply]`。详见 `references/workflow-details.md`。
 

@@ -35,21 +35,21 @@
 
 完成代码变更前，必须同步更新对应文档：
 
-- 新功能：PRD + TASK + ACC，必要时 ADR / design / ops。
-- Bug 修复：BUG + TASK + ACC，必要时 ADR / design / ops。
-- 重构 / 维护：TASK + ACC，必要时 ADR / design / ops。
+- quick：默认不创建正式文档，只在最终回复写摘要；必要时一个 TASK。
+- standard Bug：默认一个 BUG 主记录，验证、审查、验收结论写在同一文档。
+- standard 功能 / 维护：默认一个 TASK 主记录，验证、审查、验收结论写在同一文档。
+- strict：PRD / 改版使用 PRD + REQ + TASK + ACC，高风险 Bug 可使用 BUG + TASK + ACC。
 - 已有项目历史：只在当前变更需要时补 LEGACY 或补录 ADR。
 
 完成前必须执行文档同步检查：
 
 - TASK 是否记录实际改动范围、验证方式和结果。
 - PRD / 改版任务是否已建立并确认 REQ 需求追踪矩阵。
-- TASK 是否关联 REQ 或 BUG。
-- TASK 或 ACC 是否记录代码审查结论。
+- TASK 或 BUG 是否记录代码审查结论。
 - BUG 是否记录复现、根因、修复方案和验证结果。
 - PRD 是否追加需求变更记录。
 - ADR / design / ops 是否已按影响范围更新。
-- ACC 是否记录验收标准、验证结果和结论。
+- strict 或复杂验收才要求 ACC 记录验收标准、验证结果和结论。
 - 本地索引是否已重建或可重建。
 
 验证和文档同步通过后，必须先进入提交前人工审核，列出待审核内容和待提交文件。只有用户明确回复“批准提交”或“确认提交”后，才能提交一个只包含本次任务相关代码和文档的聚焦 commit，并在提交后列出 commit hash。
@@ -60,8 +60,10 @@
 
 项目建议启用 `.githooks`：
 
-- `pre-commit`：代码变更必须伴随 `docs/` 或 `AGENTS.md` 变更。
-- `commit-msg`：提交信息必须包含追踪编号，例如 `TASK-20260528-153500-b2c3` 或 `BUG-20260528-154000-c3d4`。
+- `pre-commit`：默认检查文档结构并重建索引。
+- `commit-msg`：提交信息建议包含追踪编号；quick 可使用 `[quick]`。
+
+默认不强制每次代码变更都伴随 `docs/`。正式项目如需强门禁，可在提交环境设置 `DEV_WORKFLOW_REQUIRE_DOCS=1`。
 
 新文档追踪编号统一使用 `TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md`，旧项目中的 `TASK-0001` 这类编号继续有效。
 
@@ -71,7 +73,7 @@ PRD、新功能、现有功能改版或产品文档类任务，必须先建立 R
 
 流程强度默认自动判断。优先级：硬门禁 > 风险自动升级 > 用户指定 > 默认判断。用户指定 `quick` 但出现 PRD、改版、接口、数据、核心链路等风险时，必须自动升级并说明原因。
 
-长任务可使用 `.dev-workflow/session/*-working.json` 保存结构化状态，减少上下文占用。完成后确认已合并到 TASK / BUG / ACC，再清理并在最终回复中列出。
+长任务可使用 `.dev-workflow/session/*-working.json` 保存结构化状态，减少上下文占用。完成后确认已合并到主记录或 strict 文档链路，再清理并在最终回复中列出。
 
 `.dev-workflow/index/` 是可重建的本地机器索引，默认不提交。`docs/index.md` 只作为人类入口说明，不再作为每次任务必须手工更新的共享索引。
 
@@ -79,10 +81,10 @@ hooks 只做最低限度拦截，不能替代 PRD、TASK、BUG、ADR、ACC 的�
 
 ## 代码审查规则
 
-代码审查是完成前门禁。小任务执行自查；复杂、高风险或影响范围较大的任务使用 subagent 或人工独立 review。审查结论必须回填到 TASK 或 ACC。
+代码审查是完成前门禁。小任务执行自查；复杂、高风险或影响范围较大的任务使用 subagent 或人工独立 review。审查结论回填到主记录；quick 可只在最终回复列出。
 
 ## Subagent 使用规则
 
 默认不使用 subagent。仅在任务涉及多个独立模块、Bug 根因不明确、需要并行调查、影响范围较大、或完成前需要独立 review / QA 时使用。
 
-subagent 的调研结论、根因证据、验收结果、被否决方案必须回填到 TASK / BUG / ACC / ADR。
+subagent 的调研结论、根因证据、验收结果、被否决方案必须回填到主记录或 strict 文档链路。

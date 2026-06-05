@@ -104,9 +104,10 @@ scripts/clean-templates.sh --apply
 默认最小闭环：
 
 ```text
-新功能 / PRD 改版：PRD + REQ + TASK + ACC
-Bug 修复：BUG + TASK + ACC
-维护 / 重构：TASK + ACC
+quick：默认不创建正式文档，只输出摘要
+standard Bug：一个 BUG 主记录
+standard 功能 / 维护：一个 TASK 主记录
+strict PRD / 改版：PRD + REQ + TASK + ACC
 ```
 
 按需补充：
@@ -116,6 +117,8 @@ ADR / design / ops / LEGACY
 ```
 
 只有在影响架构、接口、数据模型、部署、监控、回滚或长期维护时，才补充这些文档。
+
+standard 的验证、代码审查、验收结论写在同一个 TASK 或 BUG 里，不默认单独创建 ACC。
 
 ## 四、省 token 策略
 
@@ -132,6 +135,8 @@ ADR / design / ops / LEGACY
 ```
 
 用户指定 `quick` 时，如果检测到 PRD、改版、接口、数据或核心链路风险，会自动升级并说明原因。
+
+quick 不强制写文档；standard 默认一个主记录；strict 才拆完整链路。
 
 默认禁止全量读取历史文档：先读 `AGENTS.md`、`docs/workflow.md`，再用 `scripts/search-dev-docs.sh` 查候选文档。
 
@@ -216,11 +221,11 @@ scripts/init-dev-workflow.sh --with-templates
 任务完成前必须确认：
 
 - 关联文档已创建或更新。
+- quick 可无正式文档，最终回复必须写摘要。
 - PRD / 改版任务已建立并确认 REQ 需求追踪矩阵。
 - `TASK` 写明实际改动和验证结果。
-- `TASK` 关联 REQ 或 BUG。
-- `TASK` 或 `ACC` 写明代码审查结论。
-- `ACC` 写明验收结论，并覆盖对应 REQ / BUG。
+- `TASK` 或 `BUG` 写明代码审查结论和验收结论。
+- strict 的 `ACC` 写明验收结论，并覆盖对应 REQ / BUG。
 - 有测试框架时已优先使用 TDD；无法自动化时已记录原因和手工验收项。
 - 必要的 `ADR / design / ops` 已处理，或明确不需要。
 - 本地索引已重建或可重建。
@@ -251,8 +256,9 @@ git config --unset core.hooksPath
 
 Git hooks 只做最低限度检查：
 
-- 代码变更必须伴随 `docs/` 或 `AGENTS.md` 变更。
-- commit message 必须包含追踪编号，例如 `TASK-20260528-153500-b2c3` 或 `BUG-20260528-154000-c3d4`。
+- 默认检查文档结构并重建索引。
+- commit message 建议包含追踪编号；quick 可使用 `[quick]`。
+- 需要强制代码变更伴随文档时，设置 `DEV_WORKFLOW_REQUIRE_DOCS=1`。
 
 ## 九、注意事项
 
@@ -280,10 +286,10 @@ dev-workflow 负责追踪和门禁
 - 需求澄清：`brainstorming` → 写入 PRD / TASK。
 - 计划制定：`writing-plans` → 写入 TASK。
 - Bug 定位：`systematic-debugging` → 写入 BUG。
-- 实现：`test-driven-development` → 写入 REQ / TASK / ACC。
-- 并行执行：`subagent-driven-development` → 结论写入 TASK / BUG / ADR / ACC。
-- 完成验证：`verification-before-completion` → 写入 ACC。
-- 代码审查：`requesting-code-review` → 写入 TASK / ACC。
+- 实现：`test-driven-development` → 写入最终摘要、主记录或 strict 的 ACC。
+- 并行执行：`subagent-driven-development` → 结论写入主记录或 strict 文档链路。
+- 完成验证：`verification-before-completion` → 写入最终摘要、主记录或 strict 的 ACC。
+- 代码审查：`requesting-code-review` → 写入最终摘要、主记录或 strict 的 ACC。
 
 dev-workflow 不替代 Superpowers，只负责建立追踪链路、沉淀关键结论、完成前检查文档，并在人工审核通过后提交。
 

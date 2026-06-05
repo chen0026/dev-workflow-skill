@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.10.0 - 2026-06-05
+
+- 将流程改为分级留痕：quick 默认不创建正式文档，standard 默认一个主记录，strict 才拆完整链路。
+- standard 的验证、代码审查、验收结论合并写入 TASK 或 BUG，不再默认创建 ACC。
+- 放宽 `check-dev-docs.sh`，不再强制 TASK 关联 ACC 或填写 TDD / 验收映射。
+- Git hooks 默认不强制代码变更必须伴随 docs；需要强门禁时设置 `DEV_WORKFLOW_REQUIRE_DOCS=1`。
+- 最终回复默认只列摘要和文件路径，不展开完整文档内容，减少 token 消耗。
+
 ## 0.9.0 - 2026-06-03
 
 - 将 `docs/index.md` 从每次任务必须手工更新的共享索引，改为人类入口说明，减少多分支合并冲突。

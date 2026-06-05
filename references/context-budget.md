@@ -52,6 +52,6 @@
 
 小任务不要一开始就写很多文档：
 
-- quick：完成前写最小 TASK 或变更记录。
-- standard：完成前回填 TASK / BUG / ACC。
+- quick：默认不写正式文档，只在最终回复摘要；必要时一个 TASK。
+- standard：完成前回填一个 TASK 或 BUG 主记录。
 - strict：PRD / 改版必须先写 REQ，确认后再编码。
