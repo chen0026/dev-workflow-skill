@@ -132,9 +132,18 @@ scripts/reindex-dev-docs.sh --write-md
 - `standard`：普通 Bug、普通功能调整、单模块功能。默认一个 `TASK` 或 `BUG` 主记录，验证、审查、验收结论写在同一文档。
 - `strict`：PRD、产品文档、现有功能改版、多模块、高风险、接口/数据/权限/支付/订单/登录/部署变化。必须 `PRD + REQ + TASK + ACC`。
 
-优先级：硬门禁 > 风险自动升级 > 用户指定 > 默认 quick。
+优先级：硬门禁 > 风险自动升级 > 文档预算 > 用户指定 > 默认 quick。
 
 如果用户指定 `quick` 但出现 PRD、改版、接口、数据、核心链路等风险，必须自动升级并说明原因。任务类型不确定但未发现明确风险时，默认 `quick`；发现用户行为影响、需要追溯或跨少量文件时，升级为 `standard`。
+
+文档预算：
+
+- quick：新增文档 0 个；最终回复摘要即留痕。
+- quick 且用户要求留痕：最多 1 个 TASK。
+- standard：新增文档最多 1 个，Bug 用 BUG，功能 / 维护用 TASK。
+- standard 不创建 ACC；验收结论写进 BUG 或 TASK。
+- strict 才允许完整链路；普通任务不得同时创建 `TASK + BUG + ACC`。
+- `docs/index.md` 不作为任务产物，不因完成任务而手工更新。
 
 ## 七、命名规则
 

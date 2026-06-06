@@ -28,6 +28,7 @@ description: "Lightweight traceable dev workflow for project init, PRD/REQ docs,
 - PRD、新功能、现有功能改版、产品文档类任务必须走 `strict`；REQ 未确认前不编码。
 - `quick` 默认无正式文档，`standard` 默认一个主记录，`strict` 才拆完整链路。
 - 默认从 `quick` 起步；只有发现用户行为影响、追溯需求或风险信号时才升级。
+- `quick` 文档新增 0 个；`standard` 文档新增最多 1 个；禁止为普通任务同时创建 `TASK + BUG + ACC`。
 - `docs/**/TEMPLATE.md` 是母版，日常任务禁止直接修改；新文档用 `TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md`。
 - 默认不在聊天中展开完整文档内容；只列文件路径、追踪编号、验证结果和待人工审核事项。
 
@@ -37,7 +38,7 @@ description: "Lightweight traceable dev workflow for project init, PRD/REQ docs,
 - `standard`：普通 Bug、普通功能调整、单模块功能；默认一个 `TASK` 或 `BUG` 主记录。
 - `strict`：PRD、改版、多模块、高风险、接口/数据/权限/支付/订单/登录/部署变化；使用完整链路。
 
-优先级：硬门禁 > 风险自动升级 > 用户指定 > 默认 quick。完整定义见 `references/flow.md`。
+优先级：硬门禁 > 风险自动升级 > 文档预算 > 用户指定 > 默认 quick。完整定义见 `references/flow.md`。
 
 ## Context Budget
 
