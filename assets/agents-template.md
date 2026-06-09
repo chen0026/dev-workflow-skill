@@ -73,11 +73,11 @@ PRD、新功能、现有功能改版或产品文档类任务，必须先建立 R
 
 流程强度默认从 `quick` 起步。优先级：硬门禁 > 风险自动升级 > 文档预算 > 用户指定 > 默认 quick。用户指定 `quick` 但出现 PRD、改版、接口、数据、核心链路等风险时，必须自动升级并说明原因；任务不确定但未发现明确风险时仍用 `quick`。
 
-文档预算：quick 新增文档 0 个；standard 新增文档最多 1 个；strict 才允许完整链路。普通任务禁止同时新建 `TASK + BUG + ACC`，不得为完成任务手工更新 `docs/index.md`。
+文档预算：quick 新增文档 0 个；standard 新增文档最多 1 个；strict 才允许完整链路。普通任务禁止同时新建 `TASK + BUG + ACC`，不得为完成任务手工更新或提交 `docs/index.md`。
 
 长任务可使用 `.dev-workflow/session/*-working.json` 保存结构化状态，减少上下文占用。完成后确认已合并到主记录或 strict 文档链路，再清理并在最终回复中列出。
 
-`.dev-workflow/index/` 是可重建的本地机器索引，默认不提交。`docs/index.md` 只作为人类入口说明，不再作为每次任务必须手工更新的共享索引。
+`.dev-workflow/index/` 是可重建的本地机器索引，默认不提交。`docs/index.md` 是可选生成文件，默认忽略，不作为必需项目文件。
 
 hooks 只做最低限度拦截，不能替代 PRD、TASK、BUG、ADR、ACC 的内容质量检查。
 

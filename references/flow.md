@@ -113,7 +113,7 @@ quick 禁用场景：
 - standard：新增文档最多 1 个，Bug 用 BUG，功能 / 维护用 TASK。
 - standard 不创建 ACC；验收结论写进 BUG 或 TASK。
 - strict 才允许完整链路；普通任务不得同时创建 `TASK + BUG + ACC`。
-- `docs/index.md` 不作为任务产物，不因完成任务而手工更新。
+- `docs/index.md` 不作为任务产物，不因完成任务而手工更新；默认加入 `.gitignore`，不要提交。
 
 如果文档新增行数预计超过代码 / 测试改动行数，先降级文档写法：摘要 > 主记录 > 完整链路。
 
@@ -166,7 +166,7 @@ TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md
 
 `.dev-workflow/index/docs.jsonl` 是可重建的机器索引，默认不提交。它用于快速定位文档，避免读取全部历史文档。
 
-`docs/index.md` 只作为人类入口说明，不再作为每次任务必须手工更新的共享索引，避免多分支合并冲突。
+`docs/index.md` 只是可选的人类可读生成文件，默认加入 `.gitignore`，不作为必需项目文件，也不提交。
 
 ## archive 规则
 

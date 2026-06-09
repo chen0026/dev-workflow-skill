@@ -17,7 +17,7 @@
 - 是否存在 `AGENTS.md`。
 - 是否存在 `docs/`。
 - `docs/` 是否已有旧文档。
-- 是否已有 `docs/workflow.md`、`docs/index.md`、必要子目录和本地索引脚本。
+- 是否已有 `docs/workflow.md`、必要子目录和本地索引脚本；`docs/index.md` 不是必需文件。
 
 处理规则：
 
@@ -116,13 +116,13 @@ scripts/reindex-dev-docs.sh
 scripts/search-dev-docs.sh login
 ```
 
-`docs/index.md` 只作为人类入口说明，不再作为每次任务必须手工更新的共享索引。如果需要临时生成可读索引，可执行：
+`docs/index.md` 只是可选的人类可读生成文件，不再作为每次任务必须手工更新的共享索引。如果需要临时生成可读索引，可执行：
 
 ```bash
 scripts/reindex-dev-docs.sh --write-md
 ```
 
-日常开发不要求提交生成后的 `docs/index.md`，避免多分支合并冲突。
+`docs/index.md` 默认加入 `.gitignore`，不要提交，避免多分支合并冲突。
 
 ## 六、自动流程分级
 
@@ -143,7 +143,7 @@ scripts/reindex-dev-docs.sh --write-md
 - standard：新增文档最多 1 个，Bug 用 BUG，功能 / 维护用 TASK。
 - standard 不创建 ACC；验收结论写进 BUG 或 TASK。
 - strict 才允许完整链路；普通任务不得同时创建 `TASK + BUG + ACC`。
-- `docs/index.md` 不作为任务产物，不因完成任务而手工更新。
+- `docs/index.md` 不作为任务产物，不因完成任务而手工更新；默认加入 `.gitignore`，不要提交。
 
 ## 七、命名规则
 

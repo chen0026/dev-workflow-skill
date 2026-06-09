@@ -7,7 +7,7 @@
 1. 是否存在 `AGENTS.md`。
 2. 是否存在 `docs/`。
 3. `docs/` 是否已有旧文档。
-4. 是否已有 `docs/workflow.md`、`docs/index.md`、必要子目录和本地索引脚本。
+4. 是否已有 `docs/workflow.md`、必要子目录和本地索引脚本；`docs/index.md` 不是必需文件。
 
 处理规则：
 

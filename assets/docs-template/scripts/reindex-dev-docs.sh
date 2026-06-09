@@ -66,7 +66,7 @@ done < <(find "${find_args[@]}" | sort)
 if [ "$write_md" = "1" ]; then
   {
     printf '# 文档索引\n\n'
-    printf '> 此文件由 `scripts/reindex-dev-docs.sh --write-md` 生成。日常开发不要求提交它，避免多分支合并冲突。\n\n'
+    printf '> 此文件由 `scripts/reindex-dev-docs.sh --write-md` 生成。`docs/index.md` 默认加入 `.gitignore`，不要提交它，避免多分支合并冲突。\n\n'
     printf '| 类型 | 编号 | 标题 | 状态 | 路径 |\n'
     printf '|------|------|------|------|------|\n'
     sed -E 's/^\{"path":"([^"]+)","id":"([^"]+)","type":"([^"]+)","title":"([^"]+)","status":"([^"]+)".*/| \3 | \2 | \4 | \5 | `\1` |/' "$jsonl"

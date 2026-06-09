@@ -11,7 +11,6 @@ fail() {
 [ -f "AGENTS.md" ] || fail "缺少 AGENTS.md"
 [ -d "docs" ] || fail "缺少 docs/ 目录"
 [ -f "docs/workflow.md" ] || fail "缺少 docs/workflow.md"
-[ -f "docs/index.md" ] || fail "缺少 docs/index.md"
 
 for dir in docs/prd docs/requirements docs/tasks docs/bugs docs/design/decisions docs/acceptance docs/ops docs/legacy docs/archive; do
   [ -d "$dir" ] || fail "缺少目录：$dir"

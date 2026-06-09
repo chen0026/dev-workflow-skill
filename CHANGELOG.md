@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.14.0 - 2026-06-09
+
+- 将 `docs/index.md` 从必需项目文件改为可选生成文件，避免多分支合并冲突。
+- 初始化默认不再复制 `docs/index.md`。
+- 文档检查不再要求 `docs/index.md` 存在。
+- 初始化会把 `docs/index.md` 加入 `.gitignore`；旧项目可用 `git rm --cached docs/index.md` 停止跟踪。
+- `reindex-dev-docs.sh --write-md` 仍可临时生成人类可读索引，但默认不提交。
+
 ## 0.13.0 - 2026-06-06
 
 - 新增文档预算硬规则：quick 新增文档 0 个，standard 新增文档最多 1 个，strict 才允许完整链路。

@@ -65,7 +65,7 @@ if [ ! -f "AGENTS.md" ]; then
 
 默认禁止全量读取 `docs/archive/**`、全部 PRD、全部 REQ、全部 TASK、全部 BUG、全部 ACC、全部 ADR。必须先根据本地索引、当前任务关键词、模块名、功能名、编号筛选候选文档。
 
-`.dev-workflow/index/` 是可重建的本地机器索引，默认不提交。`docs/index.md` 只作为人类入口说明，不再作为每次任务必须手工更新的共享索引。
+`.dev-workflow/index/` 是可重建的本地机器索引，默认不提交。`docs/index.md` 是可选生成文件，默认忽略，不作为必需项目文件。
 EOF
   echo "dev-workflow: 已创建 AGENTS.md"
 elif ! grep -q "开发工作流强约束" "AGENTS.md"; then
@@ -81,12 +81,12 @@ elif ! grep -q "开发工作流强约束" "AGENTS.md"; then
 
 默认只读取 `AGENTS.md`、`docs/workflow.md`、`scripts/search-dev-docs.sh` 的候选结果、用户当前提供的 PRD / 需求 / Bug 描述、与当前任务直接相关的文档。默认禁止全量读取历史文档。
 
-`.dev-workflow/index/` 是可重建的本地机器索引，默认不提交。`docs/index.md` 只作为人类入口说明，不再作为每次任务必须手工更新的共享索引。
+`.dev-workflow/index/` 是可重建的本地机器索引，默认不提交。`docs/index.md` 是可选生成文件，默认忽略，不作为必需项目文件。
 EOF
   echo "dev-workflow: 已追加 AGENTS.md 规则"
 fi
 
-if [ -d "docs" ] && { [ ! -f "docs/workflow.md" ] || [ ! -f "docs/index.md" ]; }; then
+if [ -d "docs" ] && [ ! -f "docs/workflow.md" ]; then
   archive_dir="docs/archive/legacy-docs-$(date +%Y%m%d-%H%M%S)"
   movable="$(find docs -mindepth 1 -maxdepth 1 ! -name archive -print)"
 
@@ -105,7 +105,6 @@ mkdir -p docs
 rsync -a --ignore-existing \
   "$docs_source/README.md" \
   "$docs_source/workflow.md" \
-  "$docs_source/index.md" \
   docs/
 
 mkdir -p \
@@ -147,6 +146,10 @@ touch .gitignore
 if ! grep -qxF ".dev-workflow/index/" .gitignore; then
   printf '\n.dev-workflow/index/\n' >> .gitignore
   echo "dev-workflow: 已把 .dev-workflow/index/ 加入 .gitignore"
+fi
+if ! grep -qxF "docs/index.md" .gitignore; then
+  printf 'docs/index.md\n' >> .gitignore
+  echo "dev-workflow: 已把 docs/index.md 加入 .gitignore"
 fi
 
 if [ "$enable_hooks" = "1" ]; then

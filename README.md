@@ -143,7 +143,7 @@ quick 不强制写文档；standard 默认一个主记录；strict 才拆完整�
 - quick：新增文档 0 个。
 - standard：新增文档最多 1 个，Bug 用 BUG，功能 / 维护用 TASK。
 - strict：才允许完整链路。
-- 普通任务禁止同时新建 `TASK + BUG + ACC`，不手工更新 `docs/index.md`。
+- 普通任务禁止同时新建 `TASK + BUG + ACC`，不手工更新或提交 `docs/index.md`。
 
 默认禁止全量读取历史文档：先读 `AGENTS.md`、`docs/workflow.md`，再用 `scripts/search-dev-docs.sh` 查候选文档。
 
@@ -158,7 +158,13 @@ scripts/reindex-dev-docs.sh
 scripts/search-dev-docs.sh login
 ```
 
-`docs/index.md` 只作为人类入口说明，不再作为每次任务必须手工更新的共享索引，避免多分支合并冲突。
+`docs/index.md` 只是可选的人类可读生成文件，默认加入 `.gitignore`，不再作为每次任务必须手工更新的共享索引，避免多分支合并冲突。
+
+已经被 Git 跟踪的旧项目，可执行：
+
+```bash
+git rm --cached docs/index.md
+```
 
 ## 五、命名规则
 

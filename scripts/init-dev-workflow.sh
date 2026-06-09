@@ -43,7 +43,7 @@ else
   echo "dev-workflow: AGENTS.md 已包含工作流规则"
 fi
 
-if [ -d "docs" ] && { [ ! -f "docs/workflow.md" ] || [ ! -f "docs/index.md" ]; }; then
+if [ -d "docs" ] && [ ! -f "docs/workflow.md" ]; then
   archive_dir="docs/archive/legacy-docs-$(date +%Y%m%d-%H%M%S)"
   movable="$(find docs -mindepth 1 -maxdepth 1 ! -name archive -print)"
 
@@ -62,7 +62,6 @@ mkdir -p docs
 rsync -a --ignore-existing \
   "$template_dir/README.md" \
   "$template_dir/workflow.md" \
-  "$template_dir/index.md" \
   docs/
 
 mkdir -p \
@@ -104,6 +103,10 @@ touch .gitignore
 if ! grep -qxF ".dev-workflow/index/" .gitignore; then
   printf '\n.dev-workflow/index/\n' >> .gitignore
   echo "dev-workflow: 已把 .dev-workflow/index/ 加入 .gitignore"
+fi
+if ! grep -qxF "docs/index.md" .gitignore; then
+  printf 'docs/index.md\n' >> .gitignore
+  echo "dev-workflow: 已把 docs/index.md 加入 .gitignore"
 fi
 
 if [ "$enable_hooks" = "1" ]; then
