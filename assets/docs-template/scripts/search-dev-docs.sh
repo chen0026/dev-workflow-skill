@@ -3,7 +3,11 @@ set -euo pipefail
 
 query="${*:-}"
 index=".dev-workflow/index/docs.jsonl"
-reindex_script="scripts/reindex-dev-docs.sh"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+reindex_script="$script_dir/reindex-dev-docs.sh"
+if [ ! -x "$reindex_script" ] && [ -x "scripts/reindex-dev-docs.sh" ]; then
+  reindex_script="scripts/reindex-dev-docs.sh"
+fi
 
 index_needs_rebuild() {
   if [ ! -f "$index" ]; then

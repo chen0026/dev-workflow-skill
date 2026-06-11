@@ -2,6 +2,7 @@
 set -euo pipefail
 
 mode="${1:-working}"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 fail() {
   echo "dev-workflow: $1"
@@ -17,12 +18,14 @@ for dir in docs/prd docs/requirements docs/tasks docs/bugs docs/design/decisions
 done
 
 mkdir -p .dev-workflow/index
-if [ -x "scripts/reindex-dev-docs.sh" ]; then
+if [ -x "$script_dir/reindex-dev-docs.sh" ]; then
+  "$script_dir/reindex-dev-docs.sh" >/dev/null
+elif [ -x "scripts/reindex-dev-docs.sh" ]; then
   scripts/reindex-dev-docs.sh >/dev/null
-  [ -f ".dev-workflow/index/docs.jsonl" ] || fail "无法生成 .dev-workflow/index/docs.jsonl"
 else
-  echo "dev-workflow: 未找到 scripts/reindex-dev-docs.sh，跳过本地索引重建"
+  echo "dev-workflow: 未找到 reindex-dev-docs.sh，跳过本地索引重建"
 fi
+[ -f ".dev-workflow/index/docs.jsonl" ] || fail "无法生成 .dev-workflow/index/docs.jsonl"
 
 if git rev-parse --git-dir >/dev/null 2>&1; then
   if [ "$mode" = "--staged" ] || [ "$mode" = "staged" ]; then

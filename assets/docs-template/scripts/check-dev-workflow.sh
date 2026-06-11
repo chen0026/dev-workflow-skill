@@ -3,9 +3,12 @@ set -euo pipefail
 
 mode="${1:-pre-commit}"
 tracking_id_regex='(PRD|REQ|TASK|BUG|ADR|ACC|OPS|LEGACY)-(([0-9]{8}-[0-9]{6}-[a-z0-9]{4})|([0-9]{4}))'
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if [ "$mode" = "pre-commit" ]; then
-  if [ -x "scripts/check-dev-docs.sh" ]; then
+  if [ -x "$script_dir/check-dev-docs.sh" ]; then
+    "$script_dir/check-dev-docs.sh" --staged
+  elif [ -x "scripts/check-dev-docs.sh" ]; then
     scripts/check-dev-docs.sh --staged
   fi
 

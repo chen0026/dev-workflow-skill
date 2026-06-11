@@ -26,6 +26,7 @@ rsync -a --delete --exclude .git ./ "$CODEX_HOME/skills/dev-workflow/"
 /dev-workflow init --hooks
 /dev-workflow check
 /dev-workflow clean-templates
+/dev-workflow clean-scripts
 /dev-workflow version
 /dev-workflow doctor
 修复登录态过期后没有刷新
@@ -48,13 +49,12 @@ rsync -a --delete --exclude .git ./ "$CODEX_HOME/skills/dev-workflow/"
 
 - `AGENTS.md`
 - `docs/`
-- `scripts/`
 - `.githooks/`
 - `.dev-workflow/index/`
 
-默认不会把 `TEMPLATE.md` 复制到项目目录。模板保存在已安装的 Skill 中，`scripts/new-doc.sh` 会从 Skill 模板创建新文档。
+默认不会把 `TEMPLATE.md` 或通用脚本复制到项目目录。模板和脚本保存在已安装的 Skill 中。
 
-老项目升级时也可以再次运行 `/dev-workflow init`。它会补齐缺失结构，并强制更新 `scripts/dev-workflow-harness.sh`、`scripts/search-dev-docs.sh`、`scripts/reindex-dev-docs.sh`，但不会覆盖其它已有脚本和文档。
+老项目升级时也可以再次运行 `/dev-workflow init`。它会补齐缺失结构并更新 `.githooks/`，但不会复制或覆盖项目 `scripts/`。
 
 如果项目已有旧 `docs/`，会归档到：
 
@@ -78,16 +78,24 @@ Git hooks 是项目级门禁，只对当前项目生效。正式项目建议启�
 
 只有项目需要完全自包含模板时才使用。一般项目不建议复制模板，避免误改 `TEMPLATE.md`。
 
+### 初始化并复制脚本
+
+```text
+/dev-workflow init --with-scripts
+```
+
+只有项目需要完全自包含、脱离已安装 skill 运行时才使用。一般项目不建议复制脚本，避免项目目录被通用工具污染。
+
 ### 检查文档
 
 ```text
 /dev-workflow check
 ```
 
-会运行项目内：
+会运行已安装 skill 内：
 
 ```bash
-scripts/check-dev-docs.sh
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/check-dev-docs.sh"
 ```
 
 检查必要目录、任务验收关联、代码变更是否同步文档，并重建本地索引。
@@ -95,13 +103,11 @@ scripts/check-dev-docs.sh
 ### Harness 检查
 
 ```bash
-scripts/dev-workflow-harness.sh version
-scripts/dev-workflow-harness.sh doctor
-scripts/dev-workflow-harness.sh classify "修复文件夹重命名 bug"
-scripts/dev-workflow-harness.sh run "修复文件夹重命名 bug"
-scripts/dev-workflow-harness.sh report "修复文件夹重命名 bug"
-scripts/dev-workflow-harness.sh verify "修复文件夹重命名 bug"
-scripts/dev-workflow-harness.sh check
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/dev-workflow-harness.sh" version
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/dev-workflow-harness.sh" doctor
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/dev-workflow-harness.sh" run "修复文件夹重命名 bug"
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/dev-workflow-harness.sh" verify "修复文件夹重命名 bug"
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/dev-workflow-harness.sh" check
 ```
 
 `doctor` 用来检查当前项目是否接入完整、项目内 harness 是否过期、hooks 是否启用、索引是否存在。重点看 `upgrade_needed / missing_required / doctor_status / next_action`。
@@ -119,7 +125,19 @@ scripts/dev-workflow-harness.sh check
 确认后执行：
 
 ```bash
-scripts/clean-templates.sh --apply
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/clean-templates.sh" --apply
+```
+
+### 清理项目脚本副本
+
+```text
+/dev-workflow clean-scripts
+```
+
+默认只预览项目内 dev-workflow 脚本副本，不会删除。确认后执行：
+
+```bash
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/clean-project-scripts.sh" --apply
 ```
 
 ## 三、工作流闭环
@@ -179,7 +197,7 @@ quick 不强制写文档；standard 默认一个主记录；strict 才拆完整�
 - strict：才允许完整链路。
 - 普通任务禁止同时新建 `TASK + BUG + ACC`，不手工更新或提交 `docs/index.md`。
 
-默认禁止全量读取历史文档：先读 `AGENTS.md`、`docs/workflow.md`，再用 `scripts/search-dev-docs.sh` 查候选文档。
+默认禁止全量读取历史文档：先读 `AGENTS.md`、`docs/workflow.md`，再用 skill 脚本 `search-dev-docs.sh` 查候选文档。
 
 `SKILL.md` 只保留硬规则，详细规则按需读取 `references/`。
 
@@ -188,14 +206,14 @@ quick 不强制写文档；standard 默认一个主记录；strict 才拆完整�
 本地文档索引用 `.dev-workflow/index/docs.jsonl`，默认不提交。日常直接搜索即可；索引缺失或真实文档更新时，搜索脚本会自动重建：
 
 ```bash
-scripts/search-dev-docs.sh login
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/search-dev-docs.sh" login
 ```
 
 需要手动重建或生成临时人类可读索引时，再执行：
 
 ```bash
-scripts/reindex-dev-docs.sh
-scripts/reindex-dev-docs.sh --write-md
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/reindex-dev-docs.sh"
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/reindex-dev-docs.sh" --write-md
 ```
 
 `docs/index.md` 只是可选的人类可读生成文件，默认加入 `.gitignore`，不再作为每次任务必须手工更新的共享索引，避免多分支合并冲突。
@@ -234,13 +252,13 @@ REQ-20260529-101500-a1b2-member-revamp.md
 可以用脚本生成编号：
 
 ```bash
-scripts/new-doc-id.sh TASK login-api
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/new-doc-id.sh" TASK login-api
 ```
 
 也可以直接从模板创建新文档：
 
 ```bash
-scripts/new-doc.sh TASK login-api
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/new-doc.sh" TASK login-api
 ```
 
 `docs/**/TEMPLATE.md` 是母版。日常任务只能复制模板创建新文档，禁止直接填写或修改 `TEMPLATE.md`；只有明确要求修改模板时例外。
@@ -248,7 +266,7 @@ scripts/new-doc.sh TASK login-api
 默认初始化不把模板放进项目目录。需要项目自包含模板时，使用：
 
 ```bash
-scripts/init-dev-workflow.sh --with-templates
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/init-dev-workflow.sh" --with-templates
 ```
 
 ## 六、PRD 追踪矩阵和 TDD
@@ -298,7 +316,7 @@ assets/docs-template/.githooks/
 
 ```bash
 git config core.hooksPath .githooks
-chmod +x .githooks/pre-commit .githooks/commit-msg scripts/check-dev-workflow.sh
+chmod +x .githooks/pre-commit .githooks/commit-msg
 ```
 
 关闭方式：

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.19.0 - 2026-06-11
+
+- `/dev-workflow init` 默认不再复制通用脚本到项目 `scripts/`，只初始化 `AGENTS.md`、`docs/`、`.githooks/`、`.gitignore` 和本地索引目录。
+- 新增 `/dev-workflow init --with-scripts`，仅在项目需要完全自包含时复制脚本。
+- Git hooks 改为优先调用已安装 skill 目录中的 `check-dev-workflow.sh`，项目脚本只作为 fallback。
+- 新增 `scripts/clean-project-scripts.sh`，用于预览并清理老项目中已复制的 dev-workflow 脚本副本。
+- 脚本间调用改为优先使用 skill 内同目录脚本，支持从 skill 目录直接操作项目工作区。
+- 更新 README、AGENTS 模板和 workflow 模板，默认指向 skill 脚本而不是项目 `scripts/`。
+
 ## 0.18.0 - 2026-06-11
 
 - `scripts/search-dev-docs.sh` 现在会在本地索引缺失或真实文档比索引更新时自动运行 `scripts/reindex-dev-docs.sh`。

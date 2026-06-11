@@ -9,14 +9,14 @@
 开发任务不要求用户记命令。收到自然语言任务后，先运行：
 
 ```bash
-scripts/dev-workflow-harness.sh run "用户任务描述"
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" run "用户任务描述"
 ```
 
 按输出的 `flow / docs_allowed / next_action` 执行。完成前运行：
 
 ```bash
-scripts/dev-workflow-harness.sh verify "用户任务描述"
-scripts/dev-workflow-harness.sh check
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" verify "用户任务描述"
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" check
 ```
 
 `verify` 只检查完整性；需求是否一致必须等待人工审核确认。
@@ -36,7 +36,7 @@ scripts/dev-workflow-harness.sh check
 
 1. `AGENTS.md`
 2. `docs/workflow.md`
-3. `scripts/search-dev-docs.sh` 的候选结果或 `.dev-workflow/index/docs.jsonl`
+3. skill 脚本 `search-dev-docs.sh` 的候选结果或 `.dev-workflow/index/docs.jsonl`
 4. 用户当前提供的 PRD / 需求 / Bug 描述
 5. 当前任务直接相关的文档、代码和测试
 

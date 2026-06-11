@@ -1,11 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-harness_version="0.18.0"
+harness_version="0.19.0"
 cmd="${1:-run}"
 shift || true
 
-skill_root="${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+script_skill_root="$(cd "$script_dir/.." && pwd)"
+if [ -f "$script_skill_root/VERSION" ]; then
+  default_skill_root="$script_skill_root"
+else
+  default_skill_root="${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow"
+fi
+skill_root="${DEV_WORKFLOW_SKILL_ROOT:-$default_skill_root}"
 version_file="$skill_root/VERSION"
 
 installed_skill_version() {
@@ -161,7 +168,11 @@ count_matching_files() {
 }
 
 check() {
-  if [ -x "scripts/check-dev-docs.sh" ]; then
+  if [ -x "$skill_root/scripts/check-dev-docs.sh" ]; then
+    "$skill_root/scripts/check-dev-docs.sh" >/dev/null
+  elif [ -x "$script_dir/check-dev-docs.sh" ]; then
+    "$script_dir/check-dev-docs.sh" >/dev/null
+  elif [ -x "scripts/check-dev-docs.sh" ]; then
     scripts/check-dev-docs.sh >/dev/null
   fi
 
@@ -203,8 +214,8 @@ run() {
       printf 'next_action: create_and_confirm_REQ_before_coding\n'
       ;;
   esac
-  printf 'verify_command: scripts/dev-workflow-harness.sh verify "%s"\n' "$*"
-  printf 'check_command: scripts/dev-workflow-harness.sh check\n'
+  printf 'verify_command: %s/scripts/dev-workflow-harness.sh verify "%s"\n' "$skill_root" "$*"
+  printf 'check_command: %s/scripts/dev-workflow-harness.sh check\n' "$skill_root"
 }
 
 doctor() {
@@ -213,6 +224,7 @@ doctor() {
   installed_version="$(installed_skill_version)"
   upgrade_needed="false"
   missing_required=""
+  project_scripts_present="false"
 
   add_missing() {
     if [ -z "$missing_required" ]; then
@@ -225,9 +237,13 @@ doctor() {
   [ -f "AGENTS.md" ] || add_missing "AGENTS.md"
   [ -d "docs" ] || add_missing "docs/"
   [ -f "docs/workflow.md" ] || add_missing "docs/workflow.md"
-  [ -x "$project_harness_file" ] || add_missing "$project_harness_file"
 
-  if [ "$project_harness_version" != "$installed_version" ]; then
+  project_script_probe="$(find scripts -maxdepth 1 -type f \( -name 'dev-workflow-harness.sh' -o -name 'search-dev-docs.sh' -o -name 'reindex-dev-docs.sh' -o -name 'new-doc.sh' -o -name 'new-doc-id.sh' -o -name 'check-dev-docs.sh' -o -name 'check-dev-workflow.sh' -o -name 'clean-templates.sh' -o -name 'clean-project-scripts.sh' -o -name 'session-state.sh' -o -name 'init-dev-workflow.sh' \) -print -quit 2>/dev/null || true)"
+  if [ -n "$project_script_probe" ]; then
+    project_scripts_present="true"
+  fi
+
+  if [ "$project_harness_version" != "missing" ] && [ "$project_harness_version" != "$installed_version" ]; then
     upgrade_needed="true"
   fi
 
@@ -253,8 +269,8 @@ doctor() {
     doctor_status="needs_init"
     next_action="/dev-workflow init"
   elif [ "$upgrade_needed" = "true" ]; then
-    doctor_status="upgrade_needed"
-    next_action="/dev-workflow init"
+    doctor_status="project_scripts_legacy"
+    next_action="/dev-workflow clean-scripts 或 /dev-workflow init --with-scripts"
   elif [ "$(docs_index_tracked)" = "true" ]; then
     doctor_status="blocked"
     next_action="git rm --cached docs/index.md"
@@ -269,6 +285,8 @@ doctor() {
   printf 'installed_skill_version: %s\n' "$installed_version"
   printf 'project_harness_version: %s\n' "$project_harness_version"
   printf 'project_harness_file: %s\n' "$project_harness_file"
+  printf 'project_scripts_present: %s\n' "$project_scripts_present"
+  printf 'using_skill_scripts: true\n'
   printf 'upgrade_needed: %s\n' "$upgrade_needed"
   printf 'missing_required: %s\n' "$missing_required"
   printf 'docs_index_tracked: %s\n' "$(docs_index_tracked)"

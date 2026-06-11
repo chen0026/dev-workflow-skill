@@ -38,8 +38,8 @@ REQ 未确认前，不创建实现代码，不修改业务代码。
 完成前运行：
 
 ```bash
-scripts/dev-workflow-harness.sh verify "任务描述"
-scripts/dev-workflow-harness.sh check
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" verify "任务描述"
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" check
 ```
 
 机器只检查完整性：
@@ -115,10 +115,10 @@ scripts/dev-workflow-harness.sh check
 脚本：
 
 ```bash
-scripts/session-state.sh create TASK-xxx
-scripts/session-state.sh list
-scripts/session-state.sh clean
-scripts/session-state.sh clean --apply
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/session-state.sh" create TASK-xxx
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/session-state.sh" list
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/session-state.sh" clean
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/session-state.sh" clean --apply
 ```
 
 ## Superpowers Integration

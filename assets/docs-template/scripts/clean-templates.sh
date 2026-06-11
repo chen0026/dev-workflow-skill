@@ -31,7 +31,7 @@ if [ "$apply" != "1" ]; then
   echo "dev-workflow: 将清理以下模板文件（预览，不会删除）："
   printf '%s\n' "$templates"
   echo
-  echo "dev-workflow: 确认后执行 scripts/clean-templates.sh --apply"
+  echo "dev-workflow: 确认后重新执行本脚本并加 --apply"
   exit 0
 fi
 

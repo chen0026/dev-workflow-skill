@@ -4,14 +4,18 @@ set -euo pipefail
 target_dir="$(pwd)"
 enable_hooks="0"
 with_templates="0"
+with_scripts="0"
 
 for arg in "$@"; do
   case "$arg" in
-    --enable-hooks)
+    --enable-hooks|--hooks)
       enable_hooks="1"
       ;;
     --with-templates)
       with_templates="1"
+      ;;
+    --with-scripts)
+      with_scripts="1"
       ;;
     *)
       target_dir="$arg"
@@ -19,11 +23,17 @@ for arg in "$@"; do
   esac
 done
 
-skill_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-template_dir="$skill_root/assets/docs-template"
+script_parent="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if [ -d "$script_parent/assets/docs-template" ]; then
+  skill_root="$script_parent"
+  template_dir="$skill_root/assets/docs-template"
+else
+  skill_root="${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}"
+  template_dir="$script_parent"
+fi
 
-if [ ! -d "$template_dir" ]; then
-  echo "dev-workflow: 找不到模板目录：$template_dir"
+if [ ! -f "$template_dir/workflow.md" ]; then
+  echo "dev-workflow: 找不到模板目录或 workflow.md：$template_dir"
   exit 1
 fi
 
@@ -31,13 +41,52 @@ mkdir -p "$target_dir"
 cd "$target_dir"
 
 if [ ! -f "AGENTS.md" ]; then
-  cp "$skill_root/assets/agents-template.md" "AGENTS.md"
+  if [ -f "$skill_root/assets/agents-template.md" ]; then
+    cp "$skill_root/assets/agents-template.md" "AGENTS.md"
+  else
+    cat > "AGENTS.md" <<'EOF'
+# AGENTS.md
+
+## Dev Workflow
+
+所有新功能、Bug 修复、重构、维护、PRD、改版和需求类任务必须遵守 `docs/workflow.md`。
+
+## Harness-first
+
+开发任务不要求用户记命令。收到自然语言任务后，先运行：
+
+```bash
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" run "用户任务描述"
+```
+
+完成前运行：
+
+```bash
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" verify "用户任务描述"
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" check
+```
+
+`verify` 只检查完整性；需求是否一致必须等待人工审核确认。未经用户批准，不得提交代码。
+EOF
+  fi
   echo "dev-workflow: 已创建 AGENTS.md"
 elif ! grep -Eq "Dev Workflow|Harness-first|开发工作流强约束" "AGENTS.md"; then
-  {
-    printf '\n\n'
-    cat "$skill_root/assets/agents-rule.md"
-  } >> "AGENTS.md"
+  if [ -f "$skill_root/assets/agents-rule.md" ]; then
+    {
+      printf '\n\n'
+      cat "$skill_root/assets/agents-rule.md"
+    } >> "AGENTS.md"
+  else
+    cat >> "AGENTS.md" <<'EOF'
+
+
+## Dev Workflow
+
+所有新功能、Bug 修复、重构、维护、PRD、改版和需求类任务必须遵守 `docs/workflow.md`。
+
+收到自然语言开发任务后，先运行已安装 skill 的 `dev-workflow-harness.sh run "用户任务描述"`；完成前运行 `dev-workflow-harness.sh verify "用户任务描述"` 和 `dev-workflow-harness.sh check`。未经用户批准，不得提交代码。
+EOF
+  fi
   echo "dev-workflow: 已追加 AGENTS.md 规则"
 else
   echo "dev-workflow: AGENTS.md 已包含工作流规则"
@@ -76,8 +125,7 @@ mkdir -p \
   docs/archive \
   .dev-workflow/index \
   .dev-workflow/session \
-  .githooks \
-  scripts
+  .githooks
 
 if [ "$with_templates" = "1" ]; then
   rsync -a --ignore-existing \
@@ -94,13 +142,19 @@ if [ "$with_templates" = "1" ]; then
 fi
 
 rsync -a --ignore-existing "$template_dir/.githooks/" .githooks/
-rsync -a --ignore-existing "$template_dir/scripts/" scripts/
-rsync -a "$template_dir/scripts/dev-workflow-harness.sh" scripts/dev-workflow-harness.sh
-rsync -a "$template_dir/scripts/search-dev-docs.sh" scripts/search-dev-docs.sh
-rsync -a "$template_dir/scripts/reindex-dev-docs.sh" scripts/reindex-dev-docs.sh
+rsync -a "$template_dir/.githooks/pre-commit" .githooks/pre-commit
+rsync -a "$template_dir/.githooks/commit-msg" .githooks/commit-msg
 
-chmod +x .githooks/pre-commit .githooks/commit-msg scripts/check-dev-workflow.sh 2>/dev/null || true
-chmod +x scripts/init-dev-workflow.sh scripts/check-dev-docs.sh scripts/new-doc-id.sh scripts/new-doc.sh scripts/clean-templates.sh scripts/session-state.sh scripts/reindex-dev-docs.sh scripts/search-dev-docs.sh scripts/dev-workflow-harness.sh 2>/dev/null || true
+if [ "$with_scripts" = "1" ]; then
+  mkdir -p scripts
+  rsync -a "$template_dir/scripts/" scripts/
+  echo "dev-workflow: 已复制脚本到项目 scripts/"
+fi
+
+chmod +x .githooks/pre-commit .githooks/commit-msg 2>/dev/null || true
+if [ "$with_scripts" = "1" ]; then
+  chmod +x scripts/*.sh 2>/dev/null || true
+fi
 
 touch .gitignore
 if ! grep -qxF ".dev-workflow/index/" .gitignore; then

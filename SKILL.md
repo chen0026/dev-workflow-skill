@@ -12,16 +12,16 @@ Harness-first 的轻量开发工作流。用户不需要记流程命令；开发
 当用户提出 Bug、功能、重构、维护、PRD、改版或需求类任务时，自动运行：
 
 ```bash
-scripts/dev-workflow-harness.sh run "用户任务描述"
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" run "用户任务描述"
 ```
 
-如果项目内没有脚本，使用已安装 skill 的同名脚本。按输出的 `flow / docs_allowed / next_action` 执行；不要要求用户手动选择 quick/standard/strict。
+按输出的 `flow / docs_allowed / next_action` 执行；不要要求用户手动选择 quick/standard/strict。
 
 完成前运行：
 
 ```bash
-scripts/dev-workflow-harness.sh verify "用户任务描述"
-scripts/dev-workflow-harness.sh check
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" verify "用户任务描述"
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" check
 ```
 
 ## Maintenance Commands
@@ -29,10 +29,12 @@ scripts/dev-workflow-harness.sh check
 - `/dev-workflow init`：初始化项目结构。
 - `/dev-workflow init --hooks`：初始化并启用 Git hooks。
 - `/dev-workflow init --with-templates`：初始化并复制模板；默认不复制模板。
+- `/dev-workflow init --with-scripts`：初始化并复制脚本到项目；默认不复制脚本。
 - `/dev-workflow check`：运行项目检查。
 - `/dev-workflow version`：输出 skill 版本。
 - `/dev-workflow doctor`：运行已安装 skill 的 `doctor`，检查当前项目 harness 版本、目录、hooks、索引和升级建议。
 - `/dev-workflow clean-templates`：预览并按确认清理项目内模板副本。
+- `/dev-workflow clean-scripts`：预览并按确认清理项目内 dev-workflow 脚本副本。
 
 项目脚本缺失时使用：
 

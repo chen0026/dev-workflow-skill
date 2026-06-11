@@ -3,6 +3,8 @@ set -euo pipefail
 
 type="${1:?usage: scripts/new-doc.sh TYPE short-title}"
 title="${2:?usage: scripts/new-doc.sh TYPE short-title}"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+skill_root="$(cd "$script_dir/.." && pwd)"
 
 case "$type" in
   PRD)
@@ -44,19 +46,29 @@ case "$type" in
 esac
 
 local_template="$dir/TEMPLATE.md"
-skill_template="${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/assets/docs-template/$template_rel"
+skill_template="$skill_root/assets/docs-template/$template_rel"
+installed_template="${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/assets/docs-template/$template_rel"
 
 if [ -f "$local_template" ]; then
   template="$local_template"
 elif [ -f "$skill_template" ]; then
   template="$skill_template"
+elif [ -f "$installed_template" ]; then
+  template="$installed_template"
 else
-  echo "dev-workflow: 找不到模板：$local_template 或 $skill_template"
+  echo "dev-workflow: 找不到模板：$local_template、$skill_template 或 $installed_template"
   echo "dev-workflow: 请确认已安装 dev-workflow，或使用 init --with-templates 初始化项目模板。"
   exit 1
 fi
 
-id="$(scripts/new-doc-id.sh "$type" "$title")"
+if [ -x "$script_dir/new-doc-id.sh" ]; then
+  id="$("$script_dir/new-doc-id.sh" "$type" "$title")"
+elif [ -x "scripts/new-doc-id.sh" ]; then
+  id="$(scripts/new-doc-id.sh "$type" "$title")"
+else
+  echo "dev-workflow: 找不到 new-doc-id.sh"
+  exit 1
+fi
 target="$dir/$id.md"
 
 mkdir -p "$dir"

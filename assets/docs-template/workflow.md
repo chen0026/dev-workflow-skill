@@ -15,20 +15,20 @@
 开发任务不要求用户记命令。收到自然语言任务后，先运行：
 
 ```bash
-scripts/dev-workflow-harness.sh run "用户任务描述"
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" run "用户任务描述"
 ```
 
 如果项目脚本可能过期、hooks 不确定、或初始化状态不明，先运行：
 
 ```bash
-scripts/dev-workflow-harness.sh doctor
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" doctor
 ```
 
 按输出的 `flow / docs_allowed / next_action` 执行。完成前运行：
 
 ```bash
-scripts/dev-workflow-harness.sh verify "用户任务描述"
-scripts/dev-workflow-harness.sh check
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" verify "用户任务描述"
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" check
 ```
 
 `verify` 只检查完整性；需求是否一致必须由人工审核确认。
@@ -55,15 +55,15 @@ scripts/dev-workflow-harness.sh check
 初始化脚本：
 
 ```bash
-scripts/init-dev-workflow.sh
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/init-dev-workflow.sh"
 ```
 
-默认初始化不会把 `TEMPLATE.md` 复制到项目目录，只创建文档目录和脚本。
+默认初始化不会把 `TEMPLATE.md` 或通用脚本复制到项目目录，只创建文档目录和 Git hooks 入口。
 
 如果项目需要自包含模板：
 
 ```bash
-scripts/init-dev-workflow.sh --with-templates
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/init-dev-workflow.sh" --with-templates
 ```
 
 Codex 快捷提示：
@@ -76,7 +76,7 @@ Codex 快捷提示：
 初始化并启用 Git hooks：
 
 ```bash
-scripts/init-dev-workflow.sh --enable-hooks
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/init-dev-workflow.sh" --enable-hooks
 ```
 
 Codex 快捷提示：
@@ -92,7 +92,7 @@ Codex 快捷提示：
 
 1. `AGENTS.md`
 2. `docs/workflow.md`
-3. `scripts/search-dev-docs.sh` 的候选结果，或 `.dev-workflow/index/docs.jsonl`
+3. skill 脚本 `search-dev-docs.sh` 的候选结果，或 `.dev-workflow/index/docs.jsonl`
 4. 当前任务关联的 `PRD / REQ / TASK / BUG / ADR / ACC`
 5. `docs/design/` 和 `docs/ops/`
 6. `docs/legacy/`
@@ -107,7 +107,7 @@ Codex 快捷提示：
 
 - `AGENTS.md`
 - `docs/workflow.md`
-- `scripts/search-dev-docs.sh` 的候选结果，或 `.dev-workflow/index/docs.jsonl` 中的少量匹配行
+- skill 脚本 `search-dev-docs.sh` 的候选结果，或 `.dev-workflow/index/docs.jsonl` 中的少量匹配行
 - 用户当前提供的 PRD / 需求 / Bug 描述
 - 与当前任务直接相关的文档
 
@@ -121,7 +121,7 @@ Codex 快捷提示：
 - 全部 ACC
 - 全部 ADR
 
-先用 `scripts/search-dev-docs.sh` 根据当前任务关键词、模块名、功能名、编号筛选候选文档。候选过多时，先列候选和选择依据。
+先用 skill 脚本 `search-dev-docs.sh` 根据当前任务关键词、模块名、功能名、编号筛选候选文档。候选过多时，先列候选和选择依据。
 
 ## 五、本地索引
 
@@ -130,26 +130,26 @@ Codex 快捷提示：
 日常检索：
 
 ```bash
-scripts/search-dev-docs.sh login
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/search-dev-docs.sh" login
 ```
 
 索引缺失或真实文档更新时，`search-dev-docs.sh` 会自动重建。需要手动重建时执行：
 
 ```bash
-scripts/reindex-dev-docs.sh
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/reindex-dev-docs.sh"
 ```
 
 `docs/index.md` 只是可选的人类可读生成文件，不再作为每次任务必须手工更新的共享索引。如果需要临时生成可读索引，可执行：
 
 ```bash
-scripts/reindex-dev-docs.sh --write-md
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/reindex-dev-docs.sh" --write-md
 ```
 
 `docs/index.md` 默认加入 `.gitignore`，不要提交，避免多分支合并冲突。
 
 ## 六、自动流程分级
 
-默认自动选择流程强度，不要求用户手动指定。先用 `scripts/dev-workflow-harness.sh run "任务描述"` 获取初始护栏和 `flow_reason`。默认从 `quick` 起步，只有发现明确风险信号才升级：
+默认自动选择流程强度，不要求用户手动指定。先用 skill 脚本 `dev-workflow-harness.sh run "任务描述"` 获取初始护栏和 `flow_reason`。默认从 `quick` 起步，只有发现明确风险信号才升级：
 
 - `quick`：文案、样式、小配置、小功能、小 Bug、单文件或低风险改动。少读历史，默认只写摘要。
 - `standard`：普通 Bug、普通功能调整、单模块功能。默认一个 `TASK` 或 `BUG` 主记录，验证、审查、验收结论写在同一文档。
@@ -201,18 +201,18 @@ acceptance/ACC-20260528-155000-e5f6-user-login.md
 新建文档时优先使用：
 
 ```bash
-scripts/new-doc.sh TASK login-api
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/new-doc.sh" TASK login-api
 ```
 
 如果没有脚本，先复制对应 `TEMPLATE.md` 到带编号的新文件，再填写新文件。
 
-如果项目需要自包含模板，使用 `scripts/init-dev-workflow.sh --with-templates`。
+如果项目需要自包含模板，使用 skill 脚本 `init-dev-workflow.sh --with-templates`。
 
 已经初始化过的旧项目如需清理模板：
 
 ```bash
-scripts/clean-templates.sh
-scripts/clean-templates.sh --apply
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/clean-templates.sh"
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/clean-templates.sh" --apply
 ```
 
 日常开发、Bug 修复、验收、改版时，禁止直接修改任何 `TEMPLATE.md`。只有明确提出“修改模板”或“升级 dev-workflow 模板”时，才允许改模板。
@@ -324,9 +324,9 @@ legacy/LEGACY-20260528-160000-a7b8-current-system-summary.md
 
 最终回复前必须确认：
 
-- 如环境不确定，已运行 `scripts/dev-workflow-harness.sh doctor`。
-- 已运行 `scripts/dev-workflow-harness.sh verify "任务描述"`。
-- 已运行 `scripts/dev-workflow-harness.sh check`。
+- 如环境不确定，已运行 skill 脚本 `dev-workflow-harness.sh doctor`。
+- 已运行 skill 脚本 `dev-workflow-harness.sh verify "任务描述"`。
+- 已运行 skill 脚本 `dev-workflow-harness.sh check`。
 - 已按流程级别创建或更新文档；quick 可无正式文档。
 - PRD / 改版任务已建立并确认 REQ 需求追踪矩阵。
 - standard 的 TASK 或 BUG 写明实际改动、验证结果、代码审查和验收结论。
@@ -339,7 +339,7 @@ legacy/LEGACY-20260528-160000-a7b8-current-system-summary.md
 可执行脚本检查：
 
 ```bash
-scripts/check-dev-docs.sh
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/check-dev-docs.sh"
 ```
 
 Codex 快捷提示：
@@ -427,7 +427,7 @@ subagent 的结论必须回填到对应文档：
 
 ```bash
 git config core.hooksPath .githooks
-chmod +x .githooks/pre-commit .githooks/commit-msg scripts/check-dev-workflow.sh
+chmod +x .githooks/pre-commit .githooks/commit-msg
 ```
 
 确认是否启用：

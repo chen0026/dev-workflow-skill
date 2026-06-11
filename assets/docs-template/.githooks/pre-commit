@@ -1,4 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-scripts/check-dev-workflow.sh pre-commit
+skill_root="${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}"
+
+if [ -x "$skill_root/scripts/check-dev-workflow.sh" ]; then
+  "$skill_root/scripts/check-dev-workflow.sh" pre-commit
+elif [ -x "scripts/check-dev-workflow.sh" ]; then
+  scripts/check-dev-workflow.sh pre-commit
+else
+  echo "dev-workflow: 找不到 check-dev-workflow.sh"
+  exit 1
+fi

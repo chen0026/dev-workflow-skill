@@ -5,7 +5,7 @@
 默认自动分级，不要求用户手动选择。自然语言开发任务先运行：
 
 ```bash
-scripts/dev-workflow-harness.sh run "任务描述"
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" run "任务描述"
 ```
 
 默认从 `quick` 起步；只有发现明确风险信号，才升级到 `standard` 或 `strict`。用户可以显式覆盖：`quick / standard / strict`。
@@ -138,7 +138,7 @@ TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md
 - `XXXX`：4 位小写随机码。
 - `short-title`：英文短标题，使用小写和连字符。
 
-项目内如存在 `scripts/new-doc-id.sh`，优先用它生成编号。
+使用 skill 脚本 `new-doc-id.sh` 生成编号；项目自包含模式下也可使用项目内副本。
 
 ## 上下文预算
 
@@ -148,7 +148,7 @@ TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md
 
 - `AGENTS.md`
 - `docs/workflow.md`
-- `scripts/search-dev-docs.sh` 的候选结果，或 `.dev-workflow/index/docs.jsonl` 中的少量匹配行
+- skill 脚本 `search-dev-docs.sh` 的候选结果，或 `.dev-workflow/index/docs.jsonl` 中的少量匹配行
 - 用户当前提供的 PRD / 需求 / Bug 描述
 - 与当前任务直接相关的文档
 
@@ -164,8 +164,8 @@ TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md
 
 查找顺序：
 
-1. 用 `scripts/search-dev-docs.sh 关键词` 按任务关键词、模块名、功能名、编号筛选候选文档；索引缺失或真实文档更新时，search 会自动重建。
-2. 只在需要强制刷新、生成 `docs/index.md`、或排查索引问题时手动运行 `scripts/reindex-dev-docs.sh`。
+1. 用 skill 脚本 `search-dev-docs.sh 关键词` 按任务关键词、模块名、功能名、编号筛选候选文档；索引缺失或真实文档更新时，search 会自动重建。
+2. 只在需要强制刷新、生成 `docs/index.md`、或排查索引问题时手动运行 skill 脚本 `reindex-dev-docs.sh`。
 3. 只打开候选文档中最相关的 1-5 个。
 4. 如果候选过多，先列出候选并说明选择依据。
 5. 只有搜索结果不足、任务涉及历史行为、或当前代码与文档冲突时，才搜索更多 docs。

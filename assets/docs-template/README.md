@@ -37,16 +37,14 @@
 
 ## 脚本
 
-- `scripts/init-dev-workflow.sh`：初始化 `AGENTS.md`、`docs/`、`.githooks/` 和检查脚本。
-- `scripts/check-dev-docs.sh`：检查必要目录、主记录关键字段，并重建本地索引。
-- `scripts/check-dev-workflow.sh`：供 Git hooks 调用的提交门禁脚本。
-- `scripts/new-doc-id.sh`：生成时间戳文档编号，例如 `scripts/new-doc-id.sh TASK login-api`。
-- `scripts/new-doc.sh`：从模板创建新文档，例如 `scripts/new-doc.sh TASK login-api`。
-- `scripts/clean-templates.sh`：清理旧项目中已经复制进去的 `docs/**/TEMPLATE.md`，默认只预览。
-- `scripts/session-state.sh`：管理长任务临时状态文件，减少上下文占用。
-- `scripts/reindex-dev-docs.sh`：手动生成 `.dev-workflow/index/docs.jsonl` 本地机器索引。
-- `scripts/search-dev-docs.sh`：按关键词检索历史文档；索引缺失或过期时自动重建。
-- `scripts/dev-workflow-harness.sh`：自然语言任务入口，输出流程分级、文档预算、需求验收状态和提交前护栏检查。
+通用脚本默认保存在已安装的 dev-workflow skill 中，不复制到项目目录。执行时以项目根目录为当前目录：
+
+```bash
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" doctor
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/search-dev-docs.sh" 关键词
+```
+
+只有项目需要完全自包含时，才使用 `/dev-workflow init --with-scripts`。
 
 也可以让 Codex 使用快捷提示：
 
@@ -64,9 +62,9 @@
 根据 PRD 改版文件管理器
 ```
 
-开发任务不需要记子命令。agent 应先运行 `scripts/dev-workflow-harness.sh run "任务描述"`，完成前运行 `verify` 和 `check`。
+开发任务不需要记子命令。agent 应先运行 skill 中的 `dev-workflow-harness.sh run "任务描述"`，完成前运行 `verify` 和 `check`。
 
-如果项目脚本可能过期或环境不确定，先运行 `scripts/dev-workflow-harness.sh doctor`，重点看 `upgrade_needed / missing_required / doctor_status / next_action`。
+如果项目脚本可能过期或环境不确定，先运行 skill 中的 `dev-workflow-harness.sh doctor`，重点看 `upgrade_needed / missing_required / doctor_status / next_action`。
 
 ## 何时写文档
 
@@ -79,13 +77,13 @@
 - 修复高风险 Bug 后：必要时写完整 Bug 复盘和 ACC
 - 需求变更时：在原文档追加变更记录，必要时新建 ADR
 - 技术选型时：写 ADR
-- 每次任务完成前：运行 `scripts/dev-workflow-harness.sh verify "任务描述"` 和 `scripts/dev-workflow-harness.sh check`，再等待人工审核
+- 每次任务完成前：运行 skill 脚本 `dev-workflow-harness.sh verify "任务描述"` 和 `dev-workflow-harness.sh check`，再等待人工审核
 
 ## 执行策略
 
 - 默认自动分级：从 `quick` 起步，按风险升级到 `standard / strict`，不要求用户手动选择。
-- 推荐入口：`scripts/dev-workflow-harness.sh run "任务描述"`。
-- 诊断入口：`scripts/dev-workflow-harness.sh doctor`。
+- 推荐入口：skill 脚本 `dev-workflow-harness.sh run "任务描述"`。
+- 诊断入口：skill 脚本 `dev-workflow-harness.sh doctor`。
 - quick 默认不创建正式文档；standard 默认一个主记录；strict 才拆完整链路。
 - PRD、产品文档、现有功能改版、多模块、高风险、接口/数据/权限/支付/订单/登录/部署变化，自动使用 `strict`。
 - 分级优先级：硬门禁 > 风险自动升级 > 文档预算 > 用户指定 > 默认 quick。
@@ -101,7 +99,7 @@
 `docs/index.md` 不再作为人工维护的总索引，也不是必需文件。多电脑、多分支并行时，每个任务只新增或更新自己的文档。日常直接运行：
 
 ```bash
-scripts/search-dev-docs.sh 关键词
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/search-dev-docs.sh" 关键词
 ```
 
 如果机器索引缺失或真实文档更新，搜索脚本会自动重建：
@@ -142,18 +140,18 @@ TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md
 
 `docs/**/TEMPLATE.md` 是母版，只能复制，不能作为任务文档直接填写。
 
-默认初始化不会把模板复制到项目目录。模板保存在已安装的 dev-workflow Skill 中，`scripts/new-doc.sh` 会从 Skill 模板创建新文档。
+默认初始化不会把模板或脚本复制到项目目录。模板保存在已安装的 dev-workflow Skill 中，skill 脚本 `new-doc.sh` 会从 Skill 模板创建新文档。
 
 如果项目需要自包含模板，使用：
 
 ```bash
-scripts/init-dev-workflow.sh --with-templates
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/init-dev-workflow.sh" --with-templates
 ```
 
 新建文档时使用：
 
 ```bash
-scripts/new-doc.sh TASK login-api
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/new-doc.sh" TASK login-api
 ```
 
 只有明确提出“修改模板”或“升级 dev-workflow 模板”时，才允许改 `TEMPLATE.md`。
