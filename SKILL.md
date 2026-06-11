@@ -13,6 +13,7 @@ description: "Lightweight traceable dev workflow for project init, PRD/REQ docs,
 - `/dev-workflow init --hooks`：初始化并启用 Git hooks。
 - `/dev-workflow init --with-templates`：初始化并把模板复制进项目。默认不复制模板。
 - `/dev-workflow check`：运行 `scripts/check-dev-docs.sh`。
+- `/dev-workflow version`：运行 `scripts/dev-workflow-harness.sh version`。
 - `/dev-workflow clean-templates`：预览项目内 `docs/**/TEMPLATE.md`；确认后运行 `scripts/clean-templates.sh --apply`。
 
 项目内没有脚本时，使用 Skill 自带脚本：
@@ -20,6 +21,7 @@ description: "Lightweight traceable dev workflow for project init, PRD/REQ docs,
 ```bash
 "${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/init-dev-workflow.sh"
 "${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/check-dev-docs.sh"
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/dev-workflow-harness.sh" version
 ```
 
 ## Hard Rules
@@ -43,6 +45,10 @@ description: "Lightweight traceable dev workflow for project init, PRD/REQ docs,
 ## Context Budget
 
 默认只读 `AGENTS.md` / `docs/workflow.md` / `scripts/search-dev-docs.sh` 候选；细节见 `references/flow.md`。
+
+## Harness
+
+优先运行 `scripts/dev-workflow-harness.sh report "任务描述"` 获取 `flow / docs_allowed / docs_index_tracked`，再执行开发；完成前运行 `scripts/dev-workflow-harness.sh check`。
 
 ## PRD / TDD / Session
 

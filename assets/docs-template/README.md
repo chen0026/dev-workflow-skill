@@ -46,6 +46,7 @@
 - `scripts/session-state.sh`：管理长任务临时状态文件，减少上下文占用。
 - `scripts/reindex-dev-docs.sh`：生成 `.dev-workflow/index/docs.jsonl` 本地机器索引。
 - `scripts/search-dev-docs.sh`：按关键词检索本地文档索引，避免全量读取历史。
+- `scripts/dev-workflow-harness.sh`：输出版本、流程分级、文档预算和提交前护栏检查。
 
 也可以让 Codex 使用快捷提示：
 
@@ -54,6 +55,7 @@
 /dev-workflow init --hooks
 /dev-workflow check
 /dev-workflow clean-templates
+/dev-workflow version
 /dev-workflow 初始化项目
 /dev-workflow 初始化项目并启用 hooks
 /dev-workflow 检查文档

@@ -26,6 +26,7 @@ rsync -a --delete --exclude .git ./ "$CODEX_HOME/skills/dev-workflow/"
 /dev-workflow init --hooks
 /dev-workflow check
 /dev-workflow clean-templates
+/dev-workflow version
 /dev-workflow feature 用户登录功能
 /dev-workflow bug 登录态过期后没有刷新
 /dev-workflow refactor auth 模块
@@ -84,6 +85,17 @@ scripts/check-dev-docs.sh
 ```
 
 检查必要目录、任务验收关联、代码变更是否同步文档，并重建本地索引。
+
+### Harness 检查
+
+```bash
+scripts/dev-workflow-harness.sh version
+scripts/dev-workflow-harness.sh classify "修复文件夹重命名 bug"
+scripts/dev-workflow-harness.sh report "修复文件夹重命名 bug"
+scripts/dev-workflow-harness.sh check
+```
+
+`report` 会输出 `flow / docs_allowed / docs_index_tracked / human_review_required / commit_allowed`，让 agent 先看护栏再执行。
 
 ### 清理旧模板
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.15.0 - 2026-06-11
+
+- 新增 `scripts/dev-workflow-harness.sh`，提供 `version / classify / check / report`。
+- harness report 输出 `flow / docs_allowed / docs_changed / docs_index_tracked / human_review_required / commit_allowed`。
+- harness check 会拦截仍被 Git 跟踪的 `docs/index.md`，提示执行 `git rm --cached docs/index.md`。
+- 新增 `/dev-workflow version` 用法说明。
+- 初始化会同步 harness 脚本到项目内。
+
 ## 0.14.0 - 2026-06-09
 
 - 将 `docs/index.md` 从必需项目文件改为可选生成文件，避免多分支合并冲突。

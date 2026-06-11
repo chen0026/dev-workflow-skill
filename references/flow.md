@@ -4,6 +4,8 @@
 
 默认自动分级，不要求用户手动选择。默认从 `quick` 起步；只有发现明确风险信号，才升级到 `standard` 或 `strict`。用户可以显式覆盖：`quick / standard / strict`。
 
+可运行 `scripts/dev-workflow-harness.sh classify "任务描述"` 获得初始建议；该建议是护栏，不替代硬门禁和风险升级。
+
 优先级：
 
 ```text
