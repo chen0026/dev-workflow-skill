@@ -33,7 +33,7 @@ cd "$target_dir"
 if [ ! -f "AGENTS.md" ]; then
   cp "$skill_root/assets/agents-template.md" "AGENTS.md"
   echo "dev-workflow: 已创建 AGENTS.md"
-elif ! grep -q "开发工作流强约束" "AGENTS.md"; then
+elif ! grep -Eq "Dev Workflow|Harness-first|开发工作流强约束" "AGENTS.md"; then
   {
     printf '\n\n'
     cat "$skill_root/assets/agents-rule.md"
@@ -95,6 +95,7 @@ fi
 
 rsync -a --ignore-existing "$template_dir/.githooks/" .githooks/
 rsync -a --ignore-existing "$template_dir/scripts/" scripts/
+rsync -a "$template_dir/scripts/dev-workflow-harness.sh" scripts/dev-workflow-harness.sh
 
 chmod +x .githooks/pre-commit .githooks/commit-msg scripts/check-dev-workflow.sh 2>/dev/null || true
 chmod +x scripts/init-dev-workflow.sh scripts/check-dev-docs.sh scripts/new-doc-id.sh scripts/new-doc.sh scripts/clean-templates.sh scripts/session-state.sh scripts/reindex-dev-docs.sh scripts/search-dev-docs.sh scripts/dev-workflow-harness.sh 2>/dev/null || true

@@ -10,7 +10,7 @@ scripts/dev-workflow-harness.sh run "任务描述"
 
 默认从 `quick` 起步；只有发现明确风险信号，才升级到 `standard` 或 `strict`。用户可以显式覆盖：`quick / standard / strict`。
 
-`run` 输出初始护栏和下一步动作；完成前运行 `verify` 和 `check`。这些输出不替代硬门禁和人工审核。
+`run` 输出初始护栏、`flow_reason` 和下一步动作；完成前运行 `verify` 和 `check`。这些输出不替代硬门禁和人工审核。
 
 优先级：
 

@@ -56,6 +56,7 @@
 /dev-workflow check
 /dev-workflow clean-templates
 /dev-workflow version
+/dev-workflow doctor
 /dev-workflow 初始化项目
 /dev-workflow 初始化项目并启用 hooks
 /dev-workflow 检查文档
@@ -64,6 +65,8 @@
 ```
 
 开发任务不需要记子命令。agent 应先运行 `scripts/dev-workflow-harness.sh run "任务描述"`，完成前运行 `verify` 和 `check`。
+
+如果项目脚本可能过期或环境不确定，先运行 `scripts/dev-workflow-harness.sh doctor`，重点看 `upgrade_needed / missing_required / doctor_status / next_action`。
 
 ## 何时写文档
 
@@ -82,6 +85,7 @@
 
 - 默认自动分级：从 `quick` 起步，按风险升级到 `standard / strict`，不要求用户手动选择。
 - 推荐入口：`scripts/dev-workflow-harness.sh run "任务描述"`。
+- 诊断入口：`scripts/dev-workflow-harness.sh doctor`。
 - quick 默认不创建正式文档；standard 默认一个主记录；strict 才拆完整链路。
 - PRD、产品文档、现有功能改版、多模块、高风险、接口/数据/权限/支付/订单/登录/部署变化，自动使用 `strict`。
 - 分级优先级：硬门禁 > 风险自动升级 > 文档预算 > 用户指定 > 默认 quick。

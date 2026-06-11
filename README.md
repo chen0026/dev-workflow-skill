@@ -27,6 +27,7 @@ rsync -a --delete --exclude .git ./ "$CODEX_HOME/skills/dev-workflow/"
 /dev-workflow check
 /dev-workflow clean-templates
 /dev-workflow version
+/dev-workflow doctor
 修复登录态过期后没有刷新
 开发用户登录功能
 根据 PRD 改版文件管理器
@@ -52,6 +53,8 @@ rsync -a --delete --exclude .git ./ "$CODEX_HOME/skills/dev-workflow/"
 - `.dev-workflow/index/`
 
 默认不会把 `TEMPLATE.md` 复制到项目目录。模板保存在已安装的 Skill 中，`scripts/new-doc.sh` 会从 Skill 模板创建新文档。
+
+老项目升级时也可以再次运行 `/dev-workflow init`。它会补齐缺失结构，并强制更新 `scripts/dev-workflow-harness.sh`，但不会覆盖其它已有脚本和文档。
 
 如果项目已有旧 `docs/`，会归档到：
 
@@ -93,6 +96,7 @@ scripts/check-dev-docs.sh
 
 ```bash
 scripts/dev-workflow-harness.sh version
+scripts/dev-workflow-harness.sh doctor
 scripts/dev-workflow-harness.sh classify "修复文件夹重命名 bug"
 scripts/dev-workflow-harness.sh run "修复文件夹重命名 bug"
 scripts/dev-workflow-harness.sh report "修复文件夹重命名 bug"
@@ -100,7 +104,9 @@ scripts/dev-workflow-harness.sh verify "修复文件夹重命名 bug"
 scripts/dev-workflow-harness.sh check
 ```
 
-`run` 是推荐入口，会输出 `flow / docs_allowed / next_action / verify_command / check_command`。`verify` 检查需求追踪、验证证据、文档预算和提交前人工审核状态，重点看 `requirement_status / evidence_status / machine_gate / requirement_match`。
+`doctor` 用来检查当前项目是否接入完整、项目内 harness 是否过期、hooks 是否启用、索引是否存在。重点看 `upgrade_needed / missing_required / doctor_status / next_action`。
+
+`run` 是推荐入口，会输出 `flow / flow_reason / docs_allowed / next_action / verify_command / check_command`。`verify` 检查需求追踪、验证证据、文档预算和提交前人工审核状态，重点看 `requirement_status / evidence_status / machine_gate / requirement_match`。
 
 ### 清理旧模板
 

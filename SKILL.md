@@ -31,12 +31,14 @@ scripts/dev-workflow-harness.sh check
 - `/dev-workflow init --with-templates`：初始化并复制模板；默认不复制模板。
 - `/dev-workflow check`：运行项目检查。
 - `/dev-workflow version`：输出 skill 版本。
+- `/dev-workflow doctor`：运行已安装 skill 的 `doctor`，检查当前项目 harness 版本、目录、hooks、索引和升级建议。
 - `/dev-workflow clean-templates`：预览并按确认清理项目内模板副本。
 
 项目脚本缺失时使用：
 
 ```bash
 "${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/init-dev-workflow.sh"
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/dev-workflow-harness.sh" doctor
 "${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/dev-workflow-harness.sh" run "用户任务描述"
 ```
 
@@ -58,6 +60,10 @@ scripts/dev-workflow-harness.sh check
 ## Requirement Match
 
 需求一致性按 `PRD -> REQ -> TASK/BUG -> 验证证据 -> 人工审核 -> 提交` 闭环执行。`verify` 输出 `requirement_match: pending-human-review` 时，列出证据和缺口，等待用户确认。
+
+## Diagnostics
+
+如果项目脚本可能过期、hooks 不确定、或初始化状态不明，运行已安装 skill 的 `doctor`。重点看 `upgrade_needed / missing_required / doctor_status / next_action`。
 
 ## References
 

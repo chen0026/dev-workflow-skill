@@ -42,22 +42,26 @@ if [ ! -f "AGENTS.md" ]; then
   cat > "AGENTS.md" <<'EOF'
 # AGENTS.md
 
-## 开发工作流强约束
+## Dev Workflow
 
-所有新功能、Bug 修复、重构、维护任务必须遵守 `docs/workflow.md`。
+所有新功能、Bug 修复、重构、维护、PRD、改版和需求类任务必须遵守 `docs/workflow.md`。
 
-## 文档查找优先级
+## Harness-first
 
-1. `AGENTS.md`
-2. `docs/workflow.md`
-3. `scripts/search-dev-docs.sh` 的候选结果，或 `.dev-workflow/index/docs.jsonl`
-4. 当前任务关联的 `PRD / REQ / TASK / BUG / ADR / ACC`
-5. `docs/design/` 和 `docs/ops/`
-6. `docs/legacy/`
-7. `docs/archive/`
-8. 代码和测试
+开发任务不要求用户记命令。收到自然语言任务后，先运行：
 
-没有完成文档同步和人工审核，不得声明任务最终完成；未经用户批准，不得提交代码。
+```bash
+scripts/dev-workflow-harness.sh run "用户任务描述"
+```
+
+完成前运行：
+
+```bash
+scripts/dev-workflow-harness.sh verify "用户任务描述"
+scripts/dev-workflow-harness.sh check
+```
+
+`verify` 只检查完整性；需求是否一致必须等待人工审核确认。未经用户批准，不得提交代码。
 
 ## 文档读取预算
 
@@ -68,14 +72,15 @@ if [ ! -f "AGENTS.md" ]; then
 `.dev-workflow/index/` 是可重建的本地机器索引，默认不提交。`docs/index.md` 是可选生成文件，默认忽略，不作为必需项目文件。
 EOF
   echo "dev-workflow: 已创建 AGENTS.md"
-elif ! grep -q "开发工作流强约束" "AGENTS.md"; then
+elif ! grep -Eq "Dev Workflow|Harness-first|开发工作流强约束" "AGENTS.md"; then
   cat >> "AGENTS.md" <<'EOF'
 
 
-## 开发工作流强约束
+## Dev Workflow
 
-所有新功能、Bug 修复、重构、维护任务必须遵守 `docs/workflow.md`。
-没有完成文档同步和人工审核，不得声明任务最终完成；未经用户批准，不得提交代码。
+所有新功能、Bug 修复、重构、维护、PRD、改版和需求类任务必须遵守 `docs/workflow.md`。
+
+收到自然语言开发任务后，先运行 `scripts/dev-workflow-harness.sh run "用户任务描述"`；完成前运行 `scripts/dev-workflow-harness.sh verify "用户任务描述"` 和 `scripts/dev-workflow-harness.sh check`。未经用户批准，不得提交代码。
 
 ## 文档读取预算
 
@@ -138,6 +143,13 @@ fi
 
 [ -d "$hooks_source" ] && rsync -a --ignore-existing "$hooks_source/" .githooks/
 [ -d "$scripts_source" ] && rsync -a --ignore-existing "$scripts_source/" scripts/
+if [ -f "$scripts_source/dev-workflow-harness.sh" ]; then
+  source_harness="$(cd "$(dirname "$scripts_source/dev-workflow-harness.sh")" && pwd)/dev-workflow-harness.sh"
+  target_harness="$(pwd)/scripts/dev-workflow-harness.sh"
+  if [ "$source_harness" != "$target_harness" ]; then
+    rsync -a "$scripts_source/dev-workflow-harness.sh" scripts/dev-workflow-harness.sh
+  fi
+fi
 
 chmod +x .githooks/pre-commit .githooks/commit-msg scripts/check-dev-workflow.sh 2>/dev/null || true
 chmod +x scripts/init-dev-workflow.sh scripts/check-dev-docs.sh scripts/new-doc-id.sh scripts/new-doc.sh scripts/clean-templates.sh scripts/session-state.sh scripts/reindex-dev-docs.sh scripts/search-dev-docs.sh scripts/dev-workflow-harness.sh 2>/dev/null || true

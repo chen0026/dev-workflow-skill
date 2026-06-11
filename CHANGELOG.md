@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.17.0 - 2026-06-11
+
+- 新增 `scripts/dev-workflow-harness.sh doctor`，检查项目初始化状态、项目 harness 版本、hooks、索引、`docs/index.md` 跟踪状态和下一步建议。
+- harness 现在区分 `version`、`installed_skill_version`、`project_harness_version`，可发现老项目脚本是否过期。
+- `run / report / verify` 新增 `flow_reason`，说明为何判定为 `quick / standard / strict`。
+- `/dev-workflow init` 会强制更新项目内 `scripts/dev-workflow-harness.sh`，但继续不覆盖其它已有脚本和文档。
+- 修正初始化脚本的 AGENTS 规则识别，避免新版 harness-first 规则被重复追加。
+
 ## 0.16.0 - 2026-06-11
 
 - 将 dev-workflow 调整为 harness-first：自然语言开发任务默认先运行 `scripts/dev-workflow-harness.sh run "任务描述"`。

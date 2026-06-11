@@ -1,18 +1,23 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+harness_version="0.17.0"
 cmd="${1:-run}"
 shift || true
 
 skill_root="${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}"
 version_file="$skill_root/VERSION"
 
-version() {
+installed_skill_version() {
   if [ -f "$version_file" ]; then
     cat "$version_file"
   else
     echo "unknown"
   fi
+}
+
+version() {
+  echo "$harness_version"
 }
 
 classify() {
@@ -29,6 +34,47 @@ classify() {
   fi
 
   echo "quick"
+}
+
+flow_reason() {
+  text="$(printf '%s ' "$@" | tr '[:upper:]' '[:lower:]')"
+  reason=""
+
+  append_reason() {
+    if [ -z "$reason" ]; then
+      reason="$1"
+    else
+      reason="$reason,$1"
+    fi
+  }
+
+  if printf '%s\n' "$text" | grep -Eq 'prd|需求|产品文档'; then
+    append_reason "strict:prd_or_requirements"
+  fi
+  if printf '%s\n' "$text" | grep -Eq '改版|重构架构|多模块|高风险|strict'; then
+    append_reason "strict:scope_or_risk"
+  fi
+  if printf '%s\n' "$text" | grep -Eq '接口|api|数据|权限|支付|订单|登录|部署|回滚'; then
+    append_reason "strict:critical_surface"
+  fi
+
+  if [ -n "$reason" ]; then
+    echo "$reason"
+    return
+  fi
+
+  if printf '%s\n' "$text" | grep -Eq 'bug|修复|根因|追溯'; then
+    append_reason "standard:bug_or_trace"
+  fi
+  if printf '%s\n' "$text" | grep -Eq '功能|用户行为|standard'; then
+    append_reason "standard:feature_or_behavior"
+  fi
+
+  if [ -n "$reason" ]; then
+    echo "$reason"
+  else
+    echo "quick:default_no_risk_terms"
+  fi
 }
 
 docs_allowed_for() {
@@ -53,6 +99,21 @@ docs_index_tracked() {
     echo "true"
   else
     echo "false"
+  fi
+}
+
+script_version_from_file() {
+  file="$1"
+  if [ ! -f "$file" ]; then
+    echo "missing"
+    return
+  fi
+
+  found="$(sed -n 's/^harness_version="\([^"]*\)".*/\1/p' "$file" | head -n 1)"
+  if [ -n "$found" ]; then
+    echo "$found"
+  else
+    echo "legacy"
   fi
 }
 
@@ -117,7 +178,9 @@ report() {
   docs_allowed="$(docs_allowed_for "$flow")"
 
   printf 'version: %s\n' "$(version)"
+  printf 'installed_skill_version: %s\n' "$(installed_skill_version)"
   printf 'flow: %s\n' "$flow"
+  printf 'flow_reason: %s\n' "$(flow_reason "$@")"
   printf 'docs_allowed: %s\n' "$docs_allowed"
   printf 'docs_changed: %s\n' "$(docs_changed_count)"
   printf 'docs_index_tracked: %s\n' "$(docs_index_tracked)"
@@ -142,6 +205,78 @@ run() {
   esac
   printf 'verify_command: scripts/dev-workflow-harness.sh verify "%s"\n' "$*"
   printf 'check_command: scripts/dev-workflow-harness.sh check\n'
+}
+
+doctor() {
+  project_harness_file="scripts/dev-workflow-harness.sh"
+  project_harness_version="$(script_version_from_file "$project_harness_file")"
+  installed_version="$(installed_skill_version)"
+  upgrade_needed="false"
+  missing_required=""
+
+  add_missing() {
+    if [ -z "$missing_required" ]; then
+      missing_required="$1"
+    else
+      missing_required="$missing_required,$1"
+    fi
+  }
+
+  [ -f "AGENTS.md" ] || add_missing "AGENTS.md"
+  [ -d "docs" ] || add_missing "docs/"
+  [ -f "docs/workflow.md" ] || add_missing "docs/workflow.md"
+  [ -x "$project_harness_file" ] || add_missing "$project_harness_file"
+
+  if [ "$project_harness_version" != "$installed_version" ]; then
+    upgrade_needed="true"
+  fi
+
+  hooks_path="none"
+  hooks_enabled="false"
+  if git rev-parse --git-dir >/dev/null 2>&1; then
+    hooks_path="$(git config --get core.hooksPath || true)"
+    [ -n "$hooks_path" ] || hooks_path="none"
+    if [ "$hooks_path" = ".githooks" ]; then
+      hooks_enabled="true"
+    fi
+  fi
+
+  if [ -f ".dev-workflow/index/docs.jsonl" ]; then
+    local_index="present"
+  else
+    local_index="missing"
+  fi
+
+  doctor_status="ok"
+  next_action="none"
+  if [ -n "$missing_required" ]; then
+    doctor_status="needs_init"
+    next_action="/dev-workflow init"
+  elif [ "$upgrade_needed" = "true" ]; then
+    doctor_status="upgrade_needed"
+    next_action="/dev-workflow init"
+  elif [ "$(docs_index_tracked)" = "true" ]; then
+    doctor_status="blocked"
+    next_action="git rm --cached docs/index.md"
+  elif [ "$local_index" = "missing" ]; then
+    doctor_status="review"
+    next_action="/dev-workflow check"
+  fi
+
+  [ -n "$missing_required" ] || missing_required="none"
+
+  printf 'version: %s\n' "$(version)"
+  printf 'installed_skill_version: %s\n' "$installed_version"
+  printf 'project_harness_version: %s\n' "$project_harness_version"
+  printf 'project_harness_file: %s\n' "$project_harness_file"
+  printf 'upgrade_needed: %s\n' "$upgrade_needed"
+  printf 'missing_required: %s\n' "$missing_required"
+  printf 'docs_index_tracked: %s\n' "$(docs_index_tracked)"
+  printf 'local_index: %s\n' "$local_index"
+  printf 'hooks_path: %s\n' "$hooks_path"
+  printf 'hooks_enabled: %s\n' "$hooks_enabled"
+  printf 'doctor_status: %s\n' "$doctor_status"
+  printf 'next_action: %s\n' "$next_action"
 }
 
 verify() {
@@ -198,7 +333,9 @@ verify() {
   fi
 
   printf 'version: %s\n' "$(version)"
+  printf 'installed_skill_version: %s\n' "$(installed_skill_version)"
   printf 'flow: %s\n' "$flow"
+  printf 'flow_reason: %s\n' "$(flow_reason "$@")"
   printf 'docs_allowed: %s\n' "$docs_allowed"
   printf 'docs_changed: %s\n' "$docs_changed"
   printf 'code_changed: %s\n' "$code_changed"
@@ -230,6 +367,9 @@ case "$cmd" in
   check)
     check
     ;;
+  doctor)
+    doctor
+    ;;
   report)
     report "$@"
     ;;
@@ -240,7 +380,7 @@ case "$cmd" in
     verify "$@"
     ;;
   *)
-    echo "usage: scripts/dev-workflow-harness.sh version|classify|run|report|verify|check [task text]"
+    echo "usage: scripts/dev-workflow-harness.sh version|classify|doctor|run|report|verify|check [task text]"
     exit 1
     ;;
 esac
