@@ -3,12 +3,37 @@ set -euo pipefail
 
 query="${*:-}"
 index=".dev-workflow/index/docs.jsonl"
+reindex_script="scripts/reindex-dev-docs.sh"
 
-if [ ! -f "$index" ]; then
-  if [ -x "scripts/reindex-dev-docs.sh" ]; then
-    scripts/reindex-dev-docs.sh >/dev/null
+index_needs_rebuild() {
+  if [ ! -f "$index" ]; then
+    return 0
+  fi
+
+  if [ ! -d "docs" ]; then
+    return 1
+  fi
+
+  changed="$(
+    find docs \
+      -type f \
+      -name "*.md" \
+      ! -path "docs/archive/*" \
+      ! -path "docs/index.md" \
+      ! -name "TEMPLATE.md" \
+      -newer "$index" \
+      -print \
+      -quit
+  )"
+
+  [ -n "$changed" ]
+}
+
+if index_needs_rebuild; then
+  if [ -x "$reindex_script" ]; then
+    "$reindex_script" >/dev/null
   else
-    echo "dev-workflow: 缺少 $index，且没有 scripts/reindex-dev-docs.sh"
+    echo "dev-workflow: 缺少 $index，且没有 $reindex_script"
     exit 1
   fi
 fi

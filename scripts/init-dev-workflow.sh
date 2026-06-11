@@ -96,6 +96,8 @@ fi
 rsync -a --ignore-existing "$template_dir/.githooks/" .githooks/
 rsync -a --ignore-existing "$template_dir/scripts/" scripts/
 rsync -a "$template_dir/scripts/dev-workflow-harness.sh" scripts/dev-workflow-harness.sh
+rsync -a "$template_dir/scripts/search-dev-docs.sh" scripts/search-dev-docs.sh
+rsync -a "$template_dir/scripts/reindex-dev-docs.sh" scripts/reindex-dev-docs.sh
 
 chmod +x .githooks/pre-commit .githooks/commit-msg scripts/check-dev-workflow.sh 2>/dev/null || true
 chmod +x scripts/init-dev-workflow.sh scripts/check-dev-docs.sh scripts/new-doc-id.sh scripts/new-doc.sh scripts/clean-templates.sh scripts/session-state.sh scripts/reindex-dev-docs.sh scripts/search-dev-docs.sh scripts/dev-workflow-harness.sh 2>/dev/null || true

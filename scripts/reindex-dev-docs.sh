@@ -33,6 +33,10 @@ fi
 
 while IFS= read -r file; do
   base="$(basename "$file")"
+  if [ "$file" = "docs/index.md" ]; then
+    continue
+  fi
+
   case "$base" in
     TEMPLATE.md)
       continue

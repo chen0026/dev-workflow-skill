@@ -150,6 +150,15 @@ if [ -f "$scripts_source/dev-workflow-harness.sh" ]; then
     rsync -a "$scripts_source/dev-workflow-harness.sh" scripts/dev-workflow-harness.sh
   fi
 fi
+for core_script in search-dev-docs.sh reindex-dev-docs.sh; do
+  if [ -f "$scripts_source/$core_script" ]; then
+    source_script="$(cd "$(dirname "$scripts_source/$core_script")" && pwd)/$core_script"
+    target_script="$(pwd)/scripts/$core_script"
+    if [ "$source_script" != "$target_script" ]; then
+      rsync -a "$scripts_source/$core_script" "scripts/$core_script"
+    fi
+  fi
+done
 
 chmod +x .githooks/pre-commit .githooks/commit-msg scripts/check-dev-workflow.sh 2>/dev/null || true
 chmod +x scripts/init-dev-workflow.sh scripts/check-dev-docs.sh scripts/new-doc-id.sh scripts/new-doc.sh scripts/clean-templates.sh scripts/session-state.sh scripts/reindex-dev-docs.sh scripts/search-dev-docs.sh scripts/dev-workflow-harness.sh 2>/dev/null || true

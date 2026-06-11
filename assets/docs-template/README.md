@@ -44,8 +44,8 @@
 - `scripts/new-doc.sh`：从模板创建新文档，例如 `scripts/new-doc.sh TASK login-api`。
 - `scripts/clean-templates.sh`：清理旧项目中已经复制进去的 `docs/**/TEMPLATE.md`，默认只预览。
 - `scripts/session-state.sh`：管理长任务临时状态文件，减少上下文占用。
-- `scripts/reindex-dev-docs.sh`：生成 `.dev-workflow/index/docs.jsonl` 本地机器索引。
-- `scripts/search-dev-docs.sh`：按关键词检索本地文档索引，避免全量读取历史。
+- `scripts/reindex-dev-docs.sh`：手动生成 `.dev-workflow/index/docs.jsonl` 本地机器索引。
+- `scripts/search-dev-docs.sh`：按关键词检索历史文档；索引缺失或过期时自动重建。
 - `scripts/dev-workflow-harness.sh`：自然语言任务入口，输出流程分级、文档预算、需求验收状态和提交前护栏检查。
 
 也可以让 Codex 使用快捷提示：
@@ -98,13 +98,13 @@
 
 ## 本地索引和多分支合并
 
-`docs/index.md` 不再作为人工维护的总索引，也不是必需文件。多电脑、多分支并行时，每个任务只新增或更新自己的文档，完成前运行：
+`docs/index.md` 不再作为人工维护的总索引，也不是必需文件。多电脑、多分支并行时，每个任务只新增或更新自己的文档。日常直接运行：
 
 ```bash
-scripts/reindex-dev-docs.sh
+scripts/search-dev-docs.sh 关键词
 ```
 
-机器索引写入：
+如果机器索引缺失或真实文档更新，搜索脚本会自动重建：
 
 ```text
 .dev-workflow/index/docs.jsonl

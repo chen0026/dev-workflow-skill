@@ -164,8 +164,8 @@ TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md
 
 查找顺序：
 
-1. 先运行 `scripts/reindex-dev-docs.sh` 重建本地索引；如果索引已存在且刚重建过，可直接使用。
-2. 用 `scripts/search-dev-docs.sh 关键词` 按任务关键词、模块名、功能名、编号筛选候选文档。
+1. 用 `scripts/search-dev-docs.sh 关键词` 按任务关键词、模块名、功能名、编号筛选候选文档；索引缺失或真实文档更新时，search 会自动重建。
+2. 只在需要强制刷新、生成 `docs/index.md`、或排查索引问题时手动运行 `scripts/reindex-dev-docs.sh`。
 3. 只打开候选文档中最相关的 1-5 个。
 4. 如果候选过多，先列出候选并说明选择依据。
 5. 只有搜索结果不足、任务涉及历史行为、或当前代码与文档冲突时，才搜索更多 docs。

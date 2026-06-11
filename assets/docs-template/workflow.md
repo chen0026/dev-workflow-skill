@@ -127,16 +127,16 @@ Codex 快捷提示：
 
 `.dev-workflow/index/docs.jsonl` 是可重建机器索引，默认不提交。
 
-重建索引：
-
-```bash
-scripts/reindex-dev-docs.sh
-```
-
-检索文档：
+日常检索：
 
 ```bash
 scripts/search-dev-docs.sh login
+```
+
+索引缺失或真实文档更新时，`search-dev-docs.sh` 会自动重建。需要手动重建时执行：
+
+```bash
+scripts/reindex-dev-docs.sh
 ```
 
 `docs/index.md` 只是可选的人类可读生成文件，不再作为每次任务必须手工更新的共享索引。如果需要临时生成可读索引，可执行：
@@ -246,7 +246,7 @@ scripts/clean-templates.sh --apply
 3. 修复并验证。
 4. 在 BUG 中记录验证结果、代码审查和验收结论。
 5. 需要复杂验收或高风险时，再创建 ACC。
-6. 重建本地索引。
+6. 索引由 `search-dev-docs.sh` 或 `check` 按需重建。
 7. 进入提交前人工审核。
 
 ### standard 功能 / 维护 / 重构
@@ -261,7 +261,7 @@ scripts/clean-templates.sh --apply
 2. 修改并验证。
 3. 在 TASK 中记录实际改动、验证结果、代码审查和验收结论。
 4. 需要复杂验收或高风险时，再创建 ACC。
-5. 重建本地索引。
+5. 索引由 `search-dev-docs.sh` 或 `check` 按需重建。
 6. 进入提交前人工审核。
 
 ### strict 新功能 / PRD 改版 / 已有功能改版

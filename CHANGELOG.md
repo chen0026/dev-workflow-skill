@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.18.0 - 2026-06-11
+
+- `scripts/search-dev-docs.sh` 现在会在本地索引缺失或真实文档比索引更新时自动运行 `scripts/reindex-dev-docs.sh`。
+- `scripts/reindex-dev-docs.sh` 不再把生成文件 `docs/index.md` 写入机器索引，避免索引自我污染。
+- 同步 harness 版本到 `0.18.0`，避免 doctor 在新版 skill 中误报项目 harness 过期。
+- `/dev-workflow init` 会强制更新 `dev-workflow-harness.sh`、`search-dev-docs.sh`、`reindex-dev-docs.sh` 三个核心脚本，其它脚本和文档仍不覆盖。
+- 更新 README 和模板说明：日常检索历史文档优先直接运行 `search-dev-docs.sh 关键词`。
+
 ## 0.17.0 - 2026-06-11
 
 - 新增 `scripts/dev-workflow-harness.sh doctor`，检查项目初始化状态、项目 harness 版本、hooks、索引、`docs/index.md` 跟踪状态和下一步建议。

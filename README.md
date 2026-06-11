@@ -54,7 +54,7 @@ rsync -a --delete --exclude .git ./ "$CODEX_HOME/skills/dev-workflow/"
 
 默认不会把 `TEMPLATE.md` 复制到项目目录。模板保存在已安装的 Skill 中，`scripts/new-doc.sh` 会从 Skill 模板创建新文档。
 
-老项目升级时也可以再次运行 `/dev-workflow init`。它会补齐缺失结构，并强制更新 `scripts/dev-workflow-harness.sh`，但不会覆盖其它已有脚本和文档。
+老项目升级时也可以再次运行 `/dev-workflow init`。它会补齐缺失结构，并强制更新 `scripts/dev-workflow-harness.sh`、`scripts/search-dev-docs.sh`、`scripts/reindex-dev-docs.sh`，但不会覆盖其它已有脚本和文档。
 
 如果项目已有旧 `docs/`，会归档到：
 
@@ -185,11 +185,17 @@ quick 不强制写文档；standard 默认一个主记录；strict 才拆完整�
 
 长任务可使用 `.dev-workflow/session/*-working.json` 保存结构化状态，减少上下文占用。完成后确认已合并到正式文档再清理。
 
-本地文档索引用 `.dev-workflow/index/docs.jsonl`，默认不提交。它由脚本重建：
+本地文档索引用 `.dev-workflow/index/docs.jsonl`，默认不提交。日常直接搜索即可；索引缺失或真实文档更新时，搜索脚本会自动重建：
+
+```bash
+scripts/search-dev-docs.sh login
+```
+
+需要手动重建或生成临时人类可读索引时，再执行：
 
 ```bash
 scripts/reindex-dev-docs.sh
-scripts/search-dev-docs.sh login
+scripts/reindex-dev-docs.sh --write-md
 ```
 
 `docs/index.md` 只是可选的人类可读生成文件，默认加入 `.gitignore`，不再作为每次任务必须手工更新的共享索引，避免多分支合并冲突。
