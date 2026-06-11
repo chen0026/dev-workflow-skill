@@ -2,9 +2,15 @@
 
 ## 自动分级
 
-默认自动分级，不要求用户手动选择。默认从 `quick` 起步；只有发现明确风险信号，才升级到 `standard` 或 `strict`。用户可以显式覆盖：`quick / standard / strict`。
+默认自动分级，不要求用户手动选择。自然语言开发任务先运行：
 
-可运行 `scripts/dev-workflow-harness.sh classify "任务描述"` 获得初始建议；该建议是护栏，不替代硬门禁和风险升级。
+```bash
+scripts/dev-workflow-harness.sh run "任务描述"
+```
+
+默认从 `quick` 起步；只有发现明确风险信号，才升级到 `standard` 或 `strict`。用户可以显式覆盖：`quick / standard / strict`。
+
+`run` 输出初始护栏和下一步动作；完成前运行 `verify` 和 `check`。这些输出不替代硬门禁和人工审核。
 
 优先级：
 

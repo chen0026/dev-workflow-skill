@@ -1,59 +1,63 @@
 ---
 name: dev-workflow
-description: "Lightweight traceable dev workflow for project init, PRD/REQ docs, TDD, bug/feature/refactor records, and human review before commit. Triggers: /dev-workflow, PRD, feature, bug, refactor."
+description: "Use when users ask /dev-workflow, project init/check/version, PRD or requirements work, feature/bug/refactor/maintenance tasks, or traceable development with review before commit."
 ---
 
 # Dev Workflow
 
-用最少文档建立开发追踪链路，避免实现偏离需求。
+Harness-first 的轻量开发工作流。用户不需要记流程命令；开发任务先让 harness 给出护栏，再执行实现、验证和人工审核。
 
-## Commands
+## Natural Language Entry
 
-- `/dev-workflow init`：运行 `scripts/init-dev-workflow.sh`，补齐 `AGENTS.md`、`docs/`、`scripts/`、`.githooks/`。
+当用户提出 Bug、功能、重构、维护、PRD、改版或需求类任务时，自动运行：
+
+```bash
+scripts/dev-workflow-harness.sh run "用户任务描述"
+```
+
+如果项目内没有脚本，使用已安装 skill 的同名脚本。按输出的 `flow / docs_allowed / next_action` 执行；不要要求用户手动选择 quick/standard/strict。
+
+完成前运行：
+
+```bash
+scripts/dev-workflow-harness.sh verify "用户任务描述"
+scripts/dev-workflow-harness.sh check
+```
+
+## Maintenance Commands
+
+- `/dev-workflow init`：初始化项目结构。
 - `/dev-workflow init --hooks`：初始化并启用 Git hooks。
-- `/dev-workflow init --with-templates`：初始化并把模板复制进项目。默认不复制模板。
-- `/dev-workflow check`：运行 `scripts/check-dev-docs.sh`。
-- `/dev-workflow version`：运行 `scripts/dev-workflow-harness.sh version`。
-- `/dev-workflow clean-templates`：预览项目内 `docs/**/TEMPLATE.md`；确认后运行 `scripts/clean-templates.sh --apply`。
+- `/dev-workflow init --with-templates`：初始化并复制模板；默认不复制模板。
+- `/dev-workflow check`：运行项目检查。
+- `/dev-workflow version`：输出 skill 版本。
+- `/dev-workflow clean-templates`：预览并按确认清理项目内模板副本。
 
-项目内没有脚本时，使用 Skill 自带脚本：
+项目脚本缺失时使用：
 
 ```bash
 "${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/init-dev-workflow.sh"
-"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/check-dev-docs.sh"
-"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/dev-workflow-harness.sh" version
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/dev-workflow-harness.sh" run "用户任务描述"
 ```
 
-## Hard Rules
+## Gates
 
-- 默认不自动 commit；只有用户明确说“批准提交”或“确认提交”才提交，细节见 `references/details.md`。
-- PRD、新功能、现有功能改版、产品文档类任务必须走 `strict`；REQ 未确认前不编码。
-- `quick` 默认无正式文档，`standard` 默认一个主记录，`strict` 才拆完整链路。
-- 默认从 `quick` 起步；只有发现用户行为影响、追溯需求或风险信号时才升级。
-- `quick` 文档新增 0 个；`standard` 文档新增最多 1 个；禁止为普通任务同时创建 `TASK + BUG + ACC`。
-- `docs/**/TEMPLATE.md` 是母版，日常任务禁止直接修改；新文档用 `TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md`。
-- 默认不在聊天中展开完整文档内容；只列文件路径、追踪编号、验证结果和待人工审核事项。
+- 默认不自动 commit；只有用户明确说“批准提交”或“确认提交”才提交。
+- PRD、产品文档、新功能改版等 `strict` 任务，REQ 未经人工确认前不编码。
+- harness 只检查完整性；需求是否一致必须进入人工审核，不能由脚本直接判定通过。
+- 默认不展开完整文档内容，只列文件路径、追踪编号、验证结果和待审核事项。
 
-## Flow Level
+## Flow Semantics
 
-- `quick`：文案、样式、小配置、单文件无业务逻辑改动；默认只写最终摘要。
-- `standard`：普通 Bug、普通功能调整、单模块功能；默认一个 `TASK` 或 `BUG` 主记录。
-- `strict`：PRD、改版、多模块、高风险、接口/数据/权限/支付/订单/登录/部署变化；使用完整链路。
+- `quick`：低风险改动，默认新增文档 0 个，最终摘要即可。
+- `standard`：普通 Bug / 功能 / 维护，最多一个 `TASK` 或 `BUG` 主记录。
+- `strict`：PRD / 改版 / 多模块 / 高风险 / 接口、数据、权限、支付、订单、登录、部署变化，先确认 REQ。
 
-优先级：硬门禁 > 风险自动升级 > 文档预算 > 用户指定 > 默认 quick。完整定义见 `references/flow.md`。
+完整分级、文档预算、命名和索引规则见 `references/flow.md`。
 
-## Context Budget
+## Requirement Match
 
-默认只读 `AGENTS.md` / `docs/workflow.md` / `scripts/search-dev-docs.sh` 候选；细节见 `references/flow.md`。
-
-## Harness
-
-优先运行 `scripts/dev-workflow-harness.sh report "任务描述"` 获取 `flow / docs_allowed / docs_index_tracked`，再执行开发；完成前运行 `scripts/dev-workflow-harness.sh check`。
-
-## PRD / TDD / Session
-
-- PRD / 改版编码前必须先建 REQ 并等待确认；TDD、代码审查和人工审核细节见 `references/details.md`。
-- 长任务可用 `.dev-workflow/session/*-working.json` 保存结构化状态；清理规则见 `references/details.md`。
+需求一致性按 `PRD -> REQ -> TASK/BUG -> 验证证据 -> 人工审核 -> 提交` 闭环执行。`verify` 输出 `requirement_match: pending-human-review` 时，列出证据和缺口，等待用户确认。
 
 ## References
 

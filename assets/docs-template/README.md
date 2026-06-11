@@ -46,7 +46,7 @@
 - `scripts/session-state.sh`：管理长任务临时状态文件，减少上下文占用。
 - `scripts/reindex-dev-docs.sh`：生成 `.dev-workflow/index/docs.jsonl` 本地机器索引。
 - `scripts/search-dev-docs.sh`：按关键词检索本地文档索引，避免全量读取历史。
-- `scripts/dev-workflow-harness.sh`：输出版本、流程分级、文档预算和提交前护栏检查。
+- `scripts/dev-workflow-harness.sh`：自然语言任务入口，输出流程分级、文档预算、需求验收状态和提交前护栏检查。
 
 也可以让 Codex 使用快捷提示：
 
@@ -59,7 +59,11 @@
 /dev-workflow 初始化项目
 /dev-workflow 初始化项目并启用 hooks
 /dev-workflow 检查文档
+修复登录态过期后没有刷新
+根据 PRD 改版文件管理器
 ```
+
+开发任务不需要记子命令。agent 应先运行 `scripts/dev-workflow-harness.sh run "任务描述"`，完成前运行 `verify` 和 `check`。
 
 ## 何时写文档
 
@@ -72,16 +76,21 @@
 - 修复高风险 Bug 后：必要时写完整 Bug 复盘和 ACC
 - 需求变更时：在原文档追加变更记录，必要时新建 ADR
 - 技术选型时：写 ADR
-- 每次任务完成前：按流程级别补齐主记录或 strict 文档链路，并重建本地索引
+- 每次任务完成前：运行 `scripts/dev-workflow-harness.sh verify "任务描述"` 和 `scripts/dev-workflow-harness.sh check`，再等待人工审核
 
 ## 执行策略
 
 - 默认自动分级：从 `quick` 起步，按风险升级到 `standard / strict`，不要求用户手动选择。
+- 推荐入口：`scripts/dev-workflow-harness.sh run "任务描述"`。
 - quick 默认不创建正式文档；standard 默认一个主记录；strict 才拆完整链路。
 - PRD、产品文档、现有功能改版、多模块、高风险、接口/数据/权限/支付/订单/登录/部署变化，自动使用 `strict`。
 - 分级优先级：硬门禁 > 风险自动升级 > 文档预算 > 用户指定 > 默认 quick。
 - 文档预算：quick 0 个文档；standard 最多 1 个主记录；strict 才允许完整链路。
 - 默认禁止全量读取历史文档；先用 `search-dev-docs.sh` 检索候选，再按当前任务读取相关文档。
+
+## 需求一致性
+
+`verify` 只检查完整性，不直接宣称需求一致。重点看 `requirement_status / evidence_status / machine_gate / requirement_match`；最终是否符合 PRD / REQ 由人工审核确认。
 
 ## 本地索引和多分支合并
 

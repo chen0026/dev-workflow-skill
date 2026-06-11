@@ -10,6 +10,23 @@
 - 已有项目不补全历史，只在当前改动需要时补 LEGACY 或补录 ADR。
 - 没有文档同步和人工审核，不声明最终完成。
 
+### Harness-first 执行入口
+
+开发任务不要求用户记命令。收到自然语言任务后，先运行：
+
+```bash
+scripts/dev-workflow-harness.sh run "用户任务描述"
+```
+
+按输出的 `flow / docs_allowed / next_action` 执行。完成前运行：
+
+```bash
+scripts/dev-workflow-harness.sh verify "用户任务描述"
+scripts/dev-workflow-harness.sh check
+```
+
+`verify` 只检查完整性；需求是否一致必须由人工审核确认。
+
 ## 二、项目接入检查
 
 使用本工作流前先检查：
@@ -126,7 +143,7 @@ scripts/reindex-dev-docs.sh --write-md
 
 ## 六、自动流程分级
 
-默认自动选择流程强度，不要求用户手动指定。默认从 `quick` 起步，只有发现明确风险信号才升级：
+默认自动选择流程强度，不要求用户手动指定。先用 `scripts/dev-workflow-harness.sh run "任务描述"` 获取初始护栏。默认从 `quick` 起步，只有发现明确风险信号才升级：
 
 - `quick`：文案、样式、小配置、小功能、小 Bug、单文件或低风险改动。少读历史，默认只写摘要。
 - `standard`：普通 Bug、普通功能调整、单模块功能。默认一个 `TASK` 或 `BUG` 主记录，验证、审查、验收结论写在同一文档。
@@ -301,6 +318,8 @@ legacy/LEGACY-20260528-160000-a7b8-current-system-summary.md
 
 最终回复前必须确认：
 
+- 已运行 `scripts/dev-workflow-harness.sh verify "任务描述"`。
+- 已运行 `scripts/dev-workflow-harness.sh check`。
 - 已按流程级别创建或更新文档；quick 可无正式文档。
 - PRD / 改版任务已建立并确认 REQ 需求追踪矩阵。
 - standard 的 TASK 或 BUG 写明实际改动、验证结果、代码审查和验收结论。

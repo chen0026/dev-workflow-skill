@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.16.0 - 2026-06-11
+
+- 将 dev-workflow 调整为 harness-first：自然语言开发任务默认先运行 `scripts/dev-workflow-harness.sh run "任务描述"`。
+- 新增 harness `run` 和 `verify` 命令，输出下一步动作、需求验收完整性、验证证据状态、文档预算、人工审核和提交门禁状态。
+- `verify` 明确输出 `requirement_match: pending-human-review`，只做机器完整性检查，不替代人工判断需求一致性。
+- 大幅瘦身初始化写入的 `AGENTS.md` 规则，保留 harness 入口、硬门禁、上下文预算和需求一致性闭环。
+- 更新 README、模板说明和 `workflow.md`，减少日常需要记忆的子命令。
+
 ## 0.15.0 - 2026-06-11
 
 - 新增 `scripts/dev-workflow-harness.sh`，提供 `version / classify / check / report`。

@@ -33,6 +33,27 @@
 
 REQ 未确认前，不创建实现代码，不修改业务代码。
 
+## 需求一致性验收
+
+完成前运行：
+
+```bash
+scripts/dev-workflow-harness.sh verify "任务描述"
+scripts/dev-workflow-harness.sh check
+```
+
+机器只检查完整性：
+
+- 是否存在 REQ / TASK / BUG / ACC 等必要记录。
+- REQ 是否包含验收方式或测试计划。
+- 主记录或 ACC 是否包含验证证据。
+- 文档预算是否超出当前流程级别。
+- `docs/index.md` 是否仍被 Git 跟踪。
+
+机器不得直接宣称需求一致。`verify` 输出 `requirement_match: pending-human-review` 时，最终回复必须列出需求、实现、验证证据和缺口，等待人工审核。
+
+重点关注 `requirement_status / evidence_status / machine_gate`。`machine_gate: blocked` 必须先处理；`machine_gate: review` 必须在最终回复中解释原因并交给人工确认。
+
 ## TDD
 
 新功能、PRD 改版、Bug 修复默认优先使用 TDD：

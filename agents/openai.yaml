@@ -1,3 +1,3 @@
 display_name: 开发工作流
-short_description: 让开发按需求、任务、决策、验收、人工审核和文档同步闭环执行。
-default_prompt: /dev-workflow init；后续按 dev-workflow 执行开发，完成后同步文档并等待人工审核。
+short_description: 用 harness 把自然语言开发任务转成分级、验收、人工审核和提交前检查。
+default_prompt: /dev-workflow init；后续直接描述 Bug、功能、PRD 或改版任务，先跑 harness，完成后等待人工审核。

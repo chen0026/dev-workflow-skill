@@ -27,10 +27,13 @@ rsync -a --delete --exclude .git ./ "$CODEX_HOME/skills/dev-workflow/"
 /dev-workflow check
 /dev-workflow clean-templates
 /dev-workflow version
-/dev-workflow feature 用户登录功能
-/dev-workflow bug 登录态过期后没有刷新
-/dev-workflow refactor auth 模块
+修复登录态过期后没有刷新
+开发用户登录功能
+根据 PRD 改版文件管理器
+重构 auth 模块
 ```
+
+开发任务不需要记子命令。只要正常描述 Bug、功能、重构、维护、PRD 或改版任务，agent 会自动运行 harness。
 
 ## 二、日常命令
 
@@ -91,11 +94,13 @@ scripts/check-dev-docs.sh
 ```bash
 scripts/dev-workflow-harness.sh version
 scripts/dev-workflow-harness.sh classify "修复文件夹重命名 bug"
+scripts/dev-workflow-harness.sh run "修复文件夹重命名 bug"
 scripts/dev-workflow-harness.sh report "修复文件夹重命名 bug"
+scripts/dev-workflow-harness.sh verify "修复文件夹重命名 bug"
 scripts/dev-workflow-harness.sh check
 ```
 
-`report` 会输出 `flow / docs_allowed / docs_index_tracked / human_review_required / commit_allowed`，让 agent 先看护栏再执行。
+`run` 是推荐入口，会输出 `flow / docs_allowed / next_action / verify_command / check_command`。`verify` 检查需求追踪、验证证据、文档预算和提交前人工审核状态，重点看 `requirement_status / evidence_status / machine_gate / requirement_match`。
 
 ### 清理旧模板
 
@@ -113,7 +118,18 @@ scripts/clean-templates.sh --apply
 
 ## 三、工作流闭环
 
-默认最小闭环：
+自然语言任务默认闭环：
+
+```text
+用户描述任务
+  -> harness run
+  -> 按 flow 执行
+  -> harness verify/check
+  -> 人工审核需求一致性
+  -> 用户确认后才提交
+```
+
+默认最小留痕：
 
 ```text
 quick：默认不创建正式文档，只输出摘要
