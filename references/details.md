@@ -98,6 +98,18 @@ harness 输出：
 
 重点关注 `requirement_status / evidence_status / machine_gate`。`machine_gate: blocked` 必须先处理；`machine_gate: review` 必须在最终回复中解释原因并交给人工确认。
 
+## 真实验证门禁
+
+最终验收默认真实验证优先，不允许把 mock 当成降级验收：
+
+- 可作为最终证据：真实后端、真实接口、真实运行环境、本地前后端联调、测试环境、真实数据链路、人工实测记录。
+- 不可作为最终证据：mock 数据、fixture、stub、MSW、Playwright route mock、接口拦截、模拟接口、仅前端假数据。
+- mock 只能用于开发辅助、组件孤立测试、异常态/空态补充测试；它可以记录为补充证据，但不能独立支撑“需求已完成”。
+- 如果真实环境不可用，任务状态是 `blocked` 或 `pending-real-verification`，不是验收通过。
+- 最终回复和 TASK / BUG / ACC 必须写清最终验收来源、最终验收证据、是否存在辅助模拟测试。
+
+`verify` 输出 `verification_source_status: mock_only_final_evidence` 时，必须补真实验证证据后再进入人工审核。
+
 ## TDD
 
 新功能、PRD 改版、Bug 修复默认优先使用 TDD：

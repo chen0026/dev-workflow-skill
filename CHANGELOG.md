@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.22.0 - 2026-06-20
+
+- 新增真实验证门禁：最终验收必须来自真实后端、真实接口、真实运行环境、本地联调、测试环境或人工实测证据。
+- mock 数据、Playwright route mock、接口拦截、fixture、stub、MSW 只能作为开发辅助或补充测试，不能作为最终验收或降级验收。
+- harness 新增 `verification_policy / mock_policy / final_evidence_required / verification_source_status` 输出。
+- `verify` 检测到代码改动的最终证据只有 mock 时，输出 `verification_source_status: mock_only_final_evidence` 并阻断。
+- 更新 SKILL、README、workflow、AGENTS 模板和 TASK / BUG / ACC 模板，要求记录最终验收来源和证据。
+
 ## 0.21.0 - 2026-06-20
 
 - harness 新增 `loop_phase / loop_next_decision / max_iterations / stop_condition / slice_strategy` 输出，让复杂需求按短反馈循环推进。

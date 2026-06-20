@@ -114,6 +114,8 @@ Git hooks 是项目级门禁，只对当前项目生效。正式项目建议启�
 
 `run` 是推荐入口，会输出 `flow / flow_reason / docs_allowed / pre_code_gate / code_allowed / loop_phase / loop_next_decision / next_action / verify_command / check_command`。`verify` 检查编码前确认、需求追踪、验证证据、文档预算和提交前人工审核状态，重点看 `pre_code_status / loop_phase / loop_next_decision / requirement_status / evidence_status / machine_gate / requirement_match`。
 
+验证默认真实优先：最终验收必须来自真实后端、真实接口、真实运行环境、本地联调、测试环境或人工实测。mock 数据、Playwright route mock、接口拦截、fixture、stub、MSW 只能做开发辅助或补充测试，不能作为最终验收或降级验收。`verify` 输出 `verification_source_status: mock_only_final_evidence` 时，必须补真实验证证据。
+
 ### 清理旧模板
 
 ```text

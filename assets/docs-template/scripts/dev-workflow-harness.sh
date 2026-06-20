@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-harness_version="0.21.0"
+harness_version="0.22.0"
 cmd="${1:-run}"
 shift || true
 
@@ -320,6 +320,26 @@ confirmed_pre_code_count() {
   esac
 }
 
+count_matching_records() {
+  regex="$1"
+  {
+    count_matching_files docs/requirements 'REQ-*.md' "$regex"
+    count_matching_files docs/tasks 'TASK-*.md' "$regex"
+    count_matching_files docs/bugs 'BUG-*.md' "$regex"
+    count_matching_files docs/acceptance 'ACC-*.md' "$regex"
+  } | awk '{sum += $1} END {print sum + 0}'
+}
+
+real_final_evidence_count() {
+  regex='(最终验收来源|验证方式|验证方法|验证结果|最终验收证据|证据|验收结论)[[:space:]]*[：:].*(真实接口|真实后端|真实环境|测试环境|本地联调|联调通过|人工实测|手工实测|真实数据|非 mock|non-mock|staging|dev api|real API|real backend)'
+  count_matching_records "$regex"
+}
+
+mock_final_evidence_count() {
+  regex='(最终验收来源|验证方式|验证方法|验证结果|最终验收证据|证据|验收结论|辅助模拟记录)[[:space:]]*[：:].*(mock|Playwright[[:space:]-]*route|route[[:space:]-]*mock|mock 数据|mock数据|MSW|fixture|stub|fake data|接口拦截|拦截接口|模拟接口|模拟数据)'
+  count_matching_records "$regex"
+}
+
 check() {
   if [ -x "$skill_root/scripts/check-dev-docs.sh" ]; then
     "$skill_root/scripts/check-dev-docs.sh" >/dev/null
@@ -357,6 +377,9 @@ report() {
   printf 'stop_condition: %s\n' "$(stop_condition_for "$flow")"
   printf 'slice_strategy: %s\n' "$(slice_strategy_for "$flow")"
   printf 'slice_inputs: %s\n' 'requirement_structure,code_boundaries,risk_points,testability'
+  printf 'verification_policy: %s\n' 'real_final_evidence_required'
+  printf 'mock_policy: %s\n' 'development_or_supplement_only_never_final'
+  printf 'final_evidence_required: %s\n' 'real_backend_or_real_api_or_real_runtime_or_human_manual_verification'
   printf 'docs_changed: %s\n' "$(docs_changed_count)"
   printf 'docs_index_tracked: %s\n' "$(docs_index_tracked)"
   printf 'human_review_required: true\n'
@@ -480,10 +503,13 @@ verify() {
       count_matching_files docs/acceptance 'ACC-*.md' '验收标准|验证记录|结论';
     } | awk '{sum += $1} END {print sum + 0}'
   )"
+  real_final_evidence="$(real_final_evidence_count)"
+  mock_final_evidence="$(mock_final_evidence_count)"
   docs_budget_status="ok"
   pre_code_status="ok"
   requirement_status="ok"
   evidence_status="ok"
+  verification_source_status="ok"
   machine_gate="pass"
 
   if [ "$flow" = "quick" ] && [ "$code_changed" -gt 0 ] && [ "$docs_changed" -gt 0 ]; then
@@ -529,6 +555,12 @@ verify() {
     fi
   fi
 
+  if [ "$code_changed" -gt 0 ] && [ "$mock_final_evidence" -gt 0 ] && [ "$real_final_evidence" -eq 0 ]; then
+    verification_source_status="mock_only_final_evidence"
+    evidence_status="mock_only_final_evidence"
+    machine_gate="blocked"
+  fi
+
   if [ "$(docs_index_tracked)" = "true" ]; then
     machine_gate="blocked"
   fi
@@ -569,6 +601,9 @@ verify() {
   printf 'max_iterations: %s\n' "$(max_iterations_for "$flow")"
   printf 'stop_condition: %s\n' "$(stop_condition_for "$flow")"
   printf 'slice_strategy: %s\n' "$(slice_strategy_for "$flow")"
+  printf 'verification_policy: %s\n' 'real_final_evidence_required'
+  printf 'mock_policy: %s\n' 'development_or_supplement_only_never_final'
+  printf 'final_evidence_required: %s\n' 'real_backend_or_real_api_or_real_runtime_or_human_manual_verification'
   printf 'docs_changed: %s\n' "$docs_changed"
   printf 'code_changed: %s\n' "$code_changed"
   printf 'docs_budget_status: %s\n' "$docs_budget_status"
@@ -579,6 +614,9 @@ verify() {
   printf 'bug_files: %s\n' "$bug_files"
   printf 'acceptance_files: %s\n' "$acceptance_files"
   printf 'records_with_evidence: %s\n' "$records_with_evidence"
+  printf 'real_final_evidence_records: %s\n' "$real_final_evidence"
+  printf 'mock_final_evidence_records: %s\n' "$mock_final_evidence"
+  printf 'verification_source_status: %s\n' "$verification_source_status"
   printf 'evidence_status: %s\n' "$evidence_status"
   printf 'docs_index_tracked: %s\n' "$(docs_index_tracked)"
   printf 'machine_gate: %s\n' "$machine_gate"

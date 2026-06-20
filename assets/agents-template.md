@@ -27,6 +27,7 @@
 - quick 默认新增文档 0 个；standard 编码前必须先确认一个 TASK 或 BUG；strict 编码前必须先确认 REQ。
 - 编码前确认标记统一为 `编码前确认：已确认`；没有该标记不得修改业务代码。
 - 大需求使用 Adaptive Loop：先按需求文档结构、代码边界、风险点和可验证粒度切片，不套固定业务分类。
+- 最终验收必须使用真实后端、真实接口、真实运行环境、本地联调、测试环境或人工实测证据；mock 数据、Playwright route mock、接口拦截、fixture、stub、MSW 只能做辅助测试，不能作为最终验收或降级验收。
 - 普通任务禁止同时新建 `TASK + BUG + ACC`。
 - 不手工维护或提交 `docs/index.md`；使用 `.dev-workflow/index/docs.jsonl` 本地索引。
 - `docs/**/TEMPLATE.md` 是母版，日常任务禁止直接修改。
@@ -51,7 +52,7 @@
 
 ## Requirement Match
 
-需求一致性按 `PRD -> REQ -> TASK/BUG -> 验证证据 -> 人工审核 -> 提交` 闭环执行。最终回复必须列出验证证据、待审核内容和待提交文件。
+需求一致性按 `PRD -> REQ -> TASK/BUG -> 真实验证证据 -> 人工审核 -> 提交` 闭环执行。最终回复必须列出真实验证证据、待审核内容和待提交文件。
 
 ## Git Hooks
 
