@@ -112,7 +112,7 @@ Git hooks 是项目级门禁，只对当前项目生效。正式项目建议启�
 
 `doctor` 用来检查当前项目是否接入完整、项目内 harness 是否过期、hooks 是否启用、索引是否存在。重点看 `upgrade_needed / missing_required / doctor_status / next_action`。
 
-`run` 是推荐入口，会输出 `flow / flow_reason / docs_allowed / next_action / verify_command / check_command`。`verify` 检查需求追踪、验证证据、文档预算和提交前人工审核状态，重点看 `requirement_status / evidence_status / machine_gate / requirement_match`。
+`run` 是推荐入口，会输出 `flow / flow_reason / docs_allowed / pre_code_gate / code_allowed / next_action / verify_command / check_command`。`verify` 检查编码前确认、需求追踪、验证证据、文档预算和提交前人工审核状态，重点看 `pre_code_status / requirement_status / evidence_status / machine_gate / requirement_match`。
 
 ### 清理旧模板
 
@@ -147,7 +147,9 @@ Git hooks 是项目级门禁，只对当前项目生效。正式项目建议启�
 ```text
 用户描述任务
   -> harness run
-  -> 按 flow 执行
+  -> 查看 pre_code_gate / code_allowed
+  -> 必要时先确认门禁文档
+  -> 按确认后的文档编码
   -> harness verify/check
   -> 人工审核需求一致性
   -> 用户确认后才提交
@@ -157,9 +159,9 @@ Git hooks 是项目级门禁，只对当前项目生效。正式项目建议启�
 
 ```text
 quick：默认不创建正式文档，只输出摘要
-standard Bug：一个 BUG 主记录
-standard 功能 / 维护：一个 TASK 主记录
-strict PRD / 改版：PRD + REQ + TASK + ACC
+standard Bug：编码前确认一个 BUG 主记录
+standard 功能 / 维护：编码前确认一个 TASK 主记录
+strict PRD / 改版：编码前确认 REQ，再进入 PRD + REQ + TASK + ACC
 ```
 
 按需补充：
@@ -170,7 +172,7 @@ ADR / design / ops / LEGACY
 
 只有在影响架构、接口、数据模型、部署、监控、回滚或长期维护时，才补充这些文档。
 
-standard 的验证、代码审查、验收结论写在同一个 TASK 或 BUG 里，不默认单独创建 ACC。
+standard 的 TASK 或 BUG 先作为编码前门禁，确认后才编码；完成后继续在同一个文档里回填验证、代码审查、验收结论，不默认单独创建 ACC。
 
 ## 四、省 token 策略
 
@@ -188,12 +190,12 @@ standard 的验证、代码审查、验收结论写在同一个 TASK 或 BUG 里
 
 用户指定 `quick` 时，如果检测到 PRD、改版、接口、数据或核心链路风险，会自动升级并说明原因。
 
-quick 不强制写文档；standard 默认一个主记录；strict 才拆完整链路。
+quick 不强制写文档；standard 编码前确认一个主记录；strict 编码前确认 REQ 后才拆完整链路。
 
 文档预算：
 
 - quick：新增文档 0 个。
-- standard：新增文档最多 1 个，Bug 用 BUG，功能 / 维护用 TASK。
+- standard：新增文档最多 1 个，Bug 用 BUG，功能 / 维护用 TASK；这个主记录必须编码前确认。
 - strict：才允许完整链路。
 - 普通任务禁止同时新建 `TASK + BUG + ACC`，不手工更新或提交 `docs/index.md`。
 
@@ -283,6 +285,7 @@ REQ-20260529-101500-a1b2-member-revamp.md
 
 - 没有 REQ，不编码。
 - REQ 未经人工确认，不编码。
+- `standard / strict` 编码前确认标记统一为 `编码前确认：已确认`。
 - 每个 TASK 必须关联一个或多个 REQ。
 - 每个 ACC 必须验收对应 REQ。
 - 有测试框架时优先 TDD；没有测试框架时记录原因并写手工验收项。
@@ -291,6 +294,7 @@ REQ-20260529-101500-a1b2-member-revamp.md
 
 任务完成前必须确认：
 
+- standard / strict 的编码前文档已由人工确认，并写入 `编码前确认：已确认`。
 - 关联文档已创建或更新。
 - quick 可无正式文档，最终回复必须写摘要。
 - PRD / 改版任务已建立并确认 REQ 需求追踪矩阵。

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.20.0 - 2026-06-20
+
+- harness 新增 `pre_code_gate / pre_code_doc / code_allowed` 输出，`standard` 和 `strict` 默认先停在编码前文档确认阶段。
+- `standard` 改为编码前先确认一个 `TASK` 或 `BUG` 主记录，不再允许先编码、完成前才回填文档。
+- `strict` 继续要求 `REQ` 编码前确认，并统一使用 `编码前确认：已确认` 作为可检查标记。
+- `verify` 增加编码前确认检查：`standard / strict` 已有代码改动但缺少确认标记时，输出 `pre_code_status: missing_pre_code_confirmation` 并阻断。
+- 更新 `TASK / BUG / REQ` 模板、AGENTS 规则、workflow 和 README，明确“双人工门禁”：编码前确认文档，提交前确认实现。
+
 ## 0.19.0 - 2026-06-11
 
 - `/dev-workflow init` 默认不再复制通用脚本到项目 `scripts/`，只初始化 `AGENTS.md`、`docs/`、`.githooks/`、`.gitignore` 和本地索引目录。

@@ -6,6 +6,8 @@
 
 - **编号**：TASK-20260528-153500-b2c3
 - **状态**：draft / in_progress / accepted / deprecated
+- **编码前确认**：未确认 / 已确认
+- **确认人 / 时间**：
 - **来源**：PRD-20260528-153000-a1b2 / REQ-20260529-101500-a1b2 / BUG-20260528-154000-c3d4 / maintenance
 - **关联 ACC**：仅 strict 或复杂验收需要
 - **关联 ADR**：

@@ -15,7 +15,7 @@ Harness-first 的轻量开发工作流。用户不需要记流程命令；开发
 "${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" run "用户任务描述"
 ```
 
-按输出的 `flow / docs_allowed / next_action` 执行；不要要求用户手动选择 quick/standard/strict。
+按输出的 `flow / docs_allowed / pre_code_gate / code_allowed / next_action` 执行；不要要求用户手动选择 quick/standard/strict。若 `code_allowed: false`，只允许起草或更新门禁文档，等待用户确认后再编码。
 
 完成前运行：
 
@@ -47,15 +47,16 @@ Harness-first 的轻量开发工作流。用户不需要记流程命令；开发
 ## Gates
 
 - 默认不自动 commit；只有用户明确说“批准提交”或“确认提交”才提交。
-- PRD、产品文档、新功能改版等 `strict` 任务，REQ 未经人工确认前不编码。
+- `standard` 任务必须先确认一个 `TASK` 或 `BUG` 主记录；`strict` 任务必须先确认 `REQ`。确认标记统一为 `编码前确认：已确认`。
+- `code_allowed: false` 时，不创建或修改业务代码；只能准备文档草案、测试计划和待确认问题。
 - harness 只检查完整性；需求是否一致必须进入人工审核，不能由脚本直接判定通过。
 - 默认不展开完整文档内容，只列文件路径、追踪编号、验证结果和待审核事项。
 
 ## Flow Semantics
 
 - `quick`：低风险改动，默认新增文档 0 个，最终摘要即可。
-- `standard`：普通 Bug / 功能 / 维护，最多一个 `TASK` 或 `BUG` 主记录。
-- `strict`：PRD / 改版 / 多模块 / 高风险 / 接口、数据、权限、支付、订单、登录、部署变化，先确认 REQ。
+- `standard`：普通 Bug / 功能 / 维护，编码前先确认一个 `TASK` 或 `BUG` 主记录。
+- `strict`：PRD / 改版 / 多模块 / 高风险 / 接口、数据、权限、支付、订单、登录、部署变化，编码前先确认 REQ。
 
 完整分级、文档预算、命名和索引规则见 `references/flow.md`。
 

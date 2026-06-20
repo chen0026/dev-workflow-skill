@@ -24,7 +24,9 @@
 "${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" doctor
 ```
 
-按输出的 `flow / docs_allowed / next_action` 执行。完成前运行：
+按输出的 `flow / docs_allowed / pre_code_gate / code_allowed / next_action` 执行。`code_allowed: false` 时，只能准备门禁文档，等待人工确认。
+
+完成前运行：
 
 ```bash
 "${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" verify "用户任务描述"
@@ -152,7 +154,7 @@ Codex 快捷提示：
 默认自动选择流程强度，不要求用户手动指定。先用 skill 脚本 `dev-workflow-harness.sh run "任务描述"` 获取初始护栏和 `flow_reason`。默认从 `quick` 起步，只有发现明确风险信号才升级：
 
 - `quick`：文案、样式、小配置、小功能、小 Bug、单文件或低风险改动。少读历史，默认只写摘要。
-- `standard`：普通 Bug、普通功能调整、单模块功能。默认一个 `TASK` 或 `BUG` 主记录，验证、审查、验收结论写在同一文档。
+- `standard`：普通 Bug、普通功能调整、单模块功能。编码前先确认一个 `TASK` 或 `BUG` 主记录，验证、审查、验收结论写在同一文档。
 - `strict`：PRD、产品文档、现有功能改版、多模块、高风险、接口/数据/权限/支付/订单/登录/部署变化。必须 `PRD + REQ + TASK + ACC`。
 
 优先级：硬门禁 > 风险自动升级 > 文档预算 > 用户指定 > 默认 quick。
@@ -163,7 +165,7 @@ Codex 快捷提示：
 
 - quick：新增文档 0 个；最终回复摘要即留痕。
 - quick 且用户要求留痕：最多 1 个 TASK。
-- standard：新增文档最多 1 个，Bug 用 BUG，功能 / 维护用 TASK。
+- standard：新增文档最多 1 个，Bug 用 BUG，功能 / 维护用 TASK；这个主记录必须编码前确认。
 - standard 不创建 ACC；验收结论写进 BUG 或 TASK。
 - strict 才允许完整链路；普通任务不得同时创建 `TASK + BUG + ACC`。
 - `docs/index.md` 不作为任务产物，不因完成任务而手工更新；默认加入 `.gitignore`，不要提交。
@@ -219,6 +221,20 @@ acceptance/ACC-20260528-155000-e5f6-user-login.md
 
 ## 九、最小闭环
 
+### 编码前门禁
+
+- quick：`pre_code_gate: not_required`，低风险小改可直接实现。
+- standard：`pre_code_gate: confirm_TASK_or_BUG_before_code`，先写并确认一个 TASK 或 BUG。
+- strict：`pre_code_gate: confirm_REQ_before_code`，先写并确认 REQ。
+
+确认标记统一为：
+
+```text
+编码前确认：已确认
+```
+
+用户在对话中明确确认门禁文档后，才允许把标记改为 `已确认` 并开始编码。
+
 ### quick 小改
 
 必需：最终回复摘要
@@ -242,12 +258,14 @@ acceptance/ACC-20260528-155000-e5f6-user-login.md
 流程：
 
 1. BUG 写清现象、复现、根因、修复方案。
-2. 先写复现测试，或记录无法自动化原因。
-3. 修复并验证。
-4. 在 BUG 中记录验证结果、代码审查和验收结论。
-5. 需要复杂验收或高风险时，再创建 ACC。
-6. 索引由 `search-dev-docs.sh` 或 `check` 按需重建。
-7. 进入提交前人工审核。
+2. 写清验收项和测试方式。
+3. 等待人工确认，并把 `编码前确认` 改为 `已确认`。
+4. 先写复现测试，或记录无法自动化原因。
+5. 修复并验证。
+6. 在 BUG 中记录验证结果、代码审查和验收结论。
+7. 需要复杂验收或高风险时，再创建 ACC。
+8. 索引由 `search-dev-docs.sh` 或 `check` 按需重建。
+9. 进入提交前人工审核。
 
 ### standard 功能 / 维护 / 重构
 
@@ -258,11 +276,13 @@ acceptance/ACC-20260528-155000-e5f6-user-login.md
 流程：
 
 1. TASK 写清目标、非目标、改动范围。
-2. 修改并验证。
-3. 在 TASK 中记录实际改动、验证结果、代码审查和验收结论。
-4. 需要复杂验收或高风险时，再创建 ACC。
-5. 索引由 `search-dev-docs.sh` 或 `check` 按需重建。
-6. 进入提交前人工审核。
+2. 写清验收项和测试方式。
+3. 等待人工确认，并把 `编码前确认` 改为 `已确认`。
+4. 修改并验证。
+5. 在 TASK 中记录实际改动、验证结果、代码审查和验收结论。
+6. 需要复杂验收或高风险时，再创建 ACC。
+7. 索引由 `search-dev-docs.sh` 或 `check` 按需重建。
+8. 进入提交前人工审核。
 
 ### strict 新功能 / PRD 改版 / 已有功能改版
 
@@ -274,6 +294,7 @@ acceptance/ACC-20260528-155000-e5f6-user-login.md
 
 - 没有 REQ 需求追踪矩阵，不编码。
 - REQ 未经人工确认，不编码。
+- REQ 的 `编码前确认` 未标记为 `已确认`，不编码。
 - 每个 TASK 必须关联一个或多个 REQ。
 - 每个 ACC 必须验收对应 REQ。
 - 有测试框架时优先 TDD；没有测试框架时必须写手工验收项和无法自动化原因。
@@ -288,7 +309,8 @@ acceptance/ACC-20260528-155000-e5f6-user-login.md
 6. 为每个 REQ 写验收方式和测试计划。
 7. 列出待确认问题。
 8. 等待人工确认。
-9. 确认后再创建 TASK 并进入 TDD 实现。
+9. 把 REQ 的 `编码前确认` 改为 `已确认`。
+10. 确认后再创建 TASK 并进入 TDD 实现。
 
 ## 十、什么时候写 ADR
 
@@ -329,7 +351,7 @@ legacy/LEGACY-20260528-160000-a7b8-current-system-summary.md
 - 已运行 skill 脚本 `dev-workflow-harness.sh check`。
 - 已按流程级别创建或更新文档；quick 可无正式文档。
 - PRD / 改版任务已建立并确认 REQ 需求追踪矩阵。
-- standard 的 TASK 或 BUG 写明实际改动、验证结果、代码审查和验收结论。
+- standard 的 TASK 或 BUG 写明编码前确认、实际改动、验证结果、代码审查和验收结论。
 - strict 的 ACC 写明验收结论，并覆盖对应 REQ / BUG。
 - 有测试框架时已优先使用 TDD；无法自动化时已记录原因和手工验收项。
 - 必要的 ADR / design / ops 已处理，或明确“不需要”。

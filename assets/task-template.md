@@ -6,6 +6,8 @@
 
 - **编号**：TASK-20260528-153500-b2c3
 - **状态**：draft / ready / in_progress / accepted / deprecated
+- **编码前确认**：未确认 / 已确认
+- **确认人 / 时间**：
 - **关联 PRD**：
 - **关联 BUG**：
 - **关联 ADR**：

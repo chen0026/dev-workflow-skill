@@ -6,6 +6,8 @@
 
 - **编号**：REQ-20260529-101500-a1b2
 - **状态**：draft / confirmed / implemented / accepted / deprecated
+- **编码前确认**：未确认 / 已确认
+- **确认人 / 时间**：
 - **来源 PRD**：
 - **关联任务**：
 - **关联验收**：

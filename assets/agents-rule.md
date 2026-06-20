@@ -12,7 +12,7 @@
 "${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" run "用户任务描述"
 ```
 
-按输出的 `flow / docs_allowed / next_action` 执行。完成前运行：
+按输出的 `flow / docs_allowed / pre_code_gate / code_allowed / next_action` 执行。`code_allowed: false` 时，只能准备门禁文档，等待人工确认。完成前运行：
 
 ```bash
 "${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" verify "用户任务描述"
@@ -24,8 +24,8 @@
 ## Hard Gates
 
 - 默认不自动提交代码；只有用户明确回复“批准提交”或“确认提交”后才能 commit。
-- PRD、产品文档、现有功能改版和高风险任务必须先建立 REQ，并等待人工确认后再编码。
-- quick 默认新增文档 0 个；standard 最多 1 个主记录；strict 才允许完整链路。
+- quick 默认新增文档 0 个；standard 编码前必须先确认一个 TASK 或 BUG；strict 编码前必须先确认 REQ。
+- 编码前确认标记统一为 `编码前确认：已确认`；没有该标记不得修改业务代码。
 - 普通任务禁止同时新建 `TASK + BUG + ACC`。
 - 不手工维护或提交 `docs/index.md`；使用 `.dev-workflow/index/docs.jsonl` 本地索引。
 - `docs/**/TEMPLATE.md` 是母版，日常任务禁止直接修改。
@@ -45,7 +45,7 @@
 ## Flow Meaning
 
 - quick：低风险改动，最终回复摘要即可。
-- standard：普通 Bug / 功能 / 维护，用一个 `TASK` 或 `BUG` 主记录承载验证、审查和验收结论。
+- standard：普通 Bug / 功能 / 维护，先确认一个 `TASK` 或 `BUG` 主记录，再承载验证、审查和验收结论。
 - strict：PRD / 改版 / 多模块 / 高风险 / 接口、数据、权限、支付、订单、登录、部署变化，先确认 REQ。
 
 ## Requirement Match

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-harness_version="0.19.0"
+harness_version="0.20.0"
 cmd="${1:-run}"
 shift || true
 
@@ -101,6 +101,54 @@ docs_allowed_for() {
   esac
 }
 
+pre_code_gate_for() {
+  case "$1" in
+    quick)
+      echo "not_required"
+      ;;
+    standard)
+      echo "confirm_TASK_or_BUG_before_code"
+      ;;
+    strict)
+      echo "confirm_REQ_before_code"
+      ;;
+    *)
+      echo "unknown"
+      ;;
+  esac
+}
+
+pre_code_doc_for() {
+  case "$1" in
+    quick)
+      echo "none"
+      ;;
+    standard)
+      echo "TASK_or_BUG"
+      ;;
+    strict)
+      echo "REQ"
+      ;;
+    *)
+      echo "unknown"
+      ;;
+  esac
+}
+
+code_allowed_for() {
+  case "$1" in
+    quick)
+      echo "true"
+      ;;
+    standard|strict)
+      echo "false"
+      ;;
+    *)
+      echo "unknown"
+      ;;
+  esac
+}
+
 docs_index_tracked() {
   if git rev-parse --git-dir >/dev/null 2>&1 && git ls-files --error-unmatch docs/index.md >/dev/null 2>&1; then
     echo "true"
@@ -167,6 +215,29 @@ count_matching_files() {
   fi
 }
 
+confirmed_pre_code_count() {
+  flow="$1"
+  regex='编码前确认[^：:]{0,12}[：:][[:space:]]*已确认|pre_code_confirmed[：:][[:space:]]*true'
+
+  case "$flow" in
+    quick)
+      echo "0"
+      ;;
+    standard)
+      {
+        count_matching_files docs/tasks 'TASK-*.md' "$regex";
+        count_matching_files docs/bugs 'BUG-*.md' "$regex";
+      } | awk '{sum += $1} END {print sum + 0}'
+      ;;
+    strict)
+      count_matching_files docs/requirements 'REQ-*.md' "$regex"
+      ;;
+    *)
+      echo "0"
+      ;;
+  esac
+}
+
 check() {
   if [ -x "$skill_root/scripts/check-dev-docs.sh" ]; then
     "$skill_root/scripts/check-dev-docs.sh" >/dev/null
@@ -187,12 +258,17 @@ check() {
 report() {
   flow="$(classify "$@")"
   docs_allowed="$(docs_allowed_for "$flow")"
+  pre_code_gate="$(pre_code_gate_for "$flow")"
 
   printf 'version: %s\n' "$(version)"
   printf 'installed_skill_version: %s\n' "$(installed_skill_version)"
   printf 'flow: %s\n' "$flow"
   printf 'flow_reason: %s\n' "$(flow_reason "$@")"
   printf 'docs_allowed: %s\n' "$docs_allowed"
+  printf 'pre_code_gate: %s\n' "$pre_code_gate"
+  printf 'pre_code_doc: %s\n' "$(pre_code_doc_for "$flow")"
+  printf 'pre_code_confirmation_marker: %s\n' '编码前确认：已确认'
+  printf 'code_allowed: %s\n' "$(code_allowed_for "$flow")"
   printf 'docs_changed: %s\n' "$(docs_changed_count)"
   printf 'docs_index_tracked: %s\n' "$(docs_index_tracked)"
   printf 'human_review_required: true\n'
@@ -208,10 +284,10 @@ run() {
       printf 'next_action: implement_minimal_change_then_verify\n'
       ;;
     standard)
-      printf 'next_action: keep_one_task_or_bug_record_if_trace_needed_then_verify\n'
+      printf 'next_action: draft_TASK_or_BUG_then_wait_for_human_confirmation\n'
       ;;
     strict)
-      printf 'next_action: create_and_confirm_REQ_before_coding\n'
+      printf 'next_action: draft_REQ_then_wait_for_human_confirmation\n'
       ;;
   esac
   printf 'verify_command: %s/scripts/dev-workflow-harness.sh verify "%s"\n' "$skill_root" "$*"
@@ -305,7 +381,9 @@ verify() {
   requirements_files="$(count_files docs/requirements 'REQ-*.md')"
   task_files="$(count_files docs/tasks 'TASK-*.md')"
   bug_files="$(count_files docs/bugs 'BUG-*.md')"
+  task_or_bug_files="$((task_files + bug_files))"
   acceptance_files="$(count_files docs/acceptance 'ACC-*.md')"
+  pre_code_confirmed="$(confirmed_pre_code_count "$flow")"
   requirements_with_acceptance="$(count_matching_files docs/requirements 'REQ-*.md' '验收方式|手工验收|可自动化测试|测试状态')"
   records_with_evidence="$(
     {
@@ -315,6 +393,7 @@ verify() {
     } | awk '{sum += $1} END {print sum + 0}'
   )"
   docs_budget_status="ok"
+  pre_code_status="ok"
   requirement_status="ok"
   evidence_status="ok"
   machine_gate="pass"
@@ -329,13 +408,29 @@ verify() {
     machine_gate="review"
   fi
 
+  if [ "$flow" = "standard" ] && [ "$code_changed" -gt 0 ] && [ "$task_or_bug_files" -eq 0 ]; then
+    pre_code_status="missing_TASK_or_BUG"
+    machine_gate="blocked"
+  fi
+
+  if [ "$flow" = "standard" ] && [ "$code_changed" -gt 0 ] && [ "$task_or_bug_files" -gt 0 ] && [ "$pre_code_confirmed" -eq 0 ]; then
+    pre_code_status="missing_pre_code_confirmation"
+    machine_gate="blocked"
+  fi
+
   if [ "$flow" = "strict" ] && [ "$requirements_files" -eq 0 ]; then
     requirement_status="missing_REQ"
+    pre_code_status="missing_REQ"
     machine_gate="blocked"
   fi
 
   if [ "$flow" = "strict" ] && [ "$requirements_files" -gt 0 ] && [ "$requirements_with_acceptance" -lt "$requirements_files" ]; then
     requirement_status="missing_acceptance"
+    machine_gate="blocked"
+  fi
+
+  if [ "$flow" = "strict" ] && [ "$code_changed" -gt 0 ] && [ "$requirements_files" -gt 0 ] && [ "$pre_code_confirmed" -eq 0 ]; then
+    pre_code_status="missing_pre_code_confirmation"
     machine_gate="blocked"
   fi
 
@@ -355,6 +450,11 @@ verify() {
   printf 'flow: %s\n' "$flow"
   printf 'flow_reason: %s\n' "$(flow_reason "$@")"
   printf 'docs_allowed: %s\n' "$docs_allowed"
+  printf 'pre_code_gate: %s\n' "$(pre_code_gate_for "$flow")"
+  printf 'pre_code_doc: %s\n' "$(pre_code_doc_for "$flow")"
+  printf 'pre_code_confirmation_marker: %s\n' '编码前确认：已确认'
+  printf 'pre_code_confirmed_records: %s\n' "$pre_code_confirmed"
+  printf 'pre_code_status: %s\n' "$pre_code_status"
   printf 'docs_changed: %s\n' "$docs_changed"
   printf 'code_changed: %s\n' "$code_changed"
   printf 'docs_budget_status: %s\n' "$docs_budget_status"
