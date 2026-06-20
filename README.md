@@ -112,7 +112,7 @@ Git hooks 是项目级门禁，只对当前项目生效。正式项目建议启�
 
 `doctor` 用来检查当前项目是否接入完整、项目内 harness 是否过期、hooks 是否启用、索引是否存在。重点看 `upgrade_needed / missing_required / doctor_status / next_action`。
 
-`run` 是推荐入口，会输出 `flow / flow_reason / docs_allowed / pre_code_gate / code_allowed / next_action / verify_command / check_command`。`verify` 检查编码前确认、需求追踪、验证证据、文档预算和提交前人工审核状态，重点看 `pre_code_status / requirement_status / evidence_status / machine_gate / requirement_match`。
+`run` 是推荐入口，会输出 `flow / flow_reason / docs_allowed / pre_code_gate / code_allowed / loop_phase / loop_next_decision / next_action / verify_command / check_command`。`verify` 检查编码前确认、需求追踪、验证证据、文档预算和提交前人工审核状态，重点看 `pre_code_status / loop_phase / loop_next_decision / requirement_status / evidence_status / machine_gate / requirement_match`。
 
 ### 清理旧模板
 
@@ -148,8 +148,9 @@ Git hooks 是项目级门禁，只对当前项目生效。正式项目建议启�
 用户描述任务
   -> harness run
   -> 查看 pre_code_gate / code_allowed
+  -> 查看 loop_phase / loop_next_decision
   -> 必要时先确认门禁文档
-  -> 按确认后的文档编码
+  -> 按确认后的文档单 slice 小步编码
   -> harness verify/check
   -> 人工审核需求一致性
   -> 用户确认后才提交
@@ -202,6 +203,17 @@ quick 不强制写文档；standard 编码前确认一个主记录；strict 编�
 默认禁止全量读取历史文档：先读 `AGENTS.md`、`docs/workflow.md`，再用 skill 脚本 `search-dev-docs.sh` 查候选文档。
 
 `SKILL.md` 只保留硬规则，详细规则按需读取 `references/`。
+
+大需求使用 Adaptive Loop，不套固定业务分类：
+
+```text
+优先按需求文档自身结构切
+再按代码边界切
+再按风险点切
+最后按可独立验证的粒度切
+```
+
+每个 slice 都必须能独立说明目标、范围、验收、证据和停止条件。
 
 长任务可使用 `.dev-workflow/session/*-working.json` 保存结构化状态，减少上下文占用。完成后确认已合并到正式文档再清理。
 

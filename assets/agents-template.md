@@ -12,7 +12,7 @@
 "${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" run "用户任务描述"
 ```
 
-按输出的 `flow / docs_allowed / pre_code_gate / code_allowed / next_action` 执行。`code_allowed: false` 时，只能准备门禁文档，等待人工确认。完成前运行：
+按输出的 `flow / docs_allowed / pre_code_gate / code_allowed / loop_phase / loop_next_decision / next_action` 执行。`code_allowed: false` 时，只能准备门禁文档，等待人工确认。完成前运行：
 
 ```bash
 "${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" verify "用户任务描述"
@@ -26,6 +26,7 @@
 - 默认不自动提交代码；只有用户明确回复“批准提交”或“确认提交”后才能 commit。
 - quick 默认新增文档 0 个；standard 编码前必须先确认一个 TASK 或 BUG；strict 编码前必须先确认 REQ。
 - 编码前确认标记统一为 `编码前确认：已确认`；没有该标记不得修改业务代码。
+- 大需求使用 Adaptive Loop：先按需求文档结构、代码边界、风险点和可验证粒度切片，不套固定业务分类。
 - 普通任务禁止同时新建 `TASK + BUG + ACC`。
 - 不手工维护或提交 `docs/index.md`；使用 `.dev-workflow/index/docs.jsonl` 本地索引。
 - `docs/**/TEMPLATE.md` 是母版，日常任务禁止直接修改。

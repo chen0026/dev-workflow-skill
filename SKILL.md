@@ -15,7 +15,7 @@ Harness-first 的轻量开发工作流。用户不需要记流程命令；开发
 "${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" run "用户任务描述"
 ```
 
-按输出的 `flow / docs_allowed / pre_code_gate / code_allowed / next_action` 执行；不要要求用户手动选择 quick/standard/strict。若 `code_allowed: false`，只允许起草或更新门禁文档，等待用户确认后再编码。
+按输出的 `flow / docs_allowed / pre_code_gate / code_allowed / loop_phase / loop_next_decision / next_action` 执行；不要要求用户手动选择 quick/standard/strict。若 `code_allowed: false`，只允许起草或更新门禁文档，等待用户确认后再编码。
 
 完成前运行：
 
@@ -50,6 +50,7 @@ Harness-first 的轻量开发工作流。用户不需要记流程命令；开发
 - `standard` 任务必须先确认一个 `TASK` 或 `BUG` 主记录；`strict` 任务必须先确认 `REQ`。确认标记统一为 `编码前确认：已确认`。
 - `code_allowed: false` 时，不创建或修改业务代码；只能准备文档草案、测试计划和待确认问题。
 - harness 只检查完整性；需求是否一致必须进入人工审核，不能由脚本直接判定通过。
+- 大需求使用自适应 loop：先理解和切片，再按单个可验证 slice 小步实现；不要套固定业务分类。
 - 默认不展开完整文档内容，只列文件路径、追踪编号、验证结果和待审核事项。
 
 ## Flow Semantics
@@ -73,7 +74,7 @@ Harness-first 的轻量开发工作流。用户不需要记流程命令；开发
 按需读取：
 
 - `references/flow.md`：流程分级、自动升级、上下文预算、本地索引、archive、写入策略。
-- `references/details.md`：项目接入、REQ、TDD、代码审查、人工审核、session、Superpowers / subagent。
+- `references/details.md`：项目接入、REQ、Adaptive Loop、TDD、代码审查、人工审核、session、Superpowers / subagent。
 
 ## Final Response
 

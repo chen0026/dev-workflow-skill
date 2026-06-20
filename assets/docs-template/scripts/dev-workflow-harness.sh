@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-harness_version="0.20.0"
+harness_version="0.21.0"
 cmd="${1:-run}"
 shift || true
 
@@ -149,6 +149,88 @@ code_allowed_for() {
   esac
 }
 
+max_iterations_for() {
+  case "$1" in
+    quick)
+      echo "1"
+      ;;
+    standard)
+      echo "3"
+      ;;
+    strict)
+      echo "5"
+      ;;
+    *)
+      echo "unknown"
+      ;;
+  esac
+}
+
+initial_loop_phase_for() {
+  case "$1" in
+    quick)
+      echo "implement"
+      ;;
+    standard)
+      echo "pre_code_doc"
+      ;;
+    strict)
+      echo "slice"
+      ;;
+    *)
+      echo "unknown"
+      ;;
+  esac
+}
+
+slice_strategy_for() {
+  case "$1" in
+    quick)
+      echo "none"
+      ;;
+    standard)
+      echo "adaptive_if_scope_expands"
+      ;;
+    strict)
+      echo "adaptive_required"
+      ;;
+    *)
+      echo "unknown"
+      ;;
+  esac
+}
+
+stop_condition_for() {
+  case "$1" in
+    quick)
+      echo "targeted_verification_complete_or_blocked"
+      ;;
+    standard)
+      echo "confirmed_doc_then_targeted_verification_complete_or_blocked"
+      ;;
+    strict)
+      echo "confirmed_slices_and_REQ_then_each_slice_verified_or_blocked"
+      ;;
+    *)
+      echo "unknown"
+      ;;
+  esac
+}
+
+initial_loop_decision_for() {
+  case "$1" in
+    quick)
+      echo "continue"
+      ;;
+    standard|strict)
+      echo "wait_human"
+      ;;
+    *)
+      echo "unknown"
+      ;;
+  esac
+}
+
 docs_index_tracked() {
   if git rev-parse --git-dir >/dev/null 2>&1 && git ls-files --error-unmatch docs/index.md >/dev/null 2>&1; then
     echo "true"
@@ -269,6 +351,12 @@ report() {
   printf 'pre_code_doc: %s\n' "$(pre_code_doc_for "$flow")"
   printf 'pre_code_confirmation_marker: %s\n' '编码前确认：已确认'
   printf 'code_allowed: %s\n' "$(code_allowed_for "$flow")"
+  printf 'loop_phase: %s\n' "$(initial_loop_phase_for "$flow")"
+  printf 'loop_next_decision: %s\n' "$(initial_loop_decision_for "$flow")"
+  printf 'max_iterations: %s\n' "$(max_iterations_for "$flow")"
+  printf 'stop_condition: %s\n' "$(stop_condition_for "$flow")"
+  printf 'slice_strategy: %s\n' "$(slice_strategy_for "$flow")"
+  printf 'slice_inputs: %s\n' 'requirement_structure,code_boundaries,risk_points,testability'
   printf 'docs_changed: %s\n' "$(docs_changed_count)"
   printf 'docs_index_tracked: %s\n' "$(docs_index_tracked)"
   printf 'human_review_required: true\n'
@@ -445,6 +533,27 @@ verify() {
     machine_gate="blocked"
   fi
 
+  loop_phase="$(initial_loop_phase_for "$flow")"
+  loop_next_decision="$(initial_loop_decision_for "$flow")"
+  if [ "$machine_gate" = "blocked" ]; then
+    loop_next_decision="stop"
+    if [ "$pre_code_status" != "ok" ] || [ "$requirement_status" != "ok" ]; then
+      loop_phase="pre_code_doc"
+    else
+      loop_phase="verify"
+    fi
+  elif [ "$machine_gate" = "review" ]; then
+    loop_next_decision="wait_human"
+    if [ "$evidence_status" != "ok" ]; then
+      loop_phase="verify"
+    else
+      loop_phase="human_gate"
+    fi
+  else
+    loop_phase="human_gate"
+    loop_next_decision="wait_human"
+  fi
+
   printf 'version: %s\n' "$(version)"
   printf 'installed_skill_version: %s\n' "$(installed_skill_version)"
   printf 'flow: %s\n' "$flow"
@@ -455,6 +564,11 @@ verify() {
   printf 'pre_code_confirmation_marker: %s\n' '编码前确认：已确认'
   printf 'pre_code_confirmed_records: %s\n' "$pre_code_confirmed"
   printf 'pre_code_status: %s\n' "$pre_code_status"
+  printf 'loop_phase: %s\n' "$loop_phase"
+  printf 'loop_next_decision: %s\n' "$loop_next_decision"
+  printf 'max_iterations: %s\n' "$(max_iterations_for "$flow")"
+  printf 'stop_condition: %s\n' "$(stop_condition_for "$flow")"
+  printf 'slice_strategy: %s\n' "$(slice_strategy_for "$flow")"
   printf 'docs_changed: %s\n' "$docs_changed"
   printf 'code_changed: %s\n' "$code_changed"
   printf 'docs_budget_status: %s\n' "$docs_budget_status"

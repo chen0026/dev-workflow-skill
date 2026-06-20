@@ -24,7 +24,7 @@
 "${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" doctor
 ```
 
-按输出的 `flow / docs_allowed / pre_code_gate / code_allowed / next_action` 执行。`code_allowed: false` 时，只能准备门禁文档，等待人工确认。
+按输出的 `flow / docs_allowed / pre_code_gate / code_allowed / loop_phase / loop_next_decision / next_action` 执行。`code_allowed: false` 时，只能准备门禁文档，等待人工确认。
 
 完成前运行：
 
@@ -234,6 +234,31 @@ acceptance/ACC-20260528-155000-e5f6-user-login.md
 ```
 
 用户在对话中明确确认门禁文档后，才允许把标记改为 `已确认` 并开始编码。
+
+### Adaptive Loop
+
+Loop 是执行节奏控制，不是新的重文档模板。每轮只做一个可验证动作：
+
+```text
+理解当前状态 -> 选择一个小动作 -> 执行 -> 验证证据 -> 决定继续 / 修正 / 停止 / 等人确认
+```
+
+harness 字段：
+
+- `loop_phase`：当前阶段。
+- `loop_next_decision`：继续、重试、等待人工或停止。
+- `max_iterations`：quick 1，standard 3，strict 5。
+- `stop_condition`：本轮停止条件。
+- `slice_strategy`：是否需要自适应切片。
+
+自适应切片：
+
+1. 优先按需求文档自身结构切片。
+2. 再按项目代码边界切片。
+3. 再按风险点切片。
+4. 最后按可独立验证的粒度切片。
+
+每个 slice 必须写清：目标、不做什么、改动范围、验收方式、验证证据、停止条件。不套固定业务分类。
 
 ### quick 小改
 

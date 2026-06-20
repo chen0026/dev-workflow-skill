@@ -45,6 +45,38 @@ REQ 未确认前，不创建实现代码，不修改业务代码。
 
 这一步是“施工许可”，不是完成后的记录。完成后仍要回填实际改动、验证、代码审查和验收结论。
 
+## Adaptive Loop Engineering
+
+Loop 是执行节奏控制，不是新的文档负担。每轮只做一个可验证动作：
+
+```text
+理解当前状态 -> 选择一个小动作 -> 执行 -> 验证证据 -> 决定继续 / 修正 / 停止 / 等人确认
+```
+
+harness 输出：
+
+- `loop_phase`：`intake / slice / pre_code_doc / implement / verify / review / human_gate / done`。
+- `loop_next_decision`：`continue / retry / wait_human / stop`。
+- `max_iterations`：quick 1，standard 3，strict 5。
+- `stop_condition`：本轮何时必须停止。
+- `slice_strategy`：是否需要自适应切片。
+
+自适应切片规则：
+
+1. 优先按需求文档自身结构切：标题、章节、表格、用户流程、角色、状态、规则。
+2. 再按项目代码边界切：页面、组件、接口、服务、模型、任务、测试。
+3. 再按风险点切：数据、权限、金额、状态机、外部系统、部署、兼容、性能。
+4. 最后按可验证粒度切：每个 slice 必须能独立实现、验证、暂停或回滚。
+
+不套固定业务分类。风险点只是提示 agent 单独暴露和确认，不代表所有 PRD 都必须拥有这些分类。
+
+停止规则：
+
+- `loop_next_decision: wait_human`：必须停下等待人工确认。
+- `loop_next_decision: stop`：必须说明阻断原因、证据和下一步。
+- 达到 `max_iterations` 仍未通过验证：停止并汇报，不继续猜测。
+- 发现需求歧义、影响范围扩大、无法定位真实实现路径、验证证据不足：停止并列待确认问题。
+
 ## 需求一致性验收
 
 完成前运行：

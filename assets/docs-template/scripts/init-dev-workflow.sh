@@ -59,7 +59,7 @@ if [ ! -f "AGENTS.md" ]; then
 "${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" run "用户任务描述"
 ```
 
-按输出的 `flow / docs_allowed / pre_code_gate / code_allowed / next_action` 执行。`code_allowed: false` 时，只能准备门禁文档，等待人工确认。
+按输出的 `flow / docs_allowed / pre_code_gate / code_allowed / loop_phase / loop_next_decision / next_action` 执行。`code_allowed: false` 时，只能准备门禁文档，等待人工确认。
 
 完成前运行：
 
@@ -69,6 +69,8 @@ if [ ! -f "AGENTS.md" ]; then
 ```
 
 `standard` 编码前必须先确认一个 TASK 或 BUG；`strict` 编码前必须先确认 REQ。确认标记统一为 `编码前确认：已确认`。
+
+大需求使用 Adaptive Loop：先按需求文档结构、代码边界、风险点和可验证粒度切片，不套固定业务分类。
 
 `verify` 只检查完整性；需求是否一致必须等待人工审核确认。未经用户批准，不得提交代码。
 EOF
@@ -88,7 +90,7 @@ elif ! grep -Eq "Dev Workflow|Harness-first|开发工作流强约束" "AGENTS.md
 
 所有新功能、Bug 修复、重构、维护、PRD、改版和需求类任务必须遵守 `docs/workflow.md`。
 
-收到自然语言开发任务后，先运行已安装 skill 的 `dev-workflow-harness.sh run "用户任务描述"`；如果输出 `code_allowed: false`，先准备并确认门禁文档，标记 `编码前确认：已确认` 后再编码。完成前运行 `dev-workflow-harness.sh verify "用户任务描述"` 和 `dev-workflow-harness.sh check`。未经用户批准，不得提交代码。
+收到自然语言开发任务后，先运行已安装 skill 的 `dev-workflow-harness.sh run "用户任务描述"`；如果输出 `code_allowed: false`，先准备并确认门禁文档，标记 `编码前确认：已确认` 后再编码。大需求按 Adaptive Loop 切成可验证 slice，不套固定业务分类。完成前运行 `dev-workflow-harness.sh verify "用户任务描述"` 和 `dev-workflow-harness.sh check`。未经用户批准，不得提交代码。
 EOF
   fi
   echo "dev-workflow: 已追加 AGENTS.md 规则"

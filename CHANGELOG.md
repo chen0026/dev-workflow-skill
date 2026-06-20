@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.21.0 - 2026-06-20
+
+- harness 新增 `loop_phase / loop_next_decision / max_iterations / stop_condition / slice_strategy` 输出，让复杂需求按短反馈循环推进。
+- 新增自适应切片语义：优先按需求文档自身结构、代码边界、风险点和可验证粒度切片，不绑定固定业务分类。
+- `verify` 输出 loop 当前阶段和下一步决策：阻断时停止，证据不足时进入验证循环，待人工确认时进入 `human_gate`。
+- 更新 SKILL、README、AGENTS 模板和 workflow 文档，强调 Loop engineering 是执行节奏控制，不是新增重文档模板。
+
 ## 0.20.0 - 2026-06-20
 
 - harness 新增 `pre_code_gate / pre_code_doc / code_allowed` 输出，`standard` 和 `strict` 默认先停在编码前文档确认阶段。
