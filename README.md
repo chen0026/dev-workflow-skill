@@ -114,6 +114,8 @@ Git hooks 是项目级门禁，只对当前项目生效。正式项目建议启�
 
 `run` 是推荐入口，会输出 `flow / flow_reason / docs_allowed / pre_code_gate / code_allowed / loop_phase / loop_next_decision / next_action / verify_command / check_command`。`verify` 检查编码前确认、需求追踪、验证证据、文档预算和提交前人工审核状态，重点看 `pre_code_status / loop_phase / loop_next_decision / requirement_status / evidence_status / machine_gate / requirement_match`。
 
+测试用例质量默认前置：`standard / strict` 编码前必须确认测试用例清单，并写入 `测试用例确认：已确认`。用例必须从 REQ / BUG 行为倒推，包含关联需求、场景、前置状态、操作、期望结果、测试类型、真实验证路径、mock 使用限制和 RED 失败记录。`verify` 输出 `test_case_status` 阻断时，先补测试清单再编码。
+
 验证默认真实优先：最终验收必须来自真实后端、真实接口、真实运行环境、本地联调、测试环境或人工实测。mock 数据、Playwright route mock、接口拦截、fixture、stub、MSW 只能做开发辅助或补充测试，不能作为最终验收或降级验收。`verify` 输出 `verification_source_status: mock_only_final_evidence` 时，必须补真实验证证据。
 
 ### 清理旧模板
@@ -162,9 +164,9 @@ Git hooks 是项目级门禁，只对当前项目生效。正式项目建议启�
 
 ```text
 quick：默认不创建正式文档，只输出摘要
-standard Bug：编码前确认一个 BUG 主记录
-standard 功能 / 维护：编码前确认一个 TASK 主记录
-strict PRD / 改版：编码前确认 REQ，再进入 PRD + REQ + TASK + ACC
+standard Bug：编码前确认一个 BUG 主记录和测试用例清单
+standard 功能 / 维护：编码前确认一个 TASK 主记录和测试用例清单
+strict PRD / 改版：编码前确认 REQ 和测试用例矩阵，再进入 PRD + REQ + TASK + ACC
 ```
 
 按需补充：
@@ -193,12 +195,12 @@ standard 的 TASK 或 BUG 先作为编码前门禁，确认后才编码；完成
 
 用户指定 `quick` 时，如果检测到 PRD、改版、接口、数据或核心链路风险，会自动升级并说明原因。
 
-quick 不强制写文档；standard 编码前确认一个主记录；strict 编码前确认 REQ 后才拆完整链路。
+quick 不强制写文档；standard 编码前确认一个主记录和测试用例清单；strict 编码前确认 REQ 和测试用例矩阵后才拆完整链路。
 
 文档预算：
 
 - quick：新增文档 0 个。
-- standard：新增文档最多 1 个，Bug 用 BUG，功能 / 维护用 TASK；这个主记录必须编码前确认。
+- standard：新增文档最多 1 个，Bug 用 BUG，功能 / 维护用 TASK；这个主记录和测试用例清单必须编码前确认。
 - strict：才允许完整链路。
 - 普通任务禁止同时新建 `TASK + BUG + ACC`，不手工更新或提交 `docs/index.md`。
 
@@ -300,6 +302,7 @@ REQ-20260529-101500-a1b2-member-revamp.md
 - 没有 REQ，不编码。
 - REQ 未经人工确认，不编码。
 - `standard / strict` 编码前确认标记统一为 `编码前确认：已确认`。
+- 测试用例确认标记统一为 `测试用例确认：已确认`。
 - 每个 TASK 必须关联一个或多个 REQ。
 - 每个 ACC 必须验收对应 REQ。
 - 有测试框架时优先 TDD；没有测试框架时记录原因并写手工验收项。
@@ -309,6 +312,7 @@ REQ-20260529-101500-a1b2-member-revamp.md
 任务完成前必须确认：
 
 - standard / strict 的编码前文档已由人工确认，并写入 `编码前确认：已确认`。
+- standard / strict 的测试用例清单已由人工确认，并写入 `测试用例确认：已确认`。
 - 关联文档已创建或更新。
 - quick 可无正式文档，最终回复必须写摘要。
 - PRD / 改版任务已建立并确认 REQ 需求追踪矩阵。

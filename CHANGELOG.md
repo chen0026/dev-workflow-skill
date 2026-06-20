@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.23.0 - 2026-06-20
+
+- 新增测试用例质量门禁：`standard / strict` 编码前必须确认测试用例清单，并写入 `测试用例确认：已确认`。
+- harness 新增 `test_case_policy / test_case_required_fields / test_case_status` 输出，代码改动缺少测试用例确认或关键字段时阻断。
+- 测试用例清单必须从 REQ / BUG 行为倒推，包含关联需求、场景、前置状态、操作、期望结果、测试类型、真实验证路径、mock 使用限制和 RED 失败记录。
+- 更新 TASK / BUG / REQ 模板、AGENTS 规则、workflow 和 README，减少测试写偏导致的返工。
+
 ## 0.22.0 - 2026-06-20
 
 - 新增真实验证门禁：最终验收必须来自真实后端、真实接口、真实运行环境、本地联调、测试环境或人工实测证据。

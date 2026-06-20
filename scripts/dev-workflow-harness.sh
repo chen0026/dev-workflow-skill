@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-harness_version="0.22.0"
+harness_version="0.23.0"
 cmd="${1:-run}"
 shift || true
 
@@ -107,10 +107,10 @@ pre_code_gate_for() {
       echo "not_required"
       ;;
     standard)
-      echo "confirm_TASK_or_BUG_before_code"
+      echo "confirm_TASK_or_BUG_and_test_cases_before_code"
       ;;
     strict)
-      echo "confirm_REQ_before_code"
+      echo "confirm_REQ_and_test_cases_before_code"
       ;;
     *)
       echo "unknown"
@@ -320,6 +320,76 @@ confirmed_pre_code_count() {
   esac
 }
 
+test_case_confirmed_count() {
+  flow="$1"
+  regex='测试用例确认[^：:]{0,12}[：:][[:space:]]*已确认|test_cases_confirmed[：:][[:space:]]*true'
+
+  case "$flow" in
+    quick)
+      echo "0"
+      ;;
+    standard)
+      {
+        count_matching_files docs/tasks 'TASK-*.md' "$regex";
+        count_matching_files docs/bugs 'BUG-*.md' "$regex";
+      } | awk '{sum += $1} END {print sum + 0}'
+      ;;
+    strict)
+      count_matching_files docs/requirements 'REQ-*.md' "$regex"
+      ;;
+    *)
+      echo "0"
+      ;;
+  esac
+}
+
+count_test_case_quality_files() {
+  dir="$1"
+  pattern="$2"
+  marker='测试用例确认[^：:]{0,12}[：:][[:space:]]*已确认|test_cases_confirmed[：:][[:space:]]*true'
+
+  if [ ! -d "$dir" ]; then
+    echo "0"
+    return
+  fi
+
+  {
+    while IFS= read -r file; do
+      if grep -Eq "$marker" "$file" \
+        && grep -Eq '关联[[:space:]]*(REQ|BUG|需求)|REQ[[:space:]]*/[[:space:]]*BUG' "$file" \
+        && grep -Eq '前置状态' "$file" \
+        && grep -Eq '用户操作|操作|触发' "$file" \
+        && grep -Eq '期望结果' "$file" \
+        && grep -Eq '真实验证路径|真实验证计划|最终验收来源|真实接口|真实后端|真实环境|本地联调|人工实测' "$file" \
+        && grep -Eq 'RED[[:space:]]*失败|先失败记录|预期先失败' "$file"; then
+        printf '%s\n' "$file"
+      fi
+    done < <(find "$dir" -type f -name "$pattern" 2>/dev/null)
+  } | wc -l | tr -d ' '
+}
+
+test_case_quality_count() {
+  flow="$1"
+
+  case "$flow" in
+    quick)
+      echo "0"
+      ;;
+    standard)
+      {
+        count_test_case_quality_files docs/tasks 'TASK-*.md';
+        count_test_case_quality_files docs/bugs 'BUG-*.md';
+      } | awk '{sum += $1} END {print sum + 0}'
+      ;;
+    strict)
+      count_test_case_quality_files docs/requirements 'REQ-*.md'
+      ;;
+    *)
+      echo "0"
+      ;;
+  esac
+}
+
 count_matching_records() {
   regex="$1"
   {
@@ -370,6 +440,7 @@ report() {
   printf 'pre_code_gate: %s\n' "$pre_code_gate"
   printf 'pre_code_doc: %s\n' "$(pre_code_doc_for "$flow")"
   printf 'pre_code_confirmation_marker: %s\n' '编码前确认：已确认'
+  printf 'test_case_confirmation_marker: %s\n' '测试用例确认：已确认'
   printf 'code_allowed: %s\n' "$(code_allowed_for "$flow")"
   printf 'loop_phase: %s\n' "$(initial_loop_phase_for "$flow")"
   printf 'loop_next_decision: %s\n' "$(initial_loop_decision_for "$flow")"
@@ -377,6 +448,8 @@ report() {
   printf 'stop_condition: %s\n' "$(stop_condition_for "$flow")"
   printf 'slice_strategy: %s\n' "$(slice_strategy_for "$flow")"
   printf 'slice_inputs: %s\n' 'requirement_structure,code_boundaries,risk_points,testability'
+  printf 'test_case_policy: %s\n' 'requirement_behavior_first_confirm_before_code'
+  printf 'test_case_required_fields: %s\n' 'REQ_or_BUG,scenario,precondition,action,expected_result,test_type,real_verification_path,mock_policy,red_failure'
   printf 'verification_policy: %s\n' 'real_final_evidence_required'
   printf 'mock_policy: %s\n' 'development_or_supplement_only_never_final'
   printf 'final_evidence_required: %s\n' 'real_backend_or_real_api_or_real_runtime_or_human_manual_verification'
@@ -395,10 +468,10 @@ run() {
       printf 'next_action: implement_minimal_change_then_verify\n'
       ;;
     standard)
-      printf 'next_action: draft_TASK_or_BUG_then_wait_for_human_confirmation\n'
+      printf 'next_action: draft_TASK_or_BUG_with_test_cases_then_wait_for_human_confirmation\n'
       ;;
     strict)
-      printf 'next_action: draft_REQ_then_wait_for_human_confirmation\n'
+      printf 'next_action: draft_REQ_with_test_matrix_then_wait_for_human_confirmation\n'
       ;;
   esac
   printf 'verify_command: %s/scripts/dev-workflow-harness.sh verify "%s"\n' "$skill_root" "$*"
@@ -495,6 +568,8 @@ verify() {
   task_or_bug_files="$((task_files + bug_files))"
   acceptance_files="$(count_files docs/acceptance 'ACC-*.md')"
   pre_code_confirmed="$(confirmed_pre_code_count "$flow")"
+  test_case_confirmed="$(test_case_confirmed_count "$flow")"
+  test_case_quality_records="$(test_case_quality_count "$flow")"
   requirements_with_acceptance="$(count_matching_files docs/requirements 'REQ-*.md' '验收方式|手工验收|可自动化测试|测试状态')"
   records_with_evidence="$(
     {
@@ -510,6 +585,7 @@ verify() {
   requirement_status="ok"
   evidence_status="ok"
   verification_source_status="ok"
+  test_case_status="ok"
   machine_gate="pass"
 
   if [ "$flow" = "quick" ] && [ "$code_changed" -gt 0 ] && [ "$docs_changed" -gt 0 ]; then
@@ -532,6 +608,16 @@ verify() {
     machine_gate="blocked"
   fi
 
+  if [ "$flow" = "standard" ] && [ "$code_changed" -gt 0 ] && [ "$task_or_bug_files" -gt 0 ] && [ "$test_case_confirmed" -eq 0 ]; then
+    test_case_status="missing_test_case_confirmation"
+    machine_gate="blocked"
+  fi
+
+  if [ "$flow" = "standard" ] && [ "$code_changed" -gt 0 ] && [ "$test_case_confirmed" -gt 0 ] && [ "$test_case_quality_records" -eq 0 ]; then
+    test_case_status="missing_test_case_quality_fields"
+    machine_gate="blocked"
+  fi
+
   if [ "$flow" = "strict" ] && [ "$requirements_files" -eq 0 ]; then
     requirement_status="missing_REQ"
     pre_code_status="missing_REQ"
@@ -545,6 +631,16 @@ verify() {
 
   if [ "$flow" = "strict" ] && [ "$code_changed" -gt 0 ] && [ "$requirements_files" -gt 0 ] && [ "$pre_code_confirmed" -eq 0 ]; then
     pre_code_status="missing_pre_code_confirmation"
+    machine_gate="blocked"
+  fi
+
+  if [ "$flow" = "strict" ] && [ "$code_changed" -gt 0 ] && [ "$requirements_files" -gt 0 ] && [ "$test_case_confirmed" -eq 0 ]; then
+    test_case_status="missing_test_case_confirmation"
+    machine_gate="blocked"
+  fi
+
+  if [ "$flow" = "strict" ] && [ "$code_changed" -gt 0 ] && [ "$test_case_confirmed" -gt 0 ] && [ "$test_case_quality_records" -eq 0 ]; then
+    test_case_status="missing_test_case_quality_fields"
     machine_gate="blocked"
   fi
 
@@ -569,7 +665,7 @@ verify() {
   loop_next_decision="$(initial_loop_decision_for "$flow")"
   if [ "$machine_gate" = "blocked" ]; then
     loop_next_decision="stop"
-    if [ "$pre_code_status" != "ok" ] || [ "$requirement_status" != "ok" ]; then
+    if [ "$pre_code_status" != "ok" ] || [ "$requirement_status" != "ok" ] || [ "$test_case_status" != "ok" ]; then
       loop_phase="pre_code_doc"
     else
       loop_phase="verify"
@@ -596,11 +692,17 @@ verify() {
   printf 'pre_code_confirmation_marker: %s\n' '编码前确认：已确认'
   printf 'pre_code_confirmed_records: %s\n' "$pre_code_confirmed"
   printf 'pre_code_status: %s\n' "$pre_code_status"
+  printf 'test_case_confirmation_marker: %s\n' '测试用例确认：已确认'
+  printf 'test_case_confirmed_records: %s\n' "$test_case_confirmed"
+  printf 'test_case_quality_records: %s\n' "$test_case_quality_records"
+  printf 'test_case_status: %s\n' "$test_case_status"
   printf 'loop_phase: %s\n' "$loop_phase"
   printf 'loop_next_decision: %s\n' "$loop_next_decision"
   printf 'max_iterations: %s\n' "$(max_iterations_for "$flow")"
   printf 'stop_condition: %s\n' "$(stop_condition_for "$flow")"
   printf 'slice_strategy: %s\n' "$(slice_strategy_for "$flow")"
+  printf 'test_case_policy: %s\n' 'requirement_behavior_first_confirm_before_code'
+  printf 'test_case_required_fields: %s\n' 'REQ_or_BUG,scenario,precondition,action,expected_result,test_type,real_verification_path,mock_policy,red_failure'
   printf 'verification_policy: %s\n' 'real_final_evidence_required'
   printf 'mock_policy: %s\n' 'development_or_supplement_only_never_final'
   printf 'final_evidence_required: %s\n' 'real_backend_or_real_api_or_real_runtime_or_human_manual_verification'

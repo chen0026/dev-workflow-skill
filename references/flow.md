@@ -69,8 +69,8 @@ quick 禁用场景：
 
 - Bug：默认只建一个 `BUG` 主记录；如果已有 TASK，则更新已有 TASK。
 - 普通功能 / 维护：默认只建一个 `TASK` 主记录。
-- 编码前必须写清目标、范围、不做什么、验收项和测试方式，并等待人工确认。
-- 人工确认后把主记录中的 `编码前确认` 改为 `已确认`，再开始编码。
+- 编码前必须写清目标、范围、不做什么、验收项、测试方式和测试用例清单，并等待人工确认。
+- 人工确认后把主记录中的 `编码前确认` 和 `测试用例确认` 改为 `已确认`，再开始编码。
 - 文档新增数量最多 1 个；禁止为同一个普通任务同时新建 `TASK + BUG + ACC`。
 - 验证、代码审查、验收结论写入主记录，不单独创建 ACC。
 - 只有用户要求、发布验收复杂、或 strict 升级时，才创建 ACC。
@@ -92,8 +92,8 @@ quick 禁用场景：
 - 新功能 / 改版：`PRD + REQ + TASK + ACC`。
 - 高风险 Bug 可使用 `BUG + TASK + ACC`。
 - 必要时 `ADR / design / ops / legacy`。
-- REQ 未经人工确认前不编码；确认后把 `编码前确认` 改为 `已确认`。
-- TDD 或明确手工验收项。
+- REQ 和测试用例矩阵未经人工确认前不编码；确认后把 `编码前确认` 和 `测试用例确认` 改为 `已确认`。
+- TDD 或明确手工验收项，测试用例必须从 REQ 行为倒推。
 - 必要时 subagent 或人工独立 review。
 
 ## 自动升级
@@ -120,7 +120,7 @@ quick 禁用场景：
 
 - quick：新增文档 0 个；最终回复摘要即留痕。
 - quick 且用户要求留痕：最多 1 个 TASK。
-- standard：新增文档最多 1 个，Bug 用 BUG，功能 / 维护用 TASK；这个主记录必须在编码前确认。
+- standard：新增文档最多 1 个，Bug 用 BUG，功能 / 维护用 TASK；这个主记录和测试用例清单必须在编码前确认。
 - standard 不创建 ACC；验收结论写进 BUG 或 TASK。
 - strict 才允许完整链路；普通任务不得同时创建 `TASK + BUG + ACC`。
 - `docs/index.md` 不作为任务产物，不因完成任务而手工更新；默认加入 `.gitignore`，不要提交。
@@ -191,21 +191,22 @@ TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md
 ## 编码前门禁
 
 - quick：`pre_code_gate: not_required`，低风险小改可直接实现。
-- standard：`pre_code_gate: confirm_TASK_or_BUG_before_code`，先确认 `TASK` 或 `BUG`。
-- strict：`pre_code_gate: confirm_REQ_before_code`，先确认 `REQ`。
+- standard：`pre_code_gate: confirm_TASK_or_BUG_and_test_cases_before_code`，先确认 `TASK` 或 `BUG` 及测试用例清单。
+- strict：`pre_code_gate: confirm_REQ_and_test_cases_before_code`，先确认 `REQ` 及测试用例矩阵。
 
 确认标记统一写为：
 
 ```text
 编码前确认：已确认
+测试用例确认：已确认
 ```
 
-用户在对话中明确确认文档后，才允许把标记改为 `已确认` 并开始编码。
+用户在对话中明确确认门禁文档和测试用例清单后，才允许把两个标记改为 `已确认` 并开始编码。
 
 ## 文档写入策略
 
 小任务不要一开始就写很多文档：
 
 - quick：默认不写正式文档，只在最终回复摘要；必要时一个 TASK。
-- standard：编码前先确认一个 TASK 或 BUG 主记录；完成前只回填实际改动、验证、审查和验收结论，不额外创建 ACC。
-- strict：PRD / 改版必须先写 REQ，确认后再编码。
+- standard：编码前先确认一个 TASK 或 BUG 主记录及测试用例清单；完成前只回填实际改动、验证、审查和验收结论，不额外创建 ACC。
+- strict：PRD / 改版必须先写 REQ 和测试用例矩阵，确认后再编码。
