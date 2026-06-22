@@ -106,10 +106,13 @@ ACTIVE 生命周期脚本：
 ```bash
 "${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/active-work.sh" start file-manager-rename
 "${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/active-work.sh" list
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/active-work.sh" match file-manager rename
 "${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/active-work.sh" finish docs/active/ACTIVE-xxx.md file-manager < summary.md
 ```
 
 `finish` 只在人工审核通过后使用；摘要最多 8 个非空行。
+
+如果 `match` 返回 `ambiguous_active`，说明多个线程/任务都像当前任务，不能自动选择；先让用户确认 exact ACTIVE 文件。
 
 ## 需求一致性
 

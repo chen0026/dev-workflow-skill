@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.26.0 - 2026-06-22
+
+- 新增 ACTIVE 隔离门禁：多个 ACTIVE 同时存在时，必须先锁定唯一文件，禁止按模块名、最近时间或猜测选择，降低多线程任务串台风险。
+- `active-work.sh match keyword...` 支持按关键词匹配 ACTIVE；无命中退出 1，多命中输出 `ambiguous_active` 并退出 2，只命中 1 个时输出 exact 文件路径。
+- `active-work.sh start` 自动写入标题、ACTIVE 文件、任务指纹、分支、创建时间和最后更新时间，减少占位符和误判。
+- harness 新增 `active_isolation_policy: exact_ACTIVE_required_ambiguous_match_stops` 输出。
+- 更新 SKILL、references、AGENTS 模板、workflow 和 README，明确未锁定 ACTIVE 前不得读取或回填候选内容。
+
 ## 0.25.0 - 2026-06-22
 
 - 新增 `scripts/active-work.sh`，支持 `start / list / template / finish`，减少 ACTIVE 创建、查看、折叠到 history 和清理时的手工操作。

@@ -95,7 +95,7 @@ Codex 快捷提示：
 1. `AGENTS.md`
 2. `docs/workflow.md`
 3. skill 脚本 `search-dev-docs.sh` 的候选结果，或 `.dev-workflow/index/docs.jsonl`
-4. `docs/active/*.md` 中同分支、同模块、同任务的进行中工作
+4. 用 `active-work.sh match 关键词` 锁定的唯一 ACTIVE；未锁定或多候选时不得读取候选内容
 5. `docs/history/<module>.md` 的最近相关条目
 6. 当前任务关联的 `PRD / REQ / TASK / BUG / ADR / ACC`
 7. `docs/design/` 和 `docs/ops/`
@@ -287,11 +287,14 @@ ACTIVE 写清目标、范围、下一步、阻塞、测试用例、真实验证�
 
 任务完成并通过人工审核后，把 8 行以内摘要追加到 `docs/history/<module>.md`，再删除 ACTIVE。history 只写完成结论、验证、提交和关联编号，不写长过程。
 
+多个 ACTIVE 同时存在时，必须先锁定唯一 ACTIVE。`active-work.sh match` 只命中 1 个时才可读取和回填；返回 `ambiguous_active` 时停止并让用户确认，禁止按模块名、最近时间或标题相似度猜。
+
 辅助脚本：
 
 ```bash
 "${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/active-work.sh" start file-manager-rename
 "${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/active-work.sh" list
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/active-work.sh" match file-manager rename
 "${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/active-work.sh" template
 ```
 

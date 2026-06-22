@@ -215,11 +215,13 @@ ACTIVE 生命周期可用脚本减少手写：
 ```bash
 "${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/active-work.sh" start file-manager-rename
 "${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/active-work.sh" list
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/active-work.sh" match file-manager rename
 "${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/active-work.sh" template
 "${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/active-work.sh" finish docs/active/ACTIVE-xxx.md file-manager < summary.md
 ```
 
 `finish` 只接受最多 8 个非空行的摘要，并会清理 ACTIVE；未通过人工审核前不要执行。
+如果 `match` 返回 `ambiguous_active`，不要猜；先让用户确认 exact ACTIVE 文件，防止多个线程串台。
 
 大需求使用 Adaptive Loop，不套固定业务分类：
 

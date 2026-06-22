@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-harness_version="0.25.0"
+harness_version="0.26.0"
 cmd="${1:-run}"
 shift || true
 
@@ -448,6 +448,7 @@ report() {
   printf 'test_case_confirmation_marker: %s\n' '测试用例确认：已确认'
   printf 'code_allowed: %s\n' "$(code_allowed_for "$flow")"
   printf 'active_policy: %s\n' 'one_ACTIVE_file_per_in_progress_task'
+  printf 'active_isolation_policy: %s\n' 'exact_ACTIVE_required_ambiguous_match_stops'
   printf 'history_policy: %s\n' 'fold_completed_standard_work_to_docs_history_module'
   printf 'formal_doc_policy: %s\n' 'TASK_or_BUG_only_for_complex_or_high_risk_standard_work'
   printf 'history_entry_limit: %s\n' '8_lines'
@@ -725,6 +726,7 @@ verify() {
   printf 'mock_policy: %s\n' 'development_or_supplement_only_never_final'
   printf 'final_evidence_required: %s\n' 'real_backend_or_real_api_or_real_runtime_or_human_manual_verification'
   printf 'active_policy: %s\n' 'one_ACTIVE_file_per_in_progress_task'
+  printf 'active_isolation_policy: %s\n' 'exact_ACTIVE_required_ambiguous_match_stops'
   printf 'history_policy: %s\n' 'fold_completed_standard_work_to_docs_history_module'
   printf 'formal_doc_policy: %s\n' 'TASK_or_BUG_only_for_complex_or_high_risk_standard_work'
   printf 'history_entry_limit: %s\n' '8_lines'

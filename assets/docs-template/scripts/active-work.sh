@@ -11,9 +11,11 @@ usage() {
 usage:
   active-work.sh start short-title
   active-work.sh list
+  active-work.sh match keyword [keyword...]
   active-work.sh template
   active-work.sh finish ACTIVE_FILE module-name [--keep-active] < summary.md
 
+多个 ACTIVE 命中时，match 会返回 ambiguous_active 并退出 2，禁止自动猜。
 finish summary 最多 8 个非空行。完成折叠前必须已通过人工审核。
 EOF
 }
@@ -36,17 +38,68 @@ extract_field() {
     | sed -E "s/^- ${label}： *//; s/^${label}： *//" || true
 }
 
+current_branch() {
+  if git rev-parse --git-dir >/dev/null 2>&1; then
+    git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null || echo "unknown"
+  else
+    echo "no-git"
+  fi
+}
+
+stamp_now() {
+  date +%Y-%m-%dT%H:%M:%S%z
+}
+
+hydrate_active() {
+  file="$1"
+  title="$(basename "$file" .md)"
+  branch="$(current_branch)"
+  stamp="$(stamp_now)"
+  tmp="${file}.tmp.$$"
+
+  awk -v title="$title" -v file="$file" -v branch="$branch" -v stamp="$stamp" '
+    NR == 1 && $0 ~ /^# ACTIVE-YYYYMMDD-HHMMSS-XXXX-short-title/ {
+      print "# " title
+      next
+    }
+    /^- ACTIVE 文件：/ {
+      print "- ACTIVE 文件：" file
+      next
+    }
+    /^- 任务指纹：/ {
+      print "- 任务指纹：" title
+      next
+    }
+    /^- 分支：/ {
+      print "- 分支：" branch
+      next
+    }
+    /^- 创建时间：/ {
+      print "- 创建时间：" stamp
+      next
+    }
+    /^- 最后更新：/ {
+      print "- 最后更新：" stamp
+      next
+    }
+    { print }
+  ' "$file" > "$tmp"
+  mv "$tmp" "$file"
+}
+
 start_active() {
   title="${*:-}"
   [ -n "$title" ] || fail "start 需要 short-title"
 
   if [ -x "$script_dir/new-doc.sh" ]; then
-    "$script_dir/new-doc.sh" ACTIVE "$title"
+    active_file="$("$script_dir/new-doc.sh" ACTIVE "$title")"
   elif [ -x "scripts/new-doc.sh" ]; then
-    scripts/new-doc.sh ACTIVE "$title"
+    active_file="$(scripts/new-doc.sh ACTIVE "$title")"
   else
     fail "找不到 new-doc.sh"
   fi
+  hydrate_active "$active_file"
+  echo "$active_file"
 }
 
 list_active() {
@@ -75,6 +128,54 @@ list_active() {
   if [ "$found" = "0" ]; then
     echo "dev-workflow: 没有进行中的 ACTIVE"
   fi
+}
+
+match_active() {
+  [ "$#" -gt 0 ] || fail "match 需要 keyword"
+  [ -d "docs/active" ] || fail "缺少 docs/active"
+
+  matches=""
+  count="0"
+  query="$(printf '%s ' "$@" | tr '[:upper:]' '[:lower:]')"
+
+  while IFS= read -r file; do
+    title="$(sed -nE 's/^# +//p' "$file" | head -n 1)"
+    status="$(extract_field "$file" "状态")"
+    module="$(extract_field "$file" "模块")"
+    source="$(extract_field "$file" "来源")"
+    branch="$(extract_field "$file" "分支")"
+    fingerprint="$(extract_field "$file" "任务指纹")"
+    haystack="$(printf '%s %s %s %s %s %s' "$(basename "$file")" "$title" "$module" "$source" "$branch" "$fingerprint" | tr '[:upper:]' '[:lower:]')"
+
+    matched="1"
+    for token in $query; do
+      case "$haystack" in
+        *"$token"*) ;;
+        *)
+          matched="0"
+          ;;
+      esac
+    done
+
+    if [ "$matched" = "1" ]; then
+      count="$((count + 1))"
+      matches="${matches}${status:-unknown}\t${module:-unknown}\t${title:-$(basename "$file" .md)}\t${file}
+"
+    fi
+  done < <(find docs/active -type f -name 'ACTIVE-*.md' 2>/dev/null | sort)
+
+  if [ "$count" -eq 0 ]; then
+    echo "dev-workflow: no_active_match"
+    exit 1
+  fi
+
+  if [ "$count" -gt 1 ]; then
+    echo "dev-workflow: ambiguous_active"
+    printf '%b' "$matches"
+    exit 2
+  fi
+
+  printf '%b' "$matches" | awk -F '\t' '{print $4}'
 }
 
 summary_template() {
@@ -149,6 +250,9 @@ case "$cmd" in
     ;;
   list)
     list_active
+    ;;
+  match)
+    match_active "$@"
     ;;
   template)
     summary_template

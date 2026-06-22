@@ -35,7 +35,7 @@ Harness-first 的轻量开发工作流。用户不需要记流程命令；开发
 - `/dev-workflow doctor`：运行已安装 skill 的 `doctor`，检查当前项目 harness 版本、目录、hooks、索引和升级建议。
 - `/dev-workflow clean-templates`：预览并按确认清理项目内模板副本。
 - `/dev-workflow clean-scripts`：预览并按确认清理项目内 dev-workflow 脚本副本。
-- `/dev-workflow active list/start/finish`：查看、创建或折叠进行中的 ACTIVE。
+- `/dev-workflow active list/start/match/finish`：查看、创建、匹配或折叠进行中的 ACTIVE。
 
 项目脚本缺失时使用：
 
@@ -52,6 +52,7 @@ Harness-first 的轻量开发工作流。用户不需要记流程命令；开发
 - `standard` 任务默认先确认一个 `ACTIVE` 交接文件；复杂或高风险才升级 `TASK` / `BUG`。`strict` 任务必须先确认 `REQ`。确认标记统一为 `编码前确认：已确认`。
 - `standard / strict` 编码前必须确认测试用例清单。确认标记统一为 `测试用例确认：已确认`；用例必须从 ACTIVE / REQ / BUG 行为倒推，包含前置状态、操作、期望结果、真实验证路径和 RED 失败记录。
 - 进行中任务使用 `docs/active/ACTIVE-*.md`；完成后把 8 行以内摘要折叠到 `docs/history/<module>.md`，再清理 ACTIVE。不要使用全局 `current-work.md`。
+- 多个 ACTIVE 同时存在时，先用 `active-work.sh match 关键词` 锁定唯一文件；返回 `ambiguous_active` 时必须停止并让用户确认，不得按模块名、最近时间或猜测读取/回填 ACTIVE。
 - `code_allowed: false` 时，不创建或修改业务代码；只能准备文档草案、测试计划和待确认问题。
 - harness 只检查完整性；需求是否一致必须进入人工审核，不能由脚本直接判定通过。
 - 最终验收必须有真实后端、真实接口、真实运行环境或人工实测证据；mock、mock 数据、Playwright route mock 只能做开发辅助或补充测试，不能作为最终验收或降级验收证据。

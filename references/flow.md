@@ -168,7 +168,7 @@ TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md
 查找顺序：
 
 1. 先读 `AGENTS.md` 和 `docs/workflow.md`。
-2. 检查 `docs/active/*.md`，判断是否有同分支、同模块、同任务的进行中工作。
+2. 用 `active-work.sh match 关键词` 锁定当前任务唯一 ACTIVE；多个命中时先让用户确认，不读任何候选内容。
 3. 读当前模块的 `docs/history/<module>.md`；只看最近相关条目。
 4. 用 skill 脚本 `search-dev-docs.sh 关键词` 按任务关键词、模块名、功能名、编号筛选候选文档；索引缺失或真实文档更新时，search 会自动重建。
 5. 只打开候选文档中最相关的 1-5 个；候选过多时，先列出候选和选择依据。

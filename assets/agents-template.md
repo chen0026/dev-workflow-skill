@@ -28,6 +28,7 @@
 - 编码前确认标记统一为 `编码前确认：已确认`；没有该标记不得修改业务代码。
 - standard / strict 编码前必须确认测试用例清单，标记为 `测试用例确认：已确认`；用例必须从 ACTIVE / REQ / BUG 行为倒推，包含前置状态、操作、期望结果、真实验证路径和 RED 失败记录。
 - standard 进行中任务使用 `docs/active/ACTIVE-*.md`；完成并通过人工审核后，把 8 行以内摘要折叠到 `docs/history/<module>.md`，再清理 ACTIVE。
+- 多个 ACTIVE 同时存在时，必须先用 `active-work.sh match 关键词` 锁定唯一文件；返回 `ambiguous_active` 时停止并让用户确认，禁止按模块名、最近时间或猜测选择。
 - 大需求使用 Adaptive Loop：先按需求文档结构、代码边界、风险点和可验证粒度切片，不套固定业务分类。
 - 最终验收必须使用真实后端、真实接口、真实运行环境、本地联调、测试环境或人工实测证据；mock 数据、Playwright route mock、接口拦截、fixture、stub、MSW 只能做辅助测试，不能作为最终验收或降级验收。
 - 普通任务禁止同时新建 `TASK + BUG + ACC`。
@@ -42,7 +43,7 @@
 2. `docs/workflow.md`
 3. skill 脚本 `search-dev-docs.sh` 的候选结果或 `.dev-workflow/index/docs.jsonl`
 4. 用户当前提供的 PRD / 需求 / Bug 描述
-5. `docs/active/*.md` 中同分支、同模块、同任务的进行中工作
+5. 用 `active-work.sh match 关键词` 锁定的唯一 ACTIVE；未锁定或多候选时不得读取候选内容
 6. `docs/history/<module>.md` 的最近相关条目
 7. 当前任务直接相关的文档、代码和测试
 

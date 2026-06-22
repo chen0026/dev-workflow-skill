@@ -5,6 +5,8 @@
 ## 基本信息
 
 - 状态：intake / pre_code_doc / coding / testing / blocked / review
+- ACTIVE 文件：
+- 任务指纹：
 - 模块：
 - 来源：
 - 分支：
