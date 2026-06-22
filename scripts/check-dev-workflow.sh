@@ -2,7 +2,7 @@
 set -euo pipefail
 
 mode="${1:-pre-commit}"
-tracking_id_regex='(PRD|REQ|TASK|BUG|ADR|ACC|OPS|LEGACY)-(([0-9]{8}-[0-9]{6}-[a-z0-9]{4})|([0-9]{4}))'
+tracking_id_regex='(PRD|REQ|TASK|BUG|ACTIVE|ADR|ACC|OPS|LEGACY)-(([0-9]{8}-[0-9]{6}-[a-z0-9]{4})|([0-9]{4}))'
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if [ "$mode" = "pre-commit" ]; then
@@ -20,7 +20,7 @@ if [ "$mode" = "pre-commit" ]; then
 
     if [ -n "$code_changed" ] && [ -z "$docs_changed" ]; then
       echo "dev-workflow: 本次提交包含代码变更，但没有同步 docs/ 或 AGENTS.md。"
-      echo "请补充主记录文档，或取消 DEV_WORKFLOW_REQUIRE_DOCS=1。"
+      echo "请补充 ACTIVE 或正式文档，或取消 DEV_WORKFLOW_REQUIRE_DOCS=1。"
       exit 1
     fi
   fi

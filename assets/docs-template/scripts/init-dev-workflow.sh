@@ -68,9 +68,11 @@ if [ ! -f "AGENTS.md" ]; then
 "${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" check
 ```
 
-`standard` 编码前必须先确认一个 TASK 或 BUG；`strict` 编码前必须先确认 REQ。确认标记统一为 `编码前确认：已确认`。
+`standard` 编码前默认先确认一个 ACTIVE；复杂或高风险任务才使用 TASK 或 BUG；`strict` 编码前必须先确认 REQ。确认标记统一为 `编码前确认：已确认`。
 
-standard / strict 编码前必须确认测试用例清单，标记为 `测试用例确认：已确认`；用例必须从 REQ / BUG 行为倒推，包含前置状态、操作、期望结果、真实验证路径和 RED 失败记录。
+standard / strict 编码前必须确认测试用例清单，标记为 `测试用例确认：已确认`；用例必须从 ACTIVE / REQ / BUG 行为倒推，包含前置状态、操作、期望结果、真实验证路径和 RED 失败记录。
+
+普通任务只保留一个 `docs/active/ACTIVE-*.md` 作为进行中交接文件；完成后把 8 行以内摘要折叠到 `docs/history/<module>.md`，再清理 ACTIVE。
 
 大需求使用 Adaptive Loop：先按需求文档结构、代码边界、风险点和可验证粒度切片，不套固定业务分类。
 
@@ -94,7 +96,7 @@ elif ! grep -Eq "Dev Workflow|Harness-first|开发工作流强约束" "AGENTS.md
 
 所有新功能、Bug 修复、重构、维护、PRD、改版和需求类任务必须遵守 `docs/workflow.md`。
 
-收到自然语言开发任务后，先运行已安装 skill 的 `dev-workflow-harness.sh run "用户任务描述"`；如果输出 `code_allowed: false`，先准备并确认门禁文档和测试用例清单，标记 `编码前确认：已确认` 与 `测试用例确认：已确认` 后再编码。测试用例必须从 REQ / BUG 行为倒推，包含前置状态、操作、期望结果、真实验证路径和 RED 失败记录。大需求按 Adaptive Loop 切成可验证 slice，不套固定业务分类。最终验收必须使用真实后端、真实接口、真实运行环境、本地联调、测试环境或人工实测证据；mock 数据、Playwright route mock、接口拦截、fixture、stub、MSW 只能做辅助测试，不能作为最终验收或降级验收。完成前运行 `dev-workflow-harness.sh verify "用户任务描述"` 和 `dev-workflow-harness.sh check`。未经用户批准，不得提交代码。
+收到自然语言开发任务后，先运行已安装 skill 的 `dev-workflow-harness.sh run "用户任务描述"`；如果输出 `code_allowed: false`，先准备并确认门禁文档和测试用例清单，标记 `编码前确认：已确认` 与 `测试用例确认：已确认` 后再编码。普通任务默认使用一个 `docs/active/ACTIVE-*.md` 作为进行中交接文件，复杂或高风险任务才升级为 TASK / BUG；完成后把 8 行以内摘要折叠到 `docs/history/<module>.md`，再清理 ACTIVE。测试用例必须从 ACTIVE / REQ / BUG 行为倒推，包含前置状态、操作、期望结果、真实验证路径和 RED 失败记录。大需求按 Adaptive Loop 切成可验证 slice，不套固定业务分类。最终验收必须使用真实后端、真实接口、真实运行环境、本地联调、测试环境或人工实测证据；mock 数据、Playwright route mock、接口拦截、fixture、stub、MSW 只能做辅助测试，不能作为最终验收或降级验收。完成前运行 `dev-workflow-harness.sh verify "用户任务描述"` 和 `dev-workflow-harness.sh check`。未经用户批准，不得提交代码。
 EOF
   fi
   echo "dev-workflow: 已追加 AGENTS.md 规则"
@@ -128,6 +130,8 @@ mkdir -p \
   docs/requirements \
   docs/tasks \
   docs/bugs \
+  docs/active \
+  docs/history \
   docs/design/decisions \
   docs/acceptance \
   docs/ops \
@@ -143,6 +147,8 @@ if [ "$with_templates" = "1" ]; then
     "$template_dir/requirements" \
     "$template_dir/tasks" \
     "$template_dir/bugs" \
+    "$template_dir/active" \
+    "$template_dir/history" \
     "$template_dir/design" \
     "$template_dir/acceptance" \
     "$template_dir/ops" \

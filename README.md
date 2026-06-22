@@ -48,7 +48,7 @@ rsync -a --delete --exclude .git ./ "$CODEX_HOME/skills/dev-workflow/"
 会检查并补齐：
 
 - `AGENTS.md`
-- `docs/`
+- `docs/`，包含 `active/` 和 `history/`
 - `.githooks/`
 - `.dev-workflow/index/`
 
@@ -114,7 +114,7 @@ Git hooks 是项目级门禁，只对当前项目生效。正式项目建议启�
 
 `run` 是推荐入口，会输出 `flow / flow_reason / docs_allowed / pre_code_gate / code_allowed / loop_phase / loop_next_decision / next_action / verify_command / check_command`。`verify` 检查编码前确认、需求追踪、验证证据、文档预算和提交前人工审核状态，重点看 `pre_code_status / loop_phase / loop_next_decision / requirement_status / evidence_status / machine_gate / requirement_match`。
 
-测试用例质量默认前置：`standard / strict` 编码前必须确认测试用例清单，并写入 `测试用例确认：已确认`。用例必须从 REQ / BUG 行为倒推，包含关联需求、场景、前置状态、操作、期望结果、测试类型、真实验证路径、mock 使用限制和 RED 失败记录。`verify` 输出 `test_case_status` 阻断时，先补测试清单再编码。
+测试用例质量默认前置：`standard / strict` 编码前必须确认测试用例清单，并写入 `测试用例确认：已确认`。用例必须从 ACTIVE / REQ / BUG 行为倒推，包含关联需求、场景、前置状态、操作、期望结果、测试类型、真实验证路径、mock 使用限制和 RED 失败记录。`verify` 输出 `test_case_status` 阻断时，先补测试清单再编码。
 
 验证默认真实优先：最终验收必须来自真实后端、真实接口、真实运行环境、本地联调、测试环境或人工实测。mock 数据、Playwright route mock、接口拦截、fixture、stub、MSW 只能做开发辅助或补充测试，不能作为最终验收或降级验收。`verify` 输出 `verification_source_status: mock_only_final_evidence` 时，必须补真实验证证据。
 
@@ -164,8 +164,8 @@ Git hooks 是项目级门禁，只对当前项目生效。正式项目建议启�
 
 ```text
 quick：默认不创建正式文档，只输出摘要
-standard Bug：编码前确认一个 BUG 主记录和测试用例清单
-standard 功能 / 维护：编码前确认一个 TASK 主记录和测试用例清单
+standard Bug：默认编码前确认一个 ACTIVE 和测试用例清单；复杂或高风险才升级 BUG
+standard 功能 / 维护：默认编码前确认一个 ACTIVE 和测试用例清单；复杂或高风险才升级 TASK
 strict PRD / 改版：编码前确认 REQ 和测试用例矩阵，再进入 PRD + REQ + TASK + ACC
 ```
 
@@ -177,7 +177,7 @@ ADR / design / ops / LEGACY
 
 只有在影响架构、接口、数据模型、部署、监控、回滚或长期维护时，才补充这些文档。
 
-standard 的 TASK 或 BUG 先作为编码前门禁，确认后才编码；完成后继续在同一个文档里回填验证、代码审查、验收结论，不默认单独创建 ACC。
+standard 的 ACTIVE 先作为编码前门禁，确认后才编码；完成后在 ACTIVE 或正式主记录里回填验证、代码审查、验收结论。人工审核通过后，把 8 行以内摘要折叠到 `docs/history/<module>.md`，再清理 ACTIVE。
 
 ## 四、省 token 策略
 
@@ -195,16 +195,17 @@ standard 的 TASK 或 BUG 先作为编码前门禁，确认后才编码；完成
 
 用户指定 `quick` 时，如果检测到 PRD、改版、接口、数据或核心链路风险，会自动升级并说明原因。
 
-quick 不强制写文档；standard 编码前确认一个主记录和测试用例清单；strict 编码前确认 REQ 和测试用例矩阵后才拆完整链路。
+quick 不强制写文档；standard 编码前确认一个 ACTIVE 和测试用例清单；strict 编码前确认 REQ 和测试用例矩阵后才拆完整链路。
 
 文档预算：
 
 - quick：新增文档 0 个。
-- standard：新增文档最多 1 个，Bug 用 BUG，功能 / 维护用 TASK；这个主记录和测试用例清单必须编码前确认。
+- standard：默认新增 1 个 ACTIVE，完成后折叠到 1 条模块 history；复杂或高风险才使用 BUG / TASK。
 - strict：才允许完整链路。
 - 普通任务禁止同时新建 `TASK + BUG + ACC`，不手工更新或提交 `docs/index.md`。
+- 中断或换 agent 时保留 `docs/active/ACTIVE-*.md`；完成并审核后折叠到 `docs/history/<module>.md`。
 
-默认禁止全量读取历史文档：先读 `AGENTS.md`、`docs/workflow.md`，再用 skill 脚本 `search-dev-docs.sh` 查候选文档。
+默认禁止全量读取历史文档：先读 `AGENTS.md`、`docs/workflow.md`、相关 `docs/active/*.md`、模块 `docs/history/<module>.md`，再用 skill 脚本 `search-dev-docs.sh` 查候选文档。
 
 `SKILL.md` 只保留硬规则，详细规则按需读取 `references/`。
 
@@ -219,7 +220,7 @@ quick 不强制写文档；standard 编码前确认一个主记录和测试用�
 
 每个 slice 都必须能独立说明目标、范围、验收、证据和停止条件。
 
-长任务可使用 `.dev-workflow/session/*-working.json` 保存结构化状态，减少上下文占用。完成后确认已合并到正式文档再清理。
+长任务优先使用 `docs/active/ACTIVE-*.md` 作为交接文件；需要机器结构化摘要时，可使用 `.dev-workflow/session/*-working.json`。完成后确认已合并到 ACTIVE、history 或 strict 文档链路再清理。
 
 本地文档索引用 `.dev-workflow/index/docs.jsonl`，默认不提交。日常直接搜索即可；索引缺失或真实文档更新时，搜索脚本会自动重建：
 
@@ -256,6 +257,7 @@ TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md
 PRD-20260528-153000-a1b2-user-login.md
 TASK-20260528-153500-b2c3-login-api.md
 BUG-20260528-154000-c3d4-token-expired.md
+ACTIVE-20260528-154100-f6a7-file-manager-rename.md
 ACC-20260528-155000-e5f6-user-login.md
 REQ-20260529-101500-a1b2-member-revamp.md
 ```
@@ -316,8 +318,9 @@ REQ-20260529-101500-a1b2-member-revamp.md
 - 关联文档已创建或更新。
 - quick 可无正式文档，最终回复必须写摘要。
 - PRD / 改版任务已建立并确认 REQ 需求追踪矩阵。
-- `TASK` 写明实际改动和验证结果。
-- `TASK` 或 `BUG` 写明代码审查结论和验收结论。
+- `ACTIVE / TASK / BUG` 写明实际改动和验证结果。
+- `ACTIVE / TASK / BUG` 写明代码审查结论和验收结论。
+- standard 完成并审核后，已折叠到模块 history，或说明仍保留 ACTIVE 的原因。
 - strict 的 `ACC` 写明验收结论，并覆盖对应 REQ / BUG。
 - 有测试框架时已优先使用 TDD；无法自动化时已记录原因和手工验收项。
 - 必要的 `ADR / design / ops` 已处理，或明确不需要。
@@ -376,13 +379,13 @@ dev-workflow 负责追踪和门禁
 
 建议搭配：
 
-- 需求澄清：`brainstorming` → 写入 PRD / TASK。
-- 计划制定：`writing-plans` → 写入 TASK。
-- Bug 定位：`systematic-debugging` → 写入 BUG。
-- 实现：`test-driven-development` → 写入最终摘要、主记录或 strict 的 ACC。
-- 并行执行：`subagent-driven-development` → 结论写入主记录或 strict 文档链路。
-- 完成验证：`verification-before-completion` → 写入最终摘要、主记录或 strict 的 ACC。
-- 代码审查：`requesting-code-review` → 写入最终摘要、主记录或 strict 的 ACC。
+- 需求澄清：`brainstorming` → 写入 ACTIVE、PRD、REQ 或 TASK。
+- 计划制定：`writing-plans` → 写入 ACTIVE 或 TASK。
+- Bug 定位：`systematic-debugging` → 写入 ACTIVE 或 BUG。
+- 实现：`test-driven-development` → 写入最终摘要、ACTIVE、主记录或 strict 的 ACC。
+- 并行执行：`subagent-driven-development` → 结论写入 ACTIVE、主记录或 strict 文档链路。
+- 完成验证：`verification-before-completion` → 写入最终摘要、ACTIVE、主记录或 strict 的 ACC。
+- 代码审查：`requesting-code-review` → 写入最终摘要、ACTIVE、主记录或 strict 的 ACC。
 
 dev-workflow 不替代 Superpowers，只负责建立追踪链路、沉淀关键结论、完成前检查文档，并在人工审核通过后提交。
 

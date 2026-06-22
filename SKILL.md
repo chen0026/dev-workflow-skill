@@ -1,6 +1,6 @@
 ---
 name: dev-workflow
-description: "Use when users ask /dev-workflow, project init/check/version, PRD or requirements work, feature/bug/refactor/maintenance tasks, traceable development, TDD test quality, or real verification before review/commit."
+description: "Use when users ask /dev-workflow, project init/check/version, PRD/requirements, feature/bug/refactor tasks, active handoff/history traceability, TDD quality, or real verification before review/commit."
 ---
 
 # Dev Workflow
@@ -47,8 +47,9 @@ Harness-first 的轻量开发工作流。用户不需要记流程命令；开发
 ## Gates
 
 - 默认不自动 commit；只有用户明确说“批准提交”或“确认提交”才提交。
-- `standard` 任务必须先确认一个 `TASK` 或 `BUG` 主记录；`strict` 任务必须先确认 `REQ`。确认标记统一为 `编码前确认：已确认`。
-- `standard / strict` 编码前必须确认测试用例清单。确认标记统一为 `测试用例确认：已确认`；用例必须从 REQ / BUG 行为倒推，包含前置状态、操作、期望结果、真实验证路径和 RED 失败记录。
+- `standard` 任务默认先确认一个 `ACTIVE` 交接文件；复杂或高风险才升级 `TASK` / `BUG`。`strict` 任务必须先确认 `REQ`。确认标记统一为 `编码前确认：已确认`。
+- `standard / strict` 编码前必须确认测试用例清单。确认标记统一为 `测试用例确认：已确认`；用例必须从 ACTIVE / REQ / BUG 行为倒推，包含前置状态、操作、期望结果、真实验证路径和 RED 失败记录。
+- 进行中任务使用 `docs/active/ACTIVE-*.md`；完成后把 8 行以内摘要折叠到 `docs/history/<module>.md`，再清理 ACTIVE。不要使用全局 `current-work.md`。
 - `code_allowed: false` 时，不创建或修改业务代码；只能准备文档草案、测试计划和待确认问题。
 - harness 只检查完整性；需求是否一致必须进入人工审核，不能由脚本直接判定通过。
 - 最终验收必须有真实后端、真实接口、真实运行环境或人工实测证据；mock、mock 数据、Playwright route mock 只能做开发辅助或补充测试，不能作为最终验收或降级验收证据。
@@ -58,14 +59,14 @@ Harness-first 的轻量开发工作流。用户不需要记流程命令；开发
 ## Flow Semantics
 
 - `quick`：低风险改动，默认新增文档 0 个，最终摘要即可。
-- `standard`：普通 Bug / 功能 / 维护，编码前先确认一个 `TASK` 或 `BUG` 主记录和测试用例清单。
+- `standard`：普通 Bug / 功能 / 维护，编码前默认确认一个 `ACTIVE` 和测试用例清单；复杂或高风险才用 `TASK` / `BUG`。
 - `strict`：PRD / 改版 / 多模块 / 高风险 / 接口、数据、权限、支付、订单、登录、部署变化，编码前先确认 REQ 和测试用例矩阵。
 
 完整分级、文档预算、命名和索引规则见 `references/flow.md`。
 
 ## Requirement Match
 
-需求一致性按 `PRD -> REQ -> TASK/BUG -> 测试用例清单 -> 真实验证证据 -> 人工审核 -> 提交` 闭环执行。`verify` 输出 `test_case_status` 或 `verification_source_status` 阻断时，必须先补测试清单或真实验证证据。
+需求一致性按 `PRD -> REQ -> ACTIVE/TASK/BUG -> 测试用例清单 -> 真实验证证据 -> 人工审核 -> history -> 提交` 闭环执行。`verify` 输出 `test_case_status` 或 `verification_source_status` 阻断时，必须先补测试清单或真实验证证据。
 
 ## Diagnostics
 

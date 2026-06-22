@@ -13,7 +13,7 @@ fail() {
 [ -d "docs" ] || fail "缺少 docs/ 目录"
 [ -f "docs/workflow.md" ] || fail "缺少 docs/workflow.md"
 
-for dir in docs/prd docs/requirements docs/tasks docs/bugs docs/design/decisions docs/acceptance docs/ops docs/legacy docs/archive; do
+for dir in docs/prd docs/requirements docs/tasks docs/bugs docs/active docs/history docs/design/decisions docs/acceptance docs/ops docs/legacy docs/archive; do
   [ -d "$dir" ] || fail "缺少目录：$dir"
 done
 
@@ -54,6 +54,12 @@ for bug in docs/bugs/BUG-*.md; do
   [ -e "$bug" ] || continue
   grep -q "根因" "$bug" || fail "$bug 缺少根因记录"
   grep -q "验证" "$bug" || fail "$bug 缺少验证记录"
+done
+
+for active in docs/active/ACTIVE-*.md; do
+  [ -e "$active" ] || continue
+  grep -q "状态" "$active" || fail "$active 缺少状态记录"
+  grep -q "下一步" "$active" || fail "$active 缺少下一步记录"
 done
 
 for acc in docs/acceptance/ACC-*.md; do

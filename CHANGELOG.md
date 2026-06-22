@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.24.0 - 2026-06-22
+
+- 新增 `docs/active/ACTIVE-*.md` 进行中交接模式：普通 standard 任务默认先确认 ACTIVE 和测试用例清单，复杂或高风险才升级为 TASK / BUG。
+- 新增 `docs/history/<module>.md` 模块级短历史：任务完成并通过人工审核后，把 8 行以内摘要折叠到 history，再清理 ACTIVE，减少永久文档膨胀。
+- harness 升级到 `0.24.0`，`standard` 前置门禁改为 `ACTIVE_or_TASK_or_BUG`，并输出 `active_policy / history_policy / formal_doc_policy`。
+- 初始化、检查、索引、新建文档脚本支持 `active/` 和 `history/`；本地索引可识别 `ACTIVE` 和 `HISTORY`。
+- 更新 SKILL、references、AGENTS 模板、workflow、README 和模板，明确多线程、多分支、多电脑并行时用独立 ACTIVE 接力，不使用全局 `current-work.md`。
+
 ## 0.23.0 - 2026-06-20
 
 - 新增测试用例质量门禁：`standard / strict` 编码前必须确认测试用例清单，并写入 `测试用例确认：已确认`。

@@ -42,7 +42,7 @@
 - 是否存在 `AGENTS.md`。
 - 是否存在 `docs/`。
 - `docs/` 是否已有旧文档。
-- 是否已有 `docs/workflow.md`、必要子目录和本地索引脚本；`docs/index.md` 不是必需文件。
+- 是否已有 `docs/workflow.md`、`docs/active/`、`docs/history/`、必要子目录和本地索引脚本；`docs/index.md` 不是必需文件。
 
 处理规则：
 
@@ -95,11 +95,13 @@ Codex 快捷提示：
 1. `AGENTS.md`
 2. `docs/workflow.md`
 3. skill 脚本 `search-dev-docs.sh` 的候选结果，或 `.dev-workflow/index/docs.jsonl`
-4. 当前任务关联的 `PRD / REQ / TASK / BUG / ADR / ACC`
-5. `docs/design/` 和 `docs/ops/`
-6. `docs/legacy/`
-7. `docs/archive/`
-8. 代码和测试
+4. `docs/active/*.md` 中同分支、同模块、同任务的进行中工作
+5. `docs/history/<module>.md` 的最近相关条目
+6. 当前任务关联的 `PRD / REQ / TASK / BUG / ADR / ACC`
+7. `docs/design/` 和 `docs/ops/`
+8. `docs/legacy/`
+9. `docs/archive/`
+10. 代码和测试
 
 如果当前代码与 `docs/archive/` 中的旧文档冲突，以当前代码和当前链路文档为准。
 
@@ -111,7 +113,7 @@ Codex 快捷提示：
 - `docs/workflow.md`
 - skill 脚本 `search-dev-docs.sh` 的候选结果，或 `.dev-workflow/index/docs.jsonl` 中的少量匹配行
 - 用户当前提供的 PRD / 需求 / Bug 描述
-- 与当前任务直接相关的文档
+- 与当前任务直接相关的文档，优先 `active` 和模块 `history`
 
 默认禁止全量读取：
 
@@ -154,7 +156,7 @@ Codex 快捷提示：
 默认自动选择流程强度，不要求用户手动指定。先用 skill 脚本 `dev-workflow-harness.sh run "任务描述"` 获取初始护栏和 `flow_reason`。默认从 `quick` 起步，只有发现明确风险信号才升级：
 
 - `quick`：文案、样式、小配置、小功能、小 Bug、单文件或低风险改动。少读历史，默认只写摘要。
-- `standard`：普通 Bug、普通功能调整、单模块功能。编码前先确认一个 `TASK` 或 `BUG` 主记录及测试用例清单，验证、审查、验收结论写在同一文档。
+- `standard`：普通 Bug、普通功能调整、单模块功能。编码前默认确认一个 `ACTIVE` 交接文件及测试用例清单；复杂或高风险才使用 `TASK` / `BUG`。
 - `strict`：PRD、产品文档、现有功能改版、多模块、高风险、接口/数据/权限/支付/订单/登录/部署变化。编码前先确认 `REQ` 和测试用例矩阵，再进入完整链路。
 
 优先级：硬门禁 > 风险自动升级 > 文档预算 > 用户指定 > 默认 quick。
@@ -164,9 +166,9 @@ Codex 快捷提示：
 文档预算：
 
 - quick：新增文档 0 个；最终回复摘要即留痕。
-- quick 且用户要求留痕：最多 1 个 TASK。
-- standard：新增文档最多 1 个，Bug 用 BUG，功能 / 维护用 TASK；这个主记录和测试用例清单必须编码前确认。
-- standard 不创建 ACC；验收结论写进 BUG 或 TASK。
+- quick 且用户要求留痕：最多 1 个 ACTIVE 或 TASK。
+- standard：默认新增 1 个 ACTIVE；复杂或高风险才使用 BUG / TASK；完成时追加 1 条模块 history。
+- standard 不创建 ACC；验收结论写进 ACTIVE / BUG / TASK，完成摘要写进 history。
 - strict 才允许完整链路；普通任务不得同时创建 `TASK + BUG + ACC`。
 - `docs/index.md` 不作为任务产物，不因完成任务而手工更新；默认加入 `.gitignore`，不要提交。
 
@@ -178,7 +180,7 @@ Codex 快捷提示：
 TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md
 ```
 
-- `TYPE`：`PRD / REQ / TASK / BUG / ADR / ACC / OPS / LEGACY`。
+- `TYPE`：`PRD / REQ / TASK / BUG / ACTIVE / ADR / ACC / OPS / LEGACY`。
 - `YYYYMMDD-HHMMSS`：创建文档时的本地时间。
 - `XXXX`：4 位小写随机码。
 - `short-title`：英文短标题，使用小写和连字符。
@@ -189,6 +191,7 @@ TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md
 tasks/TASK-20260528-153500-b2c3-login-api.md
 requirements/REQ-20260529-101500-a1b2-member-revamp.md
 bugs/BUG-20260528-154000-c3d4-token-expired.md
+active/ACTIVE-20260528-154100-f6a7-file-manager-rename.md
 acceptance/ACC-20260528-155000-e5f6-user-login.md
 ```
 
@@ -224,7 +227,7 @@ acceptance/ACC-20260528-155000-e5f6-user-login.md
 ### 编码前门禁
 
 - quick：`pre_code_gate: not_required`，低风险小改可直接实现。
-- standard：`pre_code_gate: confirm_TASK_or_BUG_and_test_cases_before_code`，先写并确认一个 TASK 或 BUG 及测试用例清单。
+- standard：`pre_code_gate: confirm_ACTIVE_or_TASK_or_BUG_and_test_cases_before_code`，默认先写并确认一个 ACTIVE 及测试用例清单；复杂或高风险才使用 TASK / BUG。
 - strict：`pre_code_gate: confirm_REQ_and_test_cases_before_code`，先写并确认 REQ 及测试用例清单。
 
 确认标记统一为：
@@ -241,7 +244,7 @@ standard / strict 还必须确认测试用例清单：
 测试用例确认：已确认
 ```
 
-测试用例清单必须从 REQ / BUG 行为倒推，包含关联需求、场景、前置状态、用户操作或触发、期望结果、测试类型、真实验证路径、mock 使用限制和 RED 失败记录。没有该确认标记，不编码。
+测试用例清单必须从 ACTIVE / REQ / BUG 行为倒推，包含关联需求、场景、前置状态、用户操作或触发、期望结果、测试类型、真实验证路径、mock 使用限制和 RED 失败记录。没有该确认标记，不编码。
 
 ### Adaptive Loop
 
@@ -274,13 +277,21 @@ harness 字段：
 
 mock 数据、fixture、stub、MSW、Playwright route mock、接口拦截和模拟接口只能做开发辅助或补充测试，不能作为最终验收，也不能作为真实环境不可用时的降级验收。
 
-如果真实环境不可用，结论只能是 `blocked` 或 `pending-real-verification`。TASK / BUG / ACC 和最终回复必须写清最终验收来源、最终验收证据、是否存在辅助模拟测试。
+如果真实环境不可用，结论只能是 `blocked` 或 `pending-real-verification`。ACTIVE / TASK / BUG / ACC 和最终回复必须写清最终验收来源、最终验收证据、是否存在辅助模拟测试。
+
+### ACTIVE / history 交接
+
+standard 默认使用 `docs/active/ACTIVE-*.md` 承载进行中状态。一个任务只保留一个 ACTIVE，不使用全局 `current-work.md`。
+
+ACTIVE 写清目标、范围、下一步、阻塞、测试用例、真实验证证据和代码审查。任务未完成时保留 ACTIVE，方便换 agent、换电脑或换线程继续。
+
+任务完成并通过人工审核后，把 8 行以内摘要追加到 `docs/history/<module>.md`，再删除 ACTIVE。history 只写完成结论、验证、提交和关联编号，不写长过程。
 
 ### quick 小改
 
 必需：最终回复摘要
 
-按需：一个 `TASK`
+按需：一个 `ACTIVE` 或 `TASK`
 
 流程：
 
@@ -292,39 +303,39 @@ mock 数据、fixture、stub、MSW、Playwright route mock、接口拦截和模�
 
 ### standard Bug
 
-必需：一个 `BUG` 主记录
+必需：一个 `ACTIVE` 交接文件；复杂或高风险时升级为 `BUG` 主记录
 
 按需：`TASK / ACC / ADR / design / ops`
 
 流程：
 
-1. BUG 写清现象、复现、根因、修复方案。
+1. ACTIVE 写清现象、复现、根因假设、修复方案和不做什么。
 2. 写清验收项、测试方式和测试用例清单。
 3. 等待人工确认，并把 `编码前确认` 和 `测试用例确认` 改为 `已确认`。
 4. 先写复现测试，记录 RED 失败证据；无法自动化时记录原因和手工验收项。
 5. 修复并验证。
-6. 在 BUG 中记录验证结果、代码审查和验收结论。
+6. 在 ACTIVE 或 BUG 中记录验证结果、代码审查和验收结论。
 7. 需要复杂验收或高风险时，再创建 ACC。
-8. 索引由 `search-dev-docs.sh` 或 `check` 按需重建。
-9. 进入提交前人工审核。
+8. 进入提交前人工审核。
+9. 人工审核通过后，把摘要折叠到模块 history，并清理 ACTIVE。
 
 ### standard 功能 / 维护 / 重构
 
-必需：一个 `TASK` 主记录
+必需：一个 `ACTIVE` 交接文件；复杂或高风险时升级为 `TASK` 主记录
 
 按需：`BUG / ACC / ADR / design / ops`
 
 流程：
 
-1. TASK 写清目标、非目标、改动范围。
+1. ACTIVE 写清目标、非目标、改动范围。
 2. 写清验收项、测试方式和测试用例清单。
 3. 等待人工确认，并把 `编码前确认` 和 `测试用例确认` 改为 `已确认`。
 4. 先写目标行为测试，记录 RED 失败证据；无法自动化时记录原因和手工验收项。
 5. 修改并验证。
-6. 在 TASK 中记录实际改动、验证结果、代码审查和验收结论。
+6. 在 ACTIVE 或 TASK 中记录实际改动、验证结果、代码审查和验收结论。
 7. 需要复杂验收或高风险时，再创建 ACC。
-8. 索引由 `search-dev-docs.sh` 或 `check` 按需重建。
-9. 进入提交前人工审核。
+8. 进入提交前人工审核。
+9. 人工审核通过后，把摘要折叠到模块 history，并清理 ACTIVE。
 
 ### strict 新功能 / PRD 改版 / 已有功能改版
 
@@ -394,8 +405,9 @@ legacy/LEGACY-20260528-160000-a7b8-current-system-summary.md
 - 已运行 skill 脚本 `dev-workflow-harness.sh check`。
 - 已按流程级别创建或更新文档；quick 可无正式文档。
 - PRD / 改版任务已建立并确认 REQ 需求追踪矩阵。
-- standard 的 TASK 或 BUG 写明编码前确认、测试用例确认、实际改动、验证结果、代码审查和验收结论。
-- standard / strict 的测试用例清单已覆盖 REQ / BUG、前置状态、操作、期望结果、真实验证路径和 RED 失败记录。
+- standard 的 ACTIVE / TASK / BUG 写明编码前确认、测试用例确认、实际改动、验证结果、代码审查和验收结论。
+- standard 完成后已把 ACTIVE 摘要折叠到模块 history，或明确说明仍需保留 ACTIVE 的原因。
+- standard / strict 的测试用例清单已覆盖 ACTIVE / REQ / BUG、前置状态、操作、期望结果、真实验证路径和 RED 失败记录。
 - strict 的 ACC 写明验收结论，并覆盖对应 REQ / BUG。
 - 有测试框架时已优先使用 TDD；无法自动化时已记录原因和手工验收项。
 - 必要的 ADR / design / ops 已处理，或明确“不需要”。
@@ -429,12 +441,12 @@ Codex 快捷提示：
 新功能、PRD 改版、Bug 修复默认优先使用 TDD：
 
 - 编码前先写测试用例清单，再写测试或手工验收项。
-- 每个测试或验收项必须关联 REQ / BUG，不能只关联实现文件或函数名。
+- 每个测试或验收项必须关联 ACTIVE / REQ / BUG，不能只关联实现文件或函数名。
 - 测试用例必须描述用户行为或业务规则，包含场景、前置状态、操作、期望结果、测试类型、真实验证路径、mock 使用限制和 RED 失败记录。
 - 有测试框架时，先确认目标测试失败，再编码让测试通过。
 - 已有功能改版时，先记录当前行为，再写 PRD 目标行为测试。
 - 没有测试框架或不适合自动化时，在最终摘要、主记录或 strict 的 ACC 里记录原因，并写手工验收项。
-- 如果测试用例无法从 REQ / BUG 推导，说明需求仍不清楚，先停止并列待确认问题。
+- 如果测试用例无法从 ACTIVE / REQ / BUG 推导，说明需求仍不清楚，先停止并列待确认问题。
 
 PRD 改版时，TDD 的输入必须来自 REQ 需求追踪矩阵，而不是模糊摘要。
 
@@ -448,6 +460,7 @@ PRD 改版时，TDD 的输入必须来自 REQ 需求追踪矩阵，而不是模�
 - 列出验证结果。
 - 列出代码审查结论。
 - 列出文档同步清单。
+- 列出 ACTIVE 是否已折叠到 history，或仍需保留的原因。
 - 列出待提交文件。
 - 等待用户明确回复“批准提交”或“确认提交”。
 
@@ -478,7 +491,7 @@ PRD-20260528-153000-a1b2 add user login workflow
 subagent 的结论必须回填到对应文档：
 
 - quick：最终回复列出关键结论。
-- standard：结论写入 TASK 或 BUG 主记录。
+- standard：结论写入 ACTIVE；复杂或高风险时写入 TASK 或 BUG 主记录。
 - strict：结论写入 PRD / REQ / TASK / BUG / ACC / ADR 中的对应位置。
 
 ## 十八、Git hooks 门禁

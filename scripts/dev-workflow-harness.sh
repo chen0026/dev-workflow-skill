@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-harness_version="0.23.0"
+harness_version="0.24.0"
 cmd="${1:-run}"
 shift || true
 
@@ -90,7 +90,7 @@ docs_allowed_for() {
       echo "0"
       ;;
     standard)
-      echo "1"
+      echo "active+history_or_1_formal"
       ;;
     strict)
       echo "full"
@@ -107,7 +107,7 @@ pre_code_gate_for() {
       echo "not_required"
       ;;
     standard)
-      echo "confirm_TASK_or_BUG_and_test_cases_before_code"
+      echo "confirm_ACTIVE_or_TASK_or_BUG_and_test_cases_before_code"
       ;;
     strict)
       echo "confirm_REQ_and_test_cases_before_code"
@@ -124,7 +124,7 @@ pre_code_doc_for() {
       echo "none"
       ;;
     standard)
-      echo "TASK_or_BUG"
+      echo "ACTIVE_or_TASK_or_BUG"
       ;;
     strict)
       echo "REQ"
@@ -307,6 +307,7 @@ confirmed_pre_code_count() {
       ;;
     standard)
       {
+        count_matching_files docs/active 'ACTIVE-*.md' "$regex";
         count_matching_files docs/tasks 'TASK-*.md' "$regex";
         count_matching_files docs/bugs 'BUG-*.md' "$regex";
       } | awk '{sum += $1} END {print sum + 0}'
@@ -330,6 +331,7 @@ test_case_confirmed_count() {
       ;;
     standard)
       {
+        count_matching_files docs/active 'ACTIVE-*.md' "$regex";
         count_matching_files docs/tasks 'TASK-*.md' "$regex";
         count_matching_files docs/bugs 'BUG-*.md' "$regex";
       } | awk '{sum += $1} END {print sum + 0}'
@@ -356,7 +358,7 @@ count_test_case_quality_files() {
   {
     while IFS= read -r file; do
       if grep -Eq "$marker" "$file" \
-        && grep -Eq '关联[[:space:]]*(REQ|BUG|需求)|REQ[[:space:]]*/[[:space:]]*BUG' "$file" \
+        && grep -Eq '关联[[:space:]]*(ACTIVE|REQ|BUG|需求)|ACTIVE[[:space:]]*/[[:space:]]*REQ[[:space:]]*/[[:space:]]*BUG|REQ[[:space:]]*/[[:space:]]*BUG' "$file" \
         && grep -Eq '前置状态' "$file" \
         && grep -Eq '用户操作|操作|触发' "$file" \
         && grep -Eq '期望结果' "$file" \
@@ -377,6 +379,7 @@ test_case_quality_count() {
       ;;
     standard)
       {
+        count_test_case_quality_files docs/active 'ACTIVE-*.md';
         count_test_case_quality_files docs/tasks 'TASK-*.md';
         count_test_case_quality_files docs/bugs 'BUG-*.md';
       } | awk '{sum += $1} END {print sum + 0}'
@@ -393,6 +396,8 @@ test_case_quality_count() {
 count_matching_records() {
   regex="$1"
   {
+    count_matching_files docs/active 'ACTIVE-*.md' "$regex"
+    count_matching_files docs/history '*.md' "$regex"
     count_matching_files docs/requirements 'REQ-*.md' "$regex"
     count_matching_files docs/tasks 'TASK-*.md' "$regex"
     count_matching_files docs/bugs 'BUG-*.md' "$regex"
@@ -442,6 +447,10 @@ report() {
   printf 'pre_code_confirmation_marker: %s\n' '编码前确认：已确认'
   printf 'test_case_confirmation_marker: %s\n' '测试用例确认：已确认'
   printf 'code_allowed: %s\n' "$(code_allowed_for "$flow")"
+  printf 'active_policy: %s\n' 'one_ACTIVE_file_per_in_progress_task'
+  printf 'history_policy: %s\n' 'fold_completed_standard_work_to_docs_history_module'
+  printf 'formal_doc_policy: %s\n' 'TASK_or_BUG_only_for_complex_or_high_risk_standard_work'
+  printf 'history_entry_limit: %s\n' '8_lines'
   printf 'loop_phase: %s\n' "$(initial_loop_phase_for "$flow")"
   printf 'loop_next_decision: %s\n' "$(initial_loop_decision_for "$flow")"
   printf 'max_iterations: %s\n' "$(max_iterations_for "$flow")"
@@ -449,7 +458,7 @@ report() {
   printf 'slice_strategy: %s\n' "$(slice_strategy_for "$flow")"
   printf 'slice_inputs: %s\n' 'requirement_structure,code_boundaries,risk_points,testability'
   printf 'test_case_policy: %s\n' 'requirement_behavior_first_confirm_before_code'
-  printf 'test_case_required_fields: %s\n' 'REQ_or_BUG,scenario,precondition,action,expected_result,test_type,real_verification_path,mock_policy,red_failure'
+  printf 'test_case_required_fields: %s\n' 'ACTIVE_or_REQ_or_BUG,scenario,precondition,action,expected_result,test_type,real_verification_path,mock_policy,red_failure'
   printf 'verification_policy: %s\n' 'real_final_evidence_required'
   printf 'mock_policy: %s\n' 'development_or_supplement_only_never_final'
   printf 'final_evidence_required: %s\n' 'real_backend_or_real_api_or_real_runtime_or_human_manual_verification'
@@ -468,7 +477,7 @@ run() {
       printf 'next_action: implement_minimal_change_then_verify\n'
       ;;
     standard)
-      printf 'next_action: draft_TASK_or_BUG_with_test_cases_then_wait_for_human_confirmation\n'
+      printf 'next_action: draft_ACTIVE_or_formal_doc_with_test_cases_then_wait_for_human_confirmation\n'
       ;;
     strict)
       printf 'next_action: draft_REQ_with_test_matrix_then_wait_for_human_confirmation\n'
@@ -497,6 +506,10 @@ doctor() {
   [ -f "AGENTS.md" ] || add_missing "AGENTS.md"
   [ -d "docs" ] || add_missing "docs/"
   [ -f "docs/workflow.md" ] || add_missing "docs/workflow.md"
+  if [ -d "docs" ]; then
+    [ -d "docs/active" ] || add_missing "docs/active"
+    [ -d "docs/history" ] || add_missing "docs/history"
+  fi
 
   project_script_probe="$(find scripts -maxdepth 1 -type f \( -name 'dev-workflow-harness.sh' -o -name 'search-dev-docs.sh' -o -name 'reindex-dev-docs.sh' -o -name 'new-doc.sh' -o -name 'new-doc-id.sh' -o -name 'check-dev-docs.sh' -o -name 'check-dev-workflow.sh' -o -name 'clean-templates.sh' -o -name 'clean-project-scripts.sh' -o -name 'session-state.sh' -o -name 'init-dev-workflow.sh' \) -print -quit 2>/dev/null || true)"
   if [ -n "$project_script_probe" ]; then
@@ -563,9 +576,12 @@ verify() {
   docs_changed="$(docs_changed_count)"
   code_changed="$(changed_code_count)"
   requirements_files="$(count_files docs/requirements 'REQ-*.md')"
+  active_files="$(count_files docs/active 'ACTIVE-*.md')"
+  history_files="$(count_files docs/history '*.md')"
   task_files="$(count_files docs/tasks 'TASK-*.md')"
   bug_files="$(count_files docs/bugs 'BUG-*.md')"
   task_or_bug_files="$((task_files + bug_files))"
+  standard_pre_code_records="$((active_files + task_or_bug_files))"
   acceptance_files="$(count_files docs/acceptance 'ACC-*.md')"
   pre_code_confirmed="$(confirmed_pre_code_count "$flow")"
   test_case_confirmed="$(test_case_confirmed_count "$flow")"
@@ -575,6 +591,8 @@ verify() {
     {
       count_matching_files docs/tasks 'TASK-*.md' '验证方式|验证结果|验收结论|测试';
       count_matching_files docs/bugs 'BUG-*.md' '验证结果|验证|复现步骤|根因';
+      count_matching_files docs/active 'ACTIVE-*.md' '验证方式|验证结果|验收结论|测试|最终验收证据';
+      count_matching_files docs/history '*.md' '验证|验收|证据';
       count_matching_files docs/acceptance 'ACC-*.md' '验收标准|验证记录|结论';
     } | awk '{sum += $1} END {print sum + 0}'
   )"
@@ -593,22 +611,22 @@ verify() {
     machine_gate="review"
   fi
 
-  if [ "$flow" = "standard" ] && [ "$code_changed" -gt 0 ] && [ "$docs_changed" -gt 1 ]; then
+  if [ "$flow" = "standard" ] && [ "$code_changed" -gt 0 ] && [ "$docs_changed" -gt 2 ]; then
     docs_budget_status="over_budget"
     machine_gate="review"
   fi
 
-  if [ "$flow" = "standard" ] && [ "$code_changed" -gt 0 ] && [ "$task_or_bug_files" -eq 0 ]; then
-    pre_code_status="missing_TASK_or_BUG"
+  if [ "$flow" = "standard" ] && [ "$code_changed" -gt 0 ] && [ "$standard_pre_code_records" -eq 0 ]; then
+    pre_code_status="missing_ACTIVE_or_TASK_or_BUG"
     machine_gate="blocked"
   fi
 
-  if [ "$flow" = "standard" ] && [ "$code_changed" -gt 0 ] && [ "$task_or_bug_files" -gt 0 ] && [ "$pre_code_confirmed" -eq 0 ]; then
+  if [ "$flow" = "standard" ] && [ "$code_changed" -gt 0 ] && [ "$standard_pre_code_records" -gt 0 ] && [ "$pre_code_confirmed" -eq 0 ]; then
     pre_code_status="missing_pre_code_confirmation"
     machine_gate="blocked"
   fi
 
-  if [ "$flow" = "standard" ] && [ "$code_changed" -gt 0 ] && [ "$task_or_bug_files" -gt 0 ] && [ "$test_case_confirmed" -eq 0 ]; then
+  if [ "$flow" = "standard" ] && [ "$code_changed" -gt 0 ] && [ "$standard_pre_code_records" -gt 0 ] && [ "$test_case_confirmed" -eq 0 ]; then
     test_case_status="missing_test_case_confirmation"
     machine_gate="blocked"
   fi
@@ -702,18 +720,25 @@ verify() {
   printf 'stop_condition: %s\n' "$(stop_condition_for "$flow")"
   printf 'slice_strategy: %s\n' "$(slice_strategy_for "$flow")"
   printf 'test_case_policy: %s\n' 'requirement_behavior_first_confirm_before_code'
-  printf 'test_case_required_fields: %s\n' 'REQ_or_BUG,scenario,precondition,action,expected_result,test_type,real_verification_path,mock_policy,red_failure'
+  printf 'test_case_required_fields: %s\n' 'ACTIVE_or_REQ_or_BUG,scenario,precondition,action,expected_result,test_type,real_verification_path,mock_policy,red_failure'
   printf 'verification_policy: %s\n' 'real_final_evidence_required'
   printf 'mock_policy: %s\n' 'development_or_supplement_only_never_final'
   printf 'final_evidence_required: %s\n' 'real_backend_or_real_api_or_real_runtime_or_human_manual_verification'
+  printf 'active_policy: %s\n' 'one_ACTIVE_file_per_in_progress_task'
+  printf 'history_policy: %s\n' 'fold_completed_standard_work_to_docs_history_module'
+  printf 'formal_doc_policy: %s\n' 'TASK_or_BUG_only_for_complex_or_high_risk_standard_work'
+  printf 'history_entry_limit: %s\n' '8_lines'
   printf 'docs_changed: %s\n' "$docs_changed"
   printf 'code_changed: %s\n' "$code_changed"
   printf 'docs_budget_status: %s\n' "$docs_budget_status"
   printf 'requirements_files: %s\n' "$requirements_files"
   printf 'requirements_with_acceptance: %s\n' "$requirements_with_acceptance"
   printf 'requirement_status: %s\n' "$requirement_status"
+  printf 'active_files: %s\n' "$active_files"
+  printf 'history_files: %s\n' "$history_files"
   printf 'task_files: %s\n' "$task_files"
   printf 'bug_files: %s\n' "$bug_files"
+  printf 'standard_pre_code_records: %s\n' "$standard_pre_code_records"
   printf 'acceptance_files: %s\n' "$acceptance_files"
   printf 'records_with_evidence: %s\n' "$records_with_evidence"
   printf 'real_final_evidence_records: %s\n' "$real_final_evidence"

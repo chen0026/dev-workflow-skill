@@ -23,6 +23,10 @@ case "$type" in
     dir="docs/bugs"
     template_rel="bugs/TEMPLATE.md"
     ;;
+  ACTIVE)
+    dir="docs/active"
+    template_rel="active/TEMPLATE.md"
+    ;;
   ADR)
     dir="docs/design/decisions"
     template_rel="design/decisions/TEMPLATE.md"
@@ -40,7 +44,7 @@ case "$type" in
     template_rel="legacy/TEMPLATE.md"
     ;;
   *)
-    echo "dev-workflow: TYPE 必须是 PRD/REQ/TASK/BUG/ADR/ACC/OPS/LEGACY"
+    echo "dev-workflow: TYPE 必须是 PRD/REQ/TASK/BUG/ACTIVE/ADR/ACC/OPS/LEGACY"
     exit 1
     ;;
 esac

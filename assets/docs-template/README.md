@@ -12,6 +12,8 @@
 | `requirements/` | PRD 需求项追踪矩阵，连接原文、任务、验收和测试 | 产品 + 开发 |
 | `design/` | 架构设计、技术方案 | 开发 |
 | `design/decisions/` | ADR，重要技术决策记录 | 开发 |
+| `active/` | 进行中任务交接文件，任务完成后清理 | 开发 |
+| `history/` | 模块级短历史，每条最多 8 行 | 开发 |
 | `tasks/` | 任务拆解、开发日志、AI 协作记录 | 开发 |
 | `bugs/` | Bug 复盘、根因分析 | 开发 |
 | `acceptance/` | 验收记录、验证结果、完成结论 | 开发 / 测试 |
@@ -27,11 +29,12 @@
 4. **AI 协作有痕迹**：关键 prompt 和决策过程要记录
 5. **双人工门禁**：standard / strict 先确认门禁文档再编码，完成后再审核实现
 6. **自适应 loop**：大需求先切成可验证 slice，不套固定业务分类
-7. **验收就近记录**：quick 写最终摘要，standard 写主记录，strict 才单独写 ACC
+7. **验收就近记录**：quick 写最终摘要，standard 写 ACTIVE / 主记录，strict 才单独写 ACC
 8. **测试用例先确认**：standard / strict 编码前先确认测试用例清单，避免测偏返工
 9. **真实验证优先**：mock 数据、Playwright route mock、接口拦截只能做辅助测试，不能作为最终或降级验收
 10. **提交前必须人工审核**：验证和文档同步通过后，先等待人工审核；用户批准后才提交
 11. **索引可重建**：多分支开发时不要手工维护共享索引，使用本地索引脚本检索
+12. **进行中可接力**：中断或换 agent 时保留 ACTIVE，完成后折叠到模块 history
 
 ## Git hooks
 
@@ -74,8 +77,8 @@
 
 - 项目首次接入：检查 `AGENTS.md` 和 `docs/`，必要时归档旧文档并初始化目录
 - quick 小改：默认不写正式文档，只在最终回复摘要
-- standard Bug：编码前确认一个 BUG 主记录和测试用例清单
-- standard 功能 / 维护：编码前确认一个 TASK 主记录和测试用例清单
+- standard Bug：默认编码前确认一个 ACTIVE 和测试用例清单；复杂或高风险才升级 BUG
+- standard 功能 / 维护：默认编码前确认一个 ACTIVE 和测试用例清单；复杂或高风险才升级 TASK
 - strict PRD 改版 / 高风险新功能：先写 REQ 需求追踪矩阵，人工确认后再编码
 - 合并 PR 前：按流程级别更新对应主记录和必要架构文档
 - 修复高风险 Bug 后：必要时写完整 Bug 复盘和 ACC
@@ -89,10 +92,10 @@
 - 推荐入口：skill 脚本 `dev-workflow-harness.sh run "任务描述"`。
 - 诊断入口：skill 脚本 `dev-workflow-harness.sh doctor`。
 - 大需求按 Adaptive Loop 推进：先按需求文档结构、代码边界、风险点和可验证粒度切片。
-- quick 默认不创建正式文档；standard 编码前确认一个主记录和测试用例清单；strict 才拆完整链路。
+- quick 默认不创建正式文档；standard 编码前确认一个 ACTIVE 和测试用例清单；strict 才拆完整链路。
 - PRD、产品文档、现有功能改版、多模块、高风险、接口/数据/权限/支付/订单/登录/部署变化，自动使用 `strict`。
 - 分级优先级：硬门禁 > 风险自动升级 > 文档预算 > 用户指定 > 默认 quick。
-- 文档预算：quick 0 个文档；standard 最多 1 个主记录且必须编码前确认测试用例；strict 才允许完整链路。
+- 文档预算：quick 0 个文档；standard 默认 1 个 ACTIVE，完成后折叠到 1 条 history；strict 才允许完整链路。
 - 编码前确认标记统一为 `编码前确认：已确认`。
 - 测试用例确认标记统一为 `测试用例确认：已确认`。
 - 默认禁止全量读取历史文档；先用 `search-dev-docs.sh` 检索候选，再按当前任务读取相关文档。
@@ -103,7 +106,7 @@
 
 ## 本地索引和多分支合并
 
-`docs/index.md` 不再作为人工维护的总索引，也不是必需文件。多电脑、多分支并行时，每个任务只新增或更新自己的文档。日常直接运行：
+`docs/index.md` 不再作为人工维护的总索引，也不是必需文件。多电脑、多分支并行时，每个进行中任务只更新自己的 ACTIVE，完成后折叠到模块 history。日常直接运行：
 
 ```bash
 "${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/search-dev-docs.sh" 关键词
@@ -139,6 +142,7 @@ TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md
 - `requirements/REQ-20260529-101500-a1b2-member-revamp.md`
 - `tasks/TASK-20260528-153500-b2c3-login-api.md`
 - `bugs/BUG-20260528-154000-c3d4-token-expired.md`
+- `active/ACTIVE-20260528-154100-f6a7-file-manager-rename.md`
 - `design/decisions/ADR-20260528-154500-d4e5-use-jwt-auth.md`
 - `acceptance/ACC-20260528-155000-e5f6-user-login.md`
 - `legacy/LEGACY-20260528-160000-a7b8-current-system-summary.md`
