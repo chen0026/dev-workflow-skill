@@ -104,6 +104,17 @@ else
   echo "dev-workflow: AGENTS.md 已包含工作流规则"
 fi
 
+if ! grep -q "ambiguous_active" "AGENTS.md"; then
+  cat >> "AGENTS.md" <<'EOF'
+
+
+## Dev Workflow Active Isolation
+
+多个 `docs/active/ACTIVE-*.md` 同时存在时，必须先运行已安装 skill 的 `active-work.sh match 关键词` 锁定唯一 ACTIVE。若返回 `ambiguous_active`，必须停止并让用户确认 exact ACTIVE 文件；禁止按模块名、最近时间或猜测读取、修改、回填任何候选 ACTIVE，避免多个线程任务串台。
+EOF
+  echo "dev-workflow: 已追加 ACTIVE 隔离规则到 AGENTS.md"
+fi
+
 if [ -d "docs" ] && [ ! -f "docs/workflow.md" ]; then
   archive_dir="docs/archive/legacy-docs-$(date +%Y%m%d-%H%M%S)"
   movable="$(find docs -mindepth 1 -maxdepth 1 ! -name archive -print)"

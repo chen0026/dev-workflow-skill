@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.27.0 - 2026-06-22
+
+- `/dev-workflow init` 现在会为已存在旧 dev-workflow 规则的项目补充 `Dev Workflow Active Isolation` 段落。
+- 老项目运行 init 后也能获得 `active-work.sh match` / `ambiguous_active` 防串台规则，不需要重建 docs 或覆盖原 AGENTS 内容。
+
 ## 0.26.0 - 2026-06-22
 
 - 新增 ACTIVE 隔离门禁：多个 ACTIVE 同时存在时，必须先锁定唯一文件，禁止按模块名、最近时间或猜测选择，降低多线程任务串台风险。

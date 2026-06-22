@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-harness_version="0.26.0"
+harness_version="0.27.0"
 cmd="${1:-run}"
 shift || true
 
