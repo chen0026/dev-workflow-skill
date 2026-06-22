@@ -48,3 +48,5 @@
 - history 文件：
 - 8 行以内摘要：
 - ACTIVE 清理：未清理
+
+> 人工审核通过后，可用 `active-work.sh finish ACTIVE_FILE module-name < summary.md` 折叠并清理。

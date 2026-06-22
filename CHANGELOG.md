@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.25.0 - 2026-06-22
+
+- 新增 `scripts/active-work.sh`，支持 `start / list / template / finish`，减少 ACTIVE 创建、查看、折叠到 history 和清理时的手工操作。
+- `finish` 要求人工审核后执行，且 history 摘要最多 8 个非空行，避免 history 重新膨胀。
+- doctor 和 clean-scripts 识别 `active-work.sh`，项目自包含脚本模式也会同步该脚本。
+- 更新 SKILL、README、workflow、ACTIVE 模板和 references，补充 ACTIVE 生命周期脚本用法。
+
 ## 0.24.0 - 2026-06-22
 
 - 新增 `docs/active/ACTIVE-*.md` 进行中交接模式：普通 standard 任务默认先确认 ACTIVE 和测试用例清单，复杂或高风险才升级为 TASK / BUG。

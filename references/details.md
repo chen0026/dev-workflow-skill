@@ -60,6 +60,16 @@ ACTIVE 解决“任务做到一半换 agent 不知道进度”的问题，histor
 - 后续再次修改同一功能：如果旧 ACTIVE 未完成，继续更新旧 ACTIVE；如果旧任务已完成，先读模块 history，再新建 ACTIVE 或正式文档。
 - TASK / BUG / ACC 只在复杂、高风险、长期追溯或用户明确要求时创建；普通任务用 ACTIVE + history 即可。
 
+辅助脚本：
+
+```bash
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/active-work.sh" start file-manager-rename
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/active-work.sh" list
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/active-work.sh" template
+```
+
+完成并通过人工审核后，用 `active-work.sh finish ACTIVE_FILE module-name < summary.md` 折叠到 history；摘要最多 8 个非空行。
+
 ## Adaptive Loop Engineering
 
 Loop 是执行节奏控制，不是新的文档负担。每轮只做一个可验证动作：

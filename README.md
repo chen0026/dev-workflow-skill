@@ -108,6 +108,7 @@ Git hooks 是项目级门禁，只对当前项目生效。正式项目建议启�
 "${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/dev-workflow-harness.sh" run "修复文件夹重命名 bug"
 "${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/dev-workflow-harness.sh" verify "修复文件夹重命名 bug"
 "${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/dev-workflow-harness.sh" check
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/active-work.sh" list
 ```
 
 `doctor` 用来检查当前项目是否接入完整、项目内 harness 是否过期、hooks 是否启用、索引是否存在。重点看 `upgrade_needed / missing_required / doctor_status / next_action`。
@@ -208,6 +209,17 @@ quick 不强制写文档；standard 编码前确认一个 ACTIVE 和测试用例
 默认禁止全量读取历史文档：先读 `AGENTS.md`、`docs/workflow.md`、相关 `docs/active/*.md`、模块 `docs/history/<module>.md`，再用 skill 脚本 `search-dev-docs.sh` 查候选文档。
 
 `SKILL.md` 只保留硬规则，详细规则按需读取 `references/`。
+
+ACTIVE 生命周期可用脚本减少手写：
+
+```bash
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/active-work.sh" start file-manager-rename
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/active-work.sh" list
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/active-work.sh" template
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/active-work.sh" finish docs/active/ACTIVE-xxx.md file-manager < summary.md
+```
+
+`finish` 只接受最多 8 个非空行的摘要，并会清理 ACTIVE；未通过人工审核前不要执行。
 
 大需求使用 Adaptive Loop，不套固定业务分类：
 

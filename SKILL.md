@@ -35,6 +35,7 @@ Harness-first 的轻量开发工作流。用户不需要记流程命令；开发
 - `/dev-workflow doctor`：运行已安装 skill 的 `doctor`，检查当前项目 harness 版本、目录、hooks、索引和升级建议。
 - `/dev-workflow clean-templates`：预览并按确认清理项目内模板副本。
 - `/dev-workflow clean-scripts`：预览并按确认清理项目内 dev-workflow 脚本副本。
+- `/dev-workflow active list/start/finish`：查看、创建或折叠进行中的 ACTIVE。
 
 项目脚本缺失时使用：
 
@@ -42,6 +43,7 @@ Harness-first 的轻量开发工作流。用户不需要记流程命令；开发
 "${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/init-dev-workflow.sh"
 "${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/dev-workflow-harness.sh" doctor
 "${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/dev-workflow-harness.sh" run "用户任务描述"
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/active-work.sh" list
 ```
 
 ## Gates

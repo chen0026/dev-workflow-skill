@@ -287,6 +287,16 @@ ACTIVE 写清目标、范围、下一步、阻塞、测试用例、真实验证�
 
 任务完成并通过人工审核后，把 8 行以内摘要追加到 `docs/history/<module>.md`，再删除 ACTIVE。history 只写完成结论、验证、提交和关联编号，不写长过程。
 
+辅助脚本：
+
+```bash
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/active-work.sh" start file-manager-rename
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/active-work.sh" list
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/active-work.sh" template
+```
+
+完成并通过人工审核后，用 `active-work.sh finish ACTIVE_FILE module-name < summary.md` 折叠到 history；摘要最多 8 个非空行。
+
 ### quick 小改
 
 必需：最终回复摘要
