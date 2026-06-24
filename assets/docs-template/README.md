@@ -93,6 +93,7 @@
 - 推荐入口：skill 脚本 `dev-workflow-harness.sh run "任务描述"`。
 - 诊断入口：skill 脚本 `dev-workflow-harness.sh doctor`。
 - 大需求按 Adaptive Loop 推进：先按需求文档结构、代码边界、风险点和可验证粒度切片。
+- standard / strict 编码后用 `loop-work.sh` 按验收项执行 step -> verify -> decide，避免一口气做偏。
 - quick 默认不创建正式文档；standard 编码前确认一个 ACTIVE 和测试用例清单；strict 才拆完整链路。
 - PRD、产品文档、现有功能改版、多模块、高风险、接口/数据/权限/支付/订单/登录/部署变化，自动使用 `strict`。
 - 分级优先级：硬门禁 > 风险自动升级 > 文档预算 > 用户指定 > 默认 quick。

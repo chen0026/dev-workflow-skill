@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-harness_version="0.27.0"
+harness_version="0.28.0"
 cmd="${1:-run}"
 shift || true
 
@@ -454,6 +454,8 @@ report() {
   printf 'history_entry_limit: %s\n' '8_lines'
   printf 'loop_phase: %s\n' "$(initial_loop_phase_for "$flow")"
   printf 'loop_next_decision: %s\n' "$(initial_loop_decision_for "$flow")"
+  printf 'loop_policy: %s\n' 'acceptance_driven_step_verify_decide'
+  printf 'loop_tool: %s\n' 'loop-work.sh'
   printf 'max_iterations: %s\n' "$(max_iterations_for "$flow")"
   printf 'stop_condition: %s\n' "$(stop_condition_for "$flow")"
   printf 'slice_strategy: %s\n' "$(slice_strategy_for "$flow")"
@@ -512,7 +514,7 @@ doctor() {
     [ -d "docs/history" ] || add_missing "docs/history"
   fi
 
-  project_script_probe="$(find scripts -maxdepth 1 -type f \( -name 'dev-workflow-harness.sh' -o -name 'active-work.sh' -o -name 'search-dev-docs.sh' -o -name 'reindex-dev-docs.sh' -o -name 'new-doc.sh' -o -name 'new-doc-id.sh' -o -name 'check-dev-docs.sh' -o -name 'check-dev-workflow.sh' -o -name 'clean-templates.sh' -o -name 'clean-project-scripts.sh' -o -name 'session-state.sh' -o -name 'init-dev-workflow.sh' \) -print -quit 2>/dev/null || true)"
+  project_script_probe="$(find scripts -maxdepth 1 -type f \( -name 'dev-workflow-harness.sh' -o -name 'active-work.sh' -o -name 'loop-work.sh' -o -name 'search-dev-docs.sh' -o -name 'reindex-dev-docs.sh' -o -name 'new-doc.sh' -o -name 'new-doc-id.sh' -o -name 'check-dev-docs.sh' -o -name 'check-dev-workflow.sh' -o -name 'clean-templates.sh' -o -name 'clean-project-scripts.sh' -o -name 'session-state.sh' -o -name 'init-dev-workflow.sh' \) -print -quit 2>/dev/null || true)"
   if [ -n "$project_script_probe" ]; then
     project_scripts_present="true"
   fi
@@ -717,6 +719,8 @@ verify() {
   printf 'test_case_status: %s\n' "$test_case_status"
   printf 'loop_phase: %s\n' "$loop_phase"
   printf 'loop_next_decision: %s\n' "$loop_next_decision"
+  printf 'loop_policy: %s\n' 'acceptance_driven_step_verify_decide'
+  printf 'loop_tool: %s\n' 'loop-work.sh'
   printf 'max_iterations: %s\n' "$(max_iterations_for "$flow")"
   printf 'stop_condition: %s\n' "$(stop_condition_for "$flow")"
   printf 'slice_strategy: %s\n' "$(slice_strategy_for "$flow")"

@@ -223,6 +223,17 @@ ACTIVE 生命周期可用脚本减少手写：
 `finish` 只接受最多 8 个非空行的摘要，并会清理 ACTIVE；未通过人工审核前不要执行。
 如果 `match` 返回 `ambiguous_active`，不要猜；先让用户确认 exact ACTIVE 文件，防止多个线程串台。
 
+Loop 试验版用于减少“做偏、做不彻底”：
+
+```bash
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/loop-work.sh" start docs/active/ACTIVE-xxx.md 3
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/loop-work.sh" step docs/active/ACTIVE-xxx.md "修复目标目录解析" "重命名后目标目录正确"
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/loop-work.sh" verify docs/active/ACTIVE-xxx.md "真实接口本地联调通过"
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/loop-work.sh" decide docs/active/ACTIVE-xxx.md continue "当前验收项通过"
+```
+
+`continue / retry / rescope` 前必须先写 verify；`wait_human / stop` 后不得继续编码。
+
 大需求使用 Adaptive Loop，不套固定业务分类：
 
 ```text

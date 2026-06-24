@@ -81,7 +81,7 @@ ACTIVE 隔离门禁：
 
 ## Adaptive Loop Engineering
 
-Loop 是执行节奏控制，不是新的文档负担。每轮只做一个可验证动作：
+Loop 是执行节奏控制，不是新的文档负担。每轮只做一个可验证动作，并把状态写进当前 ACTIVE：
 
 ```text
 理解当前状态 -> 选择一个小动作 -> 执行 -> 验证证据 -> 决定继续 / 修正 / 停止 / 等人确认
@@ -106,10 +106,23 @@ harness 输出：
 
 停止规则：
 
+- standard / strict 进入编码后，优先用 `loop-work.sh` 记录每轮状态。
+- 每轮 `step` 必须写本轮目标和关联验收项。
+- 每轮 `continue / retry / rescope` 前必须先记录真实验证证据。
 - `loop_next_decision: wait_human`：必须停下等待人工确认。
 - `loop_next_decision: stop`：必须说明阻断原因、证据和下一步。
 - 达到 `max_iterations` 仍未通过验证：停止并汇报，不继续猜测。
 - 发现需求歧义、影响范围扩大、无法定位真实实现路径、验证证据不足：停止并列待确认问题。
+
+辅助脚本：
+
+```bash
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/loop-work.sh" start ACTIVE_FILE 3
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/loop-work.sh" step ACTIVE_FILE "本轮目标" "关联验收项"
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/loop-work.sh" verify ACTIVE_FILE "真实验证证据"
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/loop-work.sh" decide ACTIVE_FILE continue "原因"
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/loop-work.sh" status ACTIVE_FILE
+```
 
 ## 需求一致性验收
 

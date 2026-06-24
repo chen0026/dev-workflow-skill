@@ -258,6 +258,7 @@ harness 字段：
 
 - `loop_phase`：当前阶段。
 - `loop_next_decision`：继续、重试、等待人工或停止。
+- `loop_policy`：验收项驱动的 step -> verify -> decide。
 - `max_iterations`：quick 1，standard 3，strict 5。
 - `stop_condition`：本轮停止条件。
 - `slice_strategy`：是否需要自适应切片。
@@ -270,6 +271,17 @@ harness 字段：
 4. 最后按可独立验证的粒度切片。
 
 每个 slice 必须写清：目标、不做什么、改动范围、验收方式、验证证据、停止条件。不套固定业务分类。
+
+standard / strict 进入编码后，用 `loop-work.sh` 管住每轮执行：
+
+```bash
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/loop-work.sh" start ACTIVE_FILE 3
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/loop-work.sh" step ACTIVE_FILE "本轮目标" "关联验收项"
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/loop-work.sh" verify ACTIVE_FILE "真实验证证据"
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/loop-work.sh" decide ACTIVE_FILE continue "原因"
+```
+
+`continue / retry / rescope` 前必须已有本轮 verify；`wait_human / stop` 后不得继续编码。
 
 ### 真实验证门禁
 

@@ -115,6 +115,17 @@ EOF
   echo "dev-workflow: 已追加 ACTIVE 隔离规则到 AGENTS.md"
 fi
 
+if ! grep -q "loop-work.sh step" "AGENTS.md"; then
+  cat >> "AGENTS.md" <<'EOF'
+
+
+## Dev Workflow Loop Guard
+
+standard / strict 进入编码后，每一轮必须用 `loop-work.sh step ACTIVE_FILE "本轮目标" "关联验收项"` 记录目标和验收项，用 `loop-work.sh verify ACTIVE_FILE "真实验证证据"` 记录证据，再用 `loop-work.sh decide ACTIVE_FILE continue|retry|rescope|wait_human|stop "原因"` 决策。`continue / retry / rescope` 前必须已有本轮真实验证证据；`wait_human / stop` 后不得继续编码。
+EOF
+  echo "dev-workflow: 已追加 Loop Guard 到 AGENTS.md"
+fi
+
 if [ -d "docs" ] && [ ! -f "docs/workflow.md" ]; then
   archive_dir="docs/archive/legacy-docs-$(date +%Y%m%d-%H%M%S)"
   movable="$(find docs -mindepth 1 -maxdepth 1 ! -name archive -print)"

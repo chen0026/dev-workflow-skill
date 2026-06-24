@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.28.0 - 2026-06-24
+
+- 新增 `scripts/loop-work.sh` 试验版：在 ACTIVE 内记录 `step / verify / decide / status`，让 loop 从提示变成可检查的短闭环。
+- 每轮 `step` 必须绑定关联验收项；`continue / retry / rescope` 前必须已有本轮真实验证证据。
+- `wait_human / stop` 可直接决策，且决策后禁止继续开新轮；达到最大轮次后停止并汇报。
+- doctor / clean-scripts 识别 `loop-work.sh`，项目自包含脚本模式会同步该脚本。
+
 ## 0.27.0 - 2026-06-22
 
 - `/dev-workflow init` 现在会为已存在旧 dev-workflow 规则的项目补充 `Dev Workflow Active Isolation` 段落。

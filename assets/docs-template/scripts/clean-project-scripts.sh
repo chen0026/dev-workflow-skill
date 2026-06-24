@@ -28,6 +28,7 @@ scripts/clean-project-scripts.sh
 scripts/clean-templates.sh
 scripts/dev-workflow-harness.sh
 scripts/init-dev-workflow.sh
+scripts/loop-work.sh
 scripts/new-doc-id.sh
 scripts/new-doc.sh
 scripts/reindex-dev-docs.sh

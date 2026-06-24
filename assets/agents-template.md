@@ -30,6 +30,7 @@
 - standard 进行中任务使用 `docs/active/ACTIVE-*.md`；完成并通过人工审核后，把 8 行以内摘要折叠到 `docs/history/<module>.md`，再清理 ACTIVE。
 - 多个 ACTIVE 同时存在时，必须先用 `active-work.sh match 关键词` 锁定唯一文件；返回 `ambiguous_active` 时停止并让用户确认，禁止按模块名、最近时间或猜测选择。
 - 大需求使用 Adaptive Loop：先按需求文档结构、代码边界、风险点和可验证粒度切片，不套固定业务分类。
+- standard / strict 进入编码后，每轮用 `loop-work.sh step -> verify -> decide`；`continue / retry / rescope` 前必须有真实验证证据，`wait_human / stop` 后不得继续编码。
 - 最终验收必须使用真实后端、真实接口、真实运行环境、本地联调、测试环境或人工实测证据；mock 数据、Playwright route mock、接口拦截、fixture、stub、MSW 只能做辅助测试，不能作为最终验收或降级验收。
 - 普通任务禁止同时新建 `TASK + BUG + ACC`。
 - 不手工维护或提交 `docs/index.md`；使用 `.dev-workflow/index/docs.jsonl` 本地索引。

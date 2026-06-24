@@ -219,5 +219,5 @@ TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md
 小任务不要一开始就写很多文档：
 
 - quick：默认不写正式文档，只在最终回复摘要；必要时一个 TASK。
-- standard：编码前先确认一个 ACTIVE；复杂或高风险才用 TASK / BUG。完成前回填实际改动、验证、审查和验收结论；审核后折叠到 history，不额外创建 ACC。
+- standard：编码前先确认一个 ACTIVE；复杂或高风险才用 TASK / BUG。编码后用 `loop-work.sh` 按验收项短闭环推进；完成前回填实际改动、验证、审查和验收结论；审核后折叠到 history，不额外创建 ACC。
 - strict：PRD / 改版必须先写 REQ 和测试用例矩阵，确认后再编码。

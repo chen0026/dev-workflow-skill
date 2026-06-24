@@ -60,7 +60,7 @@ elif [ -f "$skill_template" ]; then
 elif [ -f "$installed_template" ]; then
   template="$installed_template"
 else
-  echo "dev-workflow: 找不到模板：$local_template、$skill_template 或 $installed_template"
+  echo "dev-workflow: 找不到模板：${local_template}、${skill_template} 或 ${installed_template}"
   echo "dev-workflow: 请确认已安装 dev-workflow，或使用 init --with-templates 初始化项目模板。"
   exit 1
 fi

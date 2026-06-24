@@ -37,7 +37,7 @@ if index_needs_rebuild; then
   if [ -x "$reindex_script" ]; then
     "$reindex_script" >/dev/null
   else
-    echo "dev-workflow: 缺少 $index，且没有 $reindex_script"
+    echo "dev-workflow: 缺少 ${index}，且没有 ${reindex_script}"
     exit 1
   fi
 fi

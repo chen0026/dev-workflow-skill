@@ -36,6 +36,7 @@ Harness-first 的轻量开发工作流。用户不需要记流程命令；开发
 - `/dev-workflow clean-templates`：预览并按确认清理项目内模板副本。
 - `/dev-workflow clean-scripts`：预览并按确认清理项目内 dev-workflow 脚本副本。
 - `/dev-workflow active list/start/match/finish`：查看、创建、匹配或折叠进行中的 ACTIVE。
+- `/dev-workflow loop start/step/verify/decide/status`：在 ACTIVE 内执行验收驱动短闭环。
 
 项目脚本缺失时使用：
 
@@ -57,6 +58,7 @@ Harness-first 的轻量开发工作流。用户不需要记流程命令；开发
 - harness 只检查完整性；需求是否一致必须进入人工审核，不能由脚本直接判定通过。
 - 最终验收必须有真实后端、真实接口、真实运行环境或人工实测证据；mock、mock 数据、Playwright route mock 只能做开发辅助或补充测试，不能作为最终验收或降级验收证据。
 - 大需求使用自适应 loop：先理解和切片，再按单个可验证 slice 小步实现；不要套固定业务分类。
+- standard / strict 进入编码后，每轮使用 `loop-work.sh step -> verify -> decide`；`continue / retry / rescope` 前必须有真实验证证据，`wait_human / stop` 后不得继续编码。
 - 默认不展开完整文档内容，只列文件路径、追踪编号、验证结果和待审核事项。
 
 ## Flow Semantics
