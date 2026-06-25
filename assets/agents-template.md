@@ -31,6 +31,7 @@
 - 多个 ACTIVE 同时存在时，必须先用 `active-work.sh match 关键词` 锁定唯一文件；返回 `ambiguous_active` 时停止并让用户确认，禁止按模块名、最近时间或猜测选择。
 - 大需求使用 Adaptive Loop：先按需求文档结构、代码边界、风险点和可验证粒度切片，不套固定业务分类。
 - standard / strict 进入编码后，每轮用 `loop-work.sh step -> verify -> decide`；`continue / retry / rescope` 前必须有真实验证证据，`wait_human / stop` 后不得继续编码。
+- 新增或修改关键业务代码时默认补简短中文注释，说明职责、业务原因、边界或需求关联；禁止逐行翻译代码和空泛注释。
 - 最终验收必须使用真实后端、真实接口、真实运行环境、本地联调、测试环境或人工实测证据；mock 数据、Playwright route mock、接口拦截、fixture、stub、MSW 只能做辅助测试，不能作为最终验收或降级验收。
 - 普通任务禁止同时新建 `TASK + BUG + ACC`。
 - 不手工维护或提交 `docs/index.md`；使用 `.dev-workflow/index/docs.jsonl` 本地索引。
@@ -59,6 +60,10 @@
 ## Requirement Match
 
 需求一致性按 `PRD -> REQ -> ACTIVE/TASK/BUG -> 测试用例清单 -> 真实验证证据 -> 人工审核 -> history -> 提交` 闭环执行。最终回复必须列出测试覆盖、真实验证证据、待审核内容和待提交文件。
+
+## Comment Guard
+
+新增或修改业务代码时，关键逻辑默认写简短中文注释：说明这段代码负责什么、为什么这样处理、边界或限制是什么。quick 只在不注释会看不懂时补；standard 的关键业务逻辑必须补；strict 的关键规则注释应关联 REQ / 验收项。禁止逐行翻译代码、空泛注释和长背景。
 
 ## Git Hooks
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-harness_version="0.28.0"
+harness_version="0.29.0"
 cmd="${1:-run}"
 shift || true
 
@@ -462,6 +462,8 @@ report() {
   printf 'slice_inputs: %s\n' 'requirement_structure,code_boundaries,risk_points,testability'
   printf 'test_case_policy: %s\n' 'requirement_behavior_first_confirm_before_code'
   printf 'test_case_required_fields: %s\n' 'ACTIVE_or_REQ_or_BUG,scenario,precondition,action,expected_result,test_type,real_verification_path,mock_policy,red_failure'
+  printf 'comment_policy: %s\n' 'key_business_logic_short_zh_comments'
+  printf 'comment_budget: %s\n' 'quick_if_needed_standard_key_logic_strict_REQ_link'
   printf 'verification_policy: %s\n' 'real_final_evidence_required'
   printf 'mock_policy: %s\n' 'development_or_supplement_only_never_final'
   printf 'final_evidence_required: %s\n' 'real_backend_or_real_api_or_real_runtime_or_human_manual_verification'
@@ -726,6 +728,8 @@ verify() {
   printf 'slice_strategy: %s\n' "$(slice_strategy_for "$flow")"
   printf 'test_case_policy: %s\n' 'requirement_behavior_first_confirm_before_code'
   printf 'test_case_required_fields: %s\n' 'ACTIVE_or_REQ_or_BUG,scenario,precondition,action,expected_result,test_type,real_verification_path,mock_policy,red_failure'
+  printf 'comment_policy: %s\n' 'key_business_logic_short_zh_comments'
+  printf 'comment_budget: %s\n' 'quick_if_needed_standard_key_logic_strict_REQ_link'
   printf 'verification_policy: %s\n' 'real_final_evidence_required'
   printf 'mock_policy: %s\n' 'development_or_supplement_only_never_final'
   printf 'final_evidence_required: %s\n' 'real_backend_or_real_api_or_real_runtime_or_human_manual_verification'

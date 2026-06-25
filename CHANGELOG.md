@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.29.0 - 2026-06-25
+
+- 新增轻量注释策略：新增或修改关键业务代码时默认补简短中文注释，说明职责、业务原因、边界或需求关联。
+- 明确注释预算：quick 只在不注释会看不懂时补；standard 关键业务逻辑必须补；strict 关键规则注释关联 REQ / 验收项。
+- harness 新增 `comment_policy / comment_budget` 输出，完成前自查关键逻辑是否缺注释、注释是否过时或空泛。
+- `/dev-workflow init` 会给老项目 `AGENTS.md` 补充 Comment Guard，不覆盖原有内容。
+
 ## 0.28.0 - 2026-06-24
 
 - 新增 `scripts/loop-work.sh` 试验版：在 ACTIVE 内记录 `step / verify / decide / status`，让 loop 从提示变成可检查的短闭环。

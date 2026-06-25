@@ -234,6 +234,13 @@ Loop 试验版用于减少“做偏、做不彻底”：
 
 `continue / retry / rescope` 前必须先写 verify；`wait_human / stop` 后不得继续编码。
 
+轻量注释策略：
+
+- quick：只在不注释会看不懂时补。
+- standard：新增或修改关键业务逻辑时必须补简短中文注释。
+- strict：关键规则注释应关联 REQ / 验收项。
+- 注释只解释职责、业务原因、边界或限制，禁止逐行翻译代码和空泛注释。
+
 大需求使用 Adaptive Loop，不套固定业务分类：
 
 ```text

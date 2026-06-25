@@ -59,6 +59,7 @@ Harness-first 的轻量开发工作流。用户不需要记流程命令；开发
 - 最终验收必须有真实后端、真实接口、真实运行环境或人工实测证据；mock、mock 数据、Playwright route mock 只能做开发辅助或补充测试，不能作为最终验收或降级验收证据。
 - 大需求使用自适应 loop：先理解和切片，再按单个可验证 slice 小步实现；不要套固定业务分类。
 - standard / strict 进入编码后，每轮使用 `loop-work.sh step -> verify -> decide`；`continue / retry / rescope` 前必须有真实验证证据，`wait_human / stop` 后不得继续编码。
+- 新增或修改关键业务代码时默认写简短中文注释，说明职责、业务原因、边界或需求关联；禁止逐行翻译代码。
 - 默认不展开完整文档内容，只列文件路径、追踪编号、验证结果和待审核事项。
 
 ## Flow Semantics

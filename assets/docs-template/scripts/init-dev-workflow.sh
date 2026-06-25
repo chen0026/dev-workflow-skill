@@ -126,6 +126,17 @@ EOF
   echo "dev-workflow: 已追加 Loop Guard 到 AGENTS.md"
 fi
 
+if ! grep -q "Comment Guard" "AGENTS.md"; then
+  cat >> "AGENTS.md" <<'EOF'
+
+
+## Dev Workflow Comment Guard
+
+新增或修改业务代码时，关键逻辑默认写简短中文注释：说明这段代码负责什么、为什么这样处理、边界或限制是什么。quick 只在不注释会看不懂时补；standard 的关键业务逻辑必须补；strict 的关键规则注释应关联 REQ / 验收项。禁止逐行翻译代码、空泛注释和长背景。
+EOF
+  echo "dev-workflow: 已追加 Comment Guard 到 AGENTS.md"
+fi
+
 if [ -d "docs" ] && [ ! -f "docs/workflow.md" ]; then
   archive_dir="docs/archive/legacy-docs-$(date +%Y%m%d-%H%M%S)"
   movable="$(find docs -mindepth 1 -maxdepth 1 ! -name archive -print)"
