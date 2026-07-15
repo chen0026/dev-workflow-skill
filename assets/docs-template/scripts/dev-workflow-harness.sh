@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-harness_version="0.34.0"
+harness_version="0.37.0"
 cmd="${1:-run}"
 shift || true
 
@@ -56,7 +56,7 @@ flow_reason() {
   }
 
   if printf '%s\n' "$text" | grep -Eq 'prd|产品文档'; then
-    append_reason "strict:prd_or_requirements"
+    append_reason "strict:prd_or_DEV"
   fi
   if printf '%s\n' "$text" | grep -Eq '改版|多模块|高风险|strict'; then
     append_reason "strict:scope_or_risk"
@@ -90,7 +90,7 @@ docs_allowed_for() {
       echo "1_ACTIVE"
       ;;
     strict)
-      echo "full"
+      echo "1_DEV"
       ;;
     *)
       echo "unknown"
@@ -107,7 +107,7 @@ pre_code_gate_for() {
       echo "resolve_or_create_ACTIVE_for_handoff"
       ;;
     strict)
-      echo "confirm_REQ_implementation_map_and_test_cases_before_code"
+      echo "confirm_DEV_requirement_baseline_and_acceptance_before_code"
       ;;
     *)
       echo "unknown"
@@ -124,7 +124,7 @@ pre_code_doc_for() {
       echo "ACTIVE"
       ;;
     strict)
-      echo "REQ"
+      echo "DEV"
       ;;
     *)
       echo "unknown"
@@ -248,7 +248,8 @@ local_state_ignored() {
     .dev-workflow/index/docs.jsonl \
     .dev-workflow/bindings/probe.active \
     .dev-workflow/session/probe.json \
-    .dev-workflow/commit-manifest.txt; do
+    .dev-workflow/commit-manifest.txt \
+    .dev-workflow/commits/probe.txt; do
     if ! git check-ignore -q --no-index "$probe"; then
       echo "false"
       return
@@ -267,7 +268,8 @@ local_state_tracked() {
 }
 
 commit_manifest_status() {
-  if [ -f ".dev-workflow/commit-manifest.txt" ]; then
+  if [ -f ".dev-workflow/commit-manifest.txt" ] \
+    || find .dev-workflow/commits -maxdepth 1 -type f -name '*.txt' -print -quit 2>/dev/null | grep -q .; then
     echo "present"
   else
     echo "missing"
@@ -348,7 +350,7 @@ confirmed_pre_code_count() {
       } | awk '{sum += $1} END {print sum + 0}'
       ;;
     strict)
-      count_matching_files docs/requirements 'REQ-*.md' "$regex"
+      count_matching_files docs/work 'DEV-*.md' "$regex"
       ;;
     *)
       echo "0"
@@ -372,7 +374,7 @@ test_case_confirmed_count() {
       } | awk '{sum += $1} END {print sum + 0}'
       ;;
     strict)
-      count_matching_files docs/requirements 'REQ-*.md' "$regex"
+      count_matching_files docs/work 'DEV-*.md' '编码前确认[^：:]{0,12}[：:][[:space:]]*已确认|pre_code_confirmed[：:][[:space:]]*true'
       ;;
     *)
       echo "0"
@@ -420,7 +422,7 @@ test_case_quality_count() {
       } | awk '{sum += $1} END {print sum + 0}'
       ;;
     strict)
-      count_test_case_quality_files docs/requirements 'REQ-*.md'
+      count_matching_files docs/work 'DEV-*.md' '验收矩阵'
       ;;
     *)
       echo "0"
@@ -467,7 +469,7 @@ implementation_map_count() {
       } | awk '{sum += $1} END {print sum + 0}'
       ;;
     strict)
-      count_implementation_map_files docs/requirements 'REQ-*.md'
+      count_matching_files docs/work 'DEV-*.md' '实现计划'
       ;;
     *)
       echo "0"
@@ -478,6 +480,7 @@ implementation_map_count() {
 count_matching_records() {
   regex="$1"
   {
+    count_matching_files docs/work 'DEV-*.md' "$regex"
     count_matching_files docs/active 'ACTIVE-*.md' "$regex"
     count_matching_files docs/history '*.md' "$regex"
     count_matching_files docs/requirements 'REQ-*.md' "$regex"
@@ -549,7 +552,7 @@ run() {
       printf 'next_action: resolve_or_create_one_ACTIVE_then_continue\n'
       ;;
     strict)
-      printf 'next_action: draft_REQ_with_implementation_map_and_test_matrix_then_wait_for_human_confirmation\n'
+      printf 'next_action: draft_DEV_with_requirement_baseline_and_acceptance_then_wait_for_human_confirmation\n'
       ;;
   esac
 }
@@ -648,7 +651,7 @@ verify() {
   docs_allowed="$(docs_allowed_for "$flow")"
   docs_changed="$(docs_changed_count)"
   code_changed="$(changed_code_count)"
-  requirements_files="$(count_files docs/requirements 'REQ-*.md')"
+  requirements_files="$(count_files docs/work 'DEV-*.md')"
   active_files="$(count_files docs/active 'ACTIVE-*.md')"
   history_files="$(count_files docs/history '*.md')"
   task_files="$(count_files docs/tasks 'TASK-*.md')"
@@ -660,7 +663,7 @@ verify() {
   test_case_confirmed="$(test_case_confirmed_count "$flow")"
   test_case_quality_records="$(test_case_quality_count "$flow")"
   implementation_map_records="$(implementation_map_count "$flow")"
-  requirements_with_acceptance="$(count_matching_files docs/requirements 'REQ-*.md' '验收方式|手工验收|可自动化测试|测试状态')"
+  requirements_with_acceptance="$(count_matching_files docs/work 'DEV-*.md' '验收矩阵')"
   records_with_evidence="$(
     {
       count_matching_files docs/tasks 'TASK-*.md' '验证方式|验证结果|验收结论|测试';
@@ -668,6 +671,7 @@ verify() {
       count_matching_files docs/active 'ACTIVE-*.md' '验证方式|验证结果|验收结论|测试|最终验收证据';
       count_matching_files docs/history '*.md' '验证|验收|证据';
       count_matching_files docs/acceptance 'ACC-*.md' '验收标准|验证记录|结论';
+      count_matching_files docs/work 'DEV-*.md' '真实证据|验证结果|验收矩阵';
     } | awk '{sum += $1} END {print sum + 0}'
   )"
   real_final_evidence="$(real_final_evidence_count)"
@@ -697,8 +701,8 @@ verify() {
   fi
 
   if [ "$flow" = "strict" ] && [ "$requirements_files" -eq 0 ]; then
-    requirement_status="missing_REQ"
-    pre_code_status="missing_REQ"
+    requirement_status="missing_DEV"
+    pre_code_status="missing_DEV"
     machine_gate="blocked"
   fi
 

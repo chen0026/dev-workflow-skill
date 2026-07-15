@@ -1,6 +1,6 @@
 # History: module-name
 
-> 模块级完成摘要。每条最多 8 行，只写结论，不写过程；需要细节时通过提交号、PR、REQ/TASK/BUG 或 archive 追溯。
+> 模块级完成摘要。每条最多 8 行，只写结论，不写过程；需要细节时通过提交号、PR、DEV 或 archive 追溯。
 
 ## YYYY-MM-DD short-title
 

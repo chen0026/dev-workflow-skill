@@ -49,7 +49,7 @@ if [ ! -f "AGENTS.md" ]; then
 
 ## Dev Workflow Lite
 
-普通开发任务默认直接调查、实现、测试和审查，不强制写过程文档或运行 harness。跨会话或交接时只使用一个 ACTIVE；PRD 改版或高风险变更编码前确认 REQ 和验收项。最终验收必须有真实证据，mock 只能辅助。普通 Bug / 功能正式提交时只新增一个精简 CHG，并用 Git message 记录原因、变更、验证和影响。未经用户明确批准不得 commit。
+普通开发任务默认直接调查、实现、测试和审查，不强制写过程文档。普通修改只使用结构化 Git commit；复杂任务只维护一个 DEV。共享工作区使用任务独立 manifest 和 `git commit --only`。未经用户明确批准不得 commit。
 EOF
   fi
   echo "dev-workflow: 已创建 AGENTS.md"
@@ -63,15 +63,48 @@ if ! grep -q "Dev Workflow Lite" "AGENTS.md"; then
   echo "dev-workflow: 已追加 Lite 覆盖规则到 AGENTS.md"
 fi
 
-if ! grep -q "Dev Workflow CHG Record" "AGENTS.md"; then
+if ! grep -q "Dev Workflow Git Record" "AGENTS.md"; then
   cat >> "AGENTS.md" <<'EOF'
 
 
-### Dev Workflow CHG Record
+### Dev Workflow Git Record
 
-普通 Bug / 功能不新建 REQ、TASK、BUG 或 ACC 留痕。正式提交时恰好新增一个精简 `docs/changes/YYYY/MM/CHG-*.md`，并根据实际 diff 生成 `fix/feat(scope): 摘要`，正文记录原因、变更、验证和影响。用户同时确认待提交文件、CHG 和 commit message 后才 commit。历史先搜索 `docs/changes/`，再用 Git 追查真实 diff。
+本节覆盖旧的 Dev Workflow CHG Record。普通修改不再创建 CHG、REQ、TASK、BUG 或 ACC，结构化 Git commit 是修改历史的唯一事实记录。复杂任务只维护一个 `docs/work/YYYY/MM/DEV-*.md`，贯穿需求、计划、问题、进度、验收和关联 commits。历史先用 Git 追查真实 diff。
 EOF
-  echo "dev-workflow: 已追加 CHG 修改记录规则到 AGENTS.md"
+  echo "dev-workflow: 已追加 Git/DEV 修改记录规则到 AGENTS.md"
+fi
+
+if ! grep -q "Dev Workflow Isolated Commit" "AGENTS.md"; then
+  cat >> "AGENTS.md" <<'EOF'
+
+
+### Dev Workflow Isolated Commit
+
+共享工作区为每个任务使用独立 `.dev-workflow/commits/TASK_KEY.txt`。提交时只在清单中列本任务文件，并使用 `commit-scope.sh commit TASK_KEY ...`通过 `git commit --only`精确提交；不得为了当前任务取消其他任务的暂存状态。只有不同任务清单包含同一文件时才停止并人工确认。
+EOF
+  echo "dev-workflow: 已追加共享工作区精确提交规则到 AGENTS.md"
+fi
+
+if ! grep -q "Dev Workflow One Approval" "AGENTS.md"; then
+  cat >> "AGENTS.md" <<'EOF'
+
+
+### Dev Workflow One Approval
+
+提交前必须一次性展示文件范围、完整 commit message 和验证结果；使用 DEV 时再展示 DEV 变化，只询问一次。用户确认后立即提交，不得重复确认。
+EOF
+  echo "dev-workflow: 已追加单次提交授权规则到 AGENTS.md"
+fi
+
+if ! grep -q "Dev Workflow Thread Files" "AGENTS.md"; then
+  cat >> "AGENTS.md" <<'EOF'
+
+
+### Dev Workflow Thread Files
+
+每个线程使用稳定 TASK_KEY；首次修改文件前由 Agent 后台执行 `commit-scope.sh track TASK_KEY -- FILE...`，后续发现文件时增量记录，用户无须操作。文件已被其他线程记录时在编码前停止，正常情况仍由本线程直接提交。只有 commit 成功、HEAD 变化、提交文件与本线程记录一致且这些文件无残留时，才能报告提交成功。
+EOF
+  echo "dev-workflow: 已追加本线程文件记录与提交成功校验规则到 AGENTS.md"
 fi
 
 if [ -d "docs" ] && [ ! -f "docs/workflow.md" ]; then
@@ -97,33 +130,26 @@ rsync -a --ignore-existing \
 
 mkdir -p \
   docs/prd \
-  docs/requirements \
-  docs/tasks \
-  docs/bugs \
+  docs/work \
   docs/active \
-  docs/changes \
   docs/history \
   docs/design/decisions \
-  docs/acceptance \
   docs/ops \
   docs/legacy \
   docs/archive \
   .dev-workflow/index \
   .dev-workflow/session \
   .dev-workflow/bindings \
+  .dev-workflow/commits \
   .githooks
 
 if [ "$with_templates" = "1" ]; then
   rsync -a --ignore-existing \
     "$template_dir/prd" \
-    "$template_dir/requirements" \
-    "$template_dir/tasks" \
-    "$template_dir/bugs" \
+    "$template_dir/work" \
     "$template_dir/active" \
-    "$template_dir/changes" \
     "$template_dir/history" \
     "$template_dir/design" \
-    "$template_dir/acceptance" \
     "$template_dir/ops" \
     "$template_dir/legacy" \
     docs/

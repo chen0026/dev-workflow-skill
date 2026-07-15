@@ -43,8 +43,8 @@ while IFS= read -r file; do
       ;;
   esac
 
-  id="$(printf '%s\n' "$base" | sed -nE 's/^((PRD|REQ|TASK|BUG|ACTIVE|CHG|ADR|ACC|OPS|LEGACY)-(([0-9]{8}-[0-9]{6}-[a-z0-9]{4})|([0-9]{4})).*)\.md$/\1/p')"
-  type="$(printf '%s\n' "$base" | sed -nE 's/^(PRD|REQ|TASK|BUG|ACTIVE|CHG|ADR|ACC|OPS|LEGACY)-.*/\1/p')"
+  id="$(printf '%s\n' "$base" | sed -nE 's/^((DEV|PRD|REQ|TASK|BUG|ACTIVE|CHG|ADR|ACC|OPS|LEGACY)-(([0-9]{8}-[0-9]{6}-[a-z0-9]{4})|([0-9]{4})).*)\.md$/\1/p')"
+  type="$(printf '%s\n' "$base" | sed -nE 's/^(DEV|PRD|REQ|TASK|BUG|ACTIVE|CHG|ADR|ACC|OPS|LEGACY)-.*/\1/p')"
   title="$(sed -nE 's/^# +//p' "$file" | head -n 1)"
   status="$(grep -m 1 -E '(^状态：|^\*\*状态\*\*：|^status:)' "$file" | sed -E 's/^(\*\*)?状态(\*\*)?： *//; s/^status: *//' || true)"
   mtime="$(date -r "$file" +%Y-%m-%dT%H:%M:%S%z 2>/dev/null || date +%Y-%m-%dT%H:%M:%S%z)"

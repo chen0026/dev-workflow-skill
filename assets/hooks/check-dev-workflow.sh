@@ -2,27 +2,49 @@
 set -euo pipefail
 
 mode="${1:-pre-commit}"
-tracking_id_regex='(PRD|REQ|TASK|BUG|ACTIVE|CHG|ADR|ACC|OPS|LEGACY)-(([0-9]{8}-[0-9]{6}-[a-z0-9]{4})|([0-9]{4}))'
+tracking_id_regex='(DEV|PRD|REQ|TASK|BUG|ACTIVE|CHG|ADR|ACC|OPS|LEGACY)-(([0-9]{8}-[0-9]{6}-[a-z0-9]{4})|([0-9]{4}))'
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-if [ "$mode" = "pre-commit" ]; then
+resolve_manifest() {
+  if [ -n "${DEV_WORKFLOW_MANIFEST:-}" ]; then
+    [ -f "$DEV_WORKFLOW_MANIFEST" ] || return 1
+    printf '%s\n' "$DEV_WORKFLOW_MANIFEST"
+    return 0
+  fi
+
+  candidates="$(mktemp)"
   if [ -f ".dev-workflow/commit-manifest.txt" ]; then
+    printf '%s\n' ".dev-workflow/commit-manifest.txt" >> "$candidates"
+  fi
+  if [ -d ".dev-workflow/commits" ]; then
+    find ".dev-workflow/commits" -maxdepth 1 -type f -name '*.txt' -print | LC_ALL=C sort >> "$candidates"
+  fi
+  count="$(awk 'NF {count++} END {print count+0}' "$candidates")"
+  if [ "$count" -gt 1 ]; then
+    rm -f "$candidates"
+    echo "dev-workflow: 存在多个任务提交清单；请使用 commit-scope.sh commit TASK_KEY 精确提交。" >&2
+    return 2
+  fi
+  if [ "$count" -eq 1 ]; then
+    sed -n '1p' "$candidates"
+    rm -f "$candidates"
+    return 0
+  fi
+  rm -f "$candidates"
+  return 1
+}
+
+if [ "$mode" = "pre-commit" ]; then
+  manifest_status="0"
+  active_manifest="$(resolve_manifest)" || manifest_status="$?"
+  [ "$manifest_status" != "2" ] || exit 1
+  if [ -n "$active_manifest" ]; then
     [ -x "$script_dir/commit-scope.sh" ] || {
       echo "dev-workflow: 找不到 commit-scope.sh。"
       exit 1
     }
-    "$script_dir/commit-scope.sh" check
+    DEV_WORKFLOW_MANIFEST="$active_manifest" "$script_dir/commit-scope.sh" check
 
-    changed="$(git diff --cached --name-only --diff-filter=ACMR)"
-    code_changed="$(printf '%s\n' "$changed" | grep -Ev '^(docs/|AGENTS\.md$|README\.md$|\.gitignore$|\.dev-workflow/|\.githooks/|scripts/)' || true)"
-    if [ -n "$code_changed" ] && [ "${DEV_WORKFLOW_SKIP_CHG:-0}" != "1" ]; then
-      change_records="$(git diff --cached --name-only --diff-filter=A | grep -E '^docs/changes/[0-9]{4}/[0-9]{2}/CHG-[0-9]{8}-[0-9]{6}-[a-z0-9]{4}-.+\.md$' || true)"
-      change_record_count="$(printf '%s\n' "$change_records" | awk 'NF {count++} END {print count+0}')"
-      [ "$change_record_count" -eq 1 ] || {
-        echo "dev-workflow: 正式代码提交必须恰好新增 1 个 docs/changes/YYYY/MM/CHG-*.md 记录。"
-        exit 1
-      }
-    fi
   fi
 
   if git diff --cached --name-only | grep -Eq '^(docs/|AGENTS\.md$)'; then
@@ -41,7 +63,7 @@ if [ "$mode" = "pre-commit" ]; then
 
     if [ -n "$code_changed" ] && [ -z "$docs_changed" ]; then
       echo "dev-workflow: 本次提交包含代码变更，但没有同步 docs/ 或 AGENTS.md。"
-      echo "请补充 CHG 或其他正式文档，或取消 DEV_WORKFLOW_REQUIRE_DOCS=1。"
+      echo "请补充 DEV 或其他长期文档，或取消 DEV_WORKFLOW_REQUIRE_DOCS=1。"
       exit 1
     fi
   fi
@@ -52,7 +74,10 @@ fi
 if [ "$mode" = "commit-msg" ]; then
   msg_file="${2:?commit message file is required}"
 
-  if [ -f ".dev-workflow/commit-manifest.txt" ]; then
+  manifest_status="0"
+  active_manifest="$(resolve_manifest)" || manifest_status="$?"
+  [ "$manifest_status" != "2" ] || exit 1
+  if [ -n "$active_manifest" ]; then
     if ! grep -Eq '^(fix|feat|refactor|chore|docs|test)(\([^)]+\))?:[[:space:]]+.+$' "$msg_file"; then
       echo "dev-workflow: 精确提交的摘要必须使用 fix/feat(scope): 描述。"
       exit 1
@@ -71,12 +96,15 @@ if [ "$mode" = "commit-msg" ]; then
 fi
 
 if [ "$mode" = "post-commit" ]; then
-  [ -f ".dev-workflow/commit-manifest.txt" ] || exit 0
+  manifest_status="0"
+  active_manifest="$(resolve_manifest)" || manifest_status="$?"
+  [ "$manifest_status" != "2" ] || exit 1
+  [ -n "$active_manifest" ] || exit 0
   [ -x "$script_dir/commit-scope.sh" ] || {
     echo "dev-workflow: 找不到 commit-scope.sh。"
     exit 1
   }
-  "$script_dir/commit-scope.sh" verify-head
+  DEV_WORKFLOW_MANIFEST="$active_manifest" "$script_dir/commit-scope.sh" verify-head
   exit 0
 fi
 

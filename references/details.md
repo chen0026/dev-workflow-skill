@@ -30,14 +30,14 @@
 "${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/active-work.sh" start short-title
 ```
 
-## 严格需求与一致性
+## DEV 生命周期与一致性
 
-REQ 至少包含：需求来源、现状、目标行为、范围外、影响面、验收项、测试和真实验证方式。
+严格任务只使用一个 DEV，包含需求基线、实现计划、问题与决策、验收矩阵、执行进度和 Git 记录。需求基线确认后不得静默覆盖；变化时追加修订说明。
 
 一致性链路简化为：
 
 ```text
-PRD/REQ -> 验收项 -> 实现与测试 -> 真实证据 -> 人工审核
+PRD/DEV -> 验收项 -> 实现与测试 -> 真实证据 -> 人工审核
 ```
 
 每个验收项必须能指向实现、测试或人工验证证据。存在缺口时不声称完成。
@@ -59,11 +59,19 @@ PRD/REQ -> 验收项 -> 实现与测试 -> 真实证据 -> 人工审核
 
 默认不自动 commit。只在代码、测试、审查和真实验证完成，并得到用户明确批准后提交。
 
-普通 Bug、功能完善和维护不建配套文档链。进入正式提交审核时，先运行 `new-doc.sh CHG short-title`，生成一个 `docs/changes/YYYY/MM/CHG-*.md`。
+每个线程使用稳定 TASK_KEY，并在首次修改文件前由 Agent 后台增量记录：
 
-CHG 必须保持精简：YAML 只包含 `id / type / module / created_at / files / related`，正文只包含原因、变更、验证和影响。`files` 列出实际代码/测试文件，`related` 可关联旧 CHG / REQ / ADR；这些字段也是未来生成本地知识图谱的唯一输入。
+```bash
+commit-scope.sh track TASK_KEY -- path/to/file
+```
 
-CHG 和 commit message 只写工程事实，不写密钥、token、客户隐私、生产数据、内网凭据或其他敏感信息。
+- 用户不需要记忆或执行 track；Agent 在计划修改和后续发现文件时调用。
+- track 只记录本线程触碰的文件，不要求分类整个工作区；已被其他任务记录的文件会在编码前阻断。
+- 同一线程后续 prepare 必须与已有记录取并集，不能覆盖或缩小文件范围。
+
+普通 Bug、功能完善和维护不创建 CHG 或其他任务文档，结构化 commit message 是稳定修改记录。复杂任务的 DEV 可在重要节点追加关联 commit，不要求每个 commit 都修改 DEV。
+
+DEV 和 commit message 只写工程事实，不写密钥、token、客户隐私、生产数据、内网凭据或其他敏感信息。
 
 然后根据实际 diff 和验证结果生成以下 Git commit message：
 
@@ -78,34 +86,36 @@ fix(scope): 简短描述用户可见变化
 
 - 类型使用 `fix / feat / refactor / chore / docs / test`，scope 使用稳定模块名。
 - 记录必须来自实际 diff 和已完成验证，不照抄计划或推测。
-- 人工审核同时确认待提交文件、CHG 和 commit message；任一变化都应重新确认。
-- 临时提交或用户明确要求“不留文档”时，可在 commit 命令前设置 `DEV_WORKFLOW_SKIP_CHG=1`；结构化 commit message 仍保留。
+- 首次询问确认前必须一次性展示待提交文件、完整 commit message 和验证结果；使用 DEV 时再展示 DEV 变化，不分多轮补充。
+- 用户在完整审核包后回复“提交代码 / 确认提交 / 批准提交”即完成最终授权；精确 stage、hooks 和 commit 都属于同一次授权，禁止再次询问。
+- 只有授权后文件范围、DEV、commit message 或验证结论实际变化时，授权才失效；展示变化后重新确认一次。
 
 开始提交审核时才创建临时清单：
 
 ```bash
 "${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/commit-scope.sh" prepare TASK_KEY --all
 # 共享工作区
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/commit-scope.sh" prepare TASK_KEY -- current-file --other other-task-file
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/commit-scope.sh" show
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/commit-scope.sh" prepare TASK_KEY -- current-file optional-DEV-file
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/commit-scope.sh" show TASK_KEY
 # 用户批准后
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/commit-scope.sh" stage
-git commit -m "..."
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/commit-scope.sh" commit TASK_KEY -m "..."
 ```
 
-- `prepare` 必须完整分类 staged、unstaged 和 untracked 文件。
+- `prepare` 只列本任务文件；每个任务保存到 `.dev-workflow/commits/TASK_KEY.txt`，不再分类其他任务文件。
 - 禁止用 `git add .`、`git add -u` 或 `git commit -am` 代替精确清单。
-- 存在清单且包含代码时，pre-commit 核对暂存范围并要求恰好新增一个 CHG；不存在清单时 hooks 不强制普通人工提交走 skill 流程。
+- `commit` 使用 `git commit --only`，因此其他任务已暂存文件保持不变；不同任务清单包含同一文件时阻断。
+- 存在清单时 pre-commit 只核对文件范围；不存在清单时 hooks 不强制普通人工提交走 skill 流程。
 - 存在清单时 commit-msg 要求结构化摘要以及“原因/变更/验证/影响”四项；没有清单的普通人工提交只提醒。
 - post-commit 只在存在清单时核对 HEAD 并清理。
+- 只有 commit 返回成功、HEAD 从提交前基线发生变化、HEAD 文件与清单完全一致且本线程文件无残留时，才能回复“提交成功”。
 
-历史追查先搜索精简 CHG，再读真实 Git diff：
+历史追查先读真实 Git diff，再按需读取 DEV 或旧文档：
 
 ```bash
-rg -l '关键词' docs/changes
 git log --all --grep='关键词' --regexp-ignore-case
 git log --follow -- path/to/file
 git show --stat --format=fuller COMMIT
+rg -l '关键词' docs/work docs/changes 2>/dev/null
 ```
 
 如果需要查某行代码的引入原因，先用 `git blame` 找 commit，再用 `git show` 读取结构化记录和 diff。
@@ -115,4 +125,4 @@ git show --stat --format=fuller COMMIT
 - harness：仅用于判断严格门禁、复杂切片或诊断项目接入。
 - Loop：仅用于需求不清、验证失败或需要多轮可验证切片。
 - 本地索引：仅在需要历史时调用 `search-dev-docs.sh`，不在每个任务前重建。
-- subagent / Superpowers：按任务本身需要使用，结果默认只汇总到最终回复；续作或严格模式才写入 ACTIVE / REQ。
+- subagent / Superpowers：按任务本身需要使用，结果默认只汇总到最终回复；续作或严格模式才写入 ACTIVE / DEV。

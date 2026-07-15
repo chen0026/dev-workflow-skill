@@ -310,7 +310,7 @@ finish_active() {
   if [ ! -f "$history_file" ]; then
     {
       printf '# History: %s\n\n' "$module"
-      printf '> 模块级完成摘要。每条最多 8 行，只写结论；细节通过提交号、PR、REQ/TASK/BUG/ACTIVE 或 archive 追溯。\n'
+      printf '> 模块级完成摘要。每条最多 8 行，只写结论；细节通过提交号、PR、DEV/ACTIVE 或 archive 追溯。\n'
     } > "$history_file"
   fi
 

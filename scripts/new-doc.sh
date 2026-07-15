@@ -7,6 +7,10 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 skill_root="$(cd "$script_dir/.." && pwd)"
 
 case "$type" in
+  DEV)
+    dir="docs/work/$(date +%Y)/$(date +%m)"
+    template_rel="work/TEMPLATE.md"
+    ;;
   PRD)
     dir="docs/prd"
     template_rel="prd/TEMPLATE.md"
@@ -48,13 +52,15 @@ case "$type" in
     template_rel="legacy/TEMPLATE.md"
     ;;
   *)
-    echo "dev-workflow: TYPE 必须是 PRD/REQ/TASK/BUG/ACTIVE/CHG/ADR/ACC/OPS/LEGACY"
+    echo "dev-workflow: TYPE 必须是 DEV/PRD/REQ/TASK/BUG/ACTIVE/CHG/ADR/ACC/OPS/LEGACY"
     exit 1
     ;;
 esac
 
 if [ "$type" = "CHG" ]; then
   local_template="docs/changes/TEMPLATE.md"
+elif [ "$type" = "DEV" ]; then
+  local_template="docs/work/TEMPLATE.md"
 else
   local_template="$dir/TEMPLATE.md"
 fi
@@ -85,12 +91,13 @@ target="$dir/$id.md"
 
 mkdir -p "$dir"
 cp "$template" "$target"
-if [ "$type" = "CHG" ]; then
+if [ "$type" = "CHG" ] || [ "$type" = "DEV" ]; then
   created_at="$(date +%Y-%m-%dT%H:%M:%S%z)"
   tmp="$(mktemp)"
   awk -v id="$id" -v title="$title" -v created_at="$created_at" '
     /^id:/ { print "id: " id; next }
     /^created_at:/ { print "created_at: " created_at; next }
+    /^updated_at:/ { print "updated_at: " created_at; next }
     /^# / { print "# " title; next }
     { print }
   ' "$target" > "$tmp"

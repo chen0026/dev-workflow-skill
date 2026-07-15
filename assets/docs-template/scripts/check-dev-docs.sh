@@ -13,7 +13,7 @@ fail() {
 [ -d "docs" ] || fail "缺少 docs/ 目录"
 [ -f "docs/workflow.md" ] || fail "缺少 docs/workflow.md"
 
-for dir in docs/prd docs/requirements docs/tasks docs/bugs docs/active docs/changes docs/history docs/design/decisions docs/acceptance docs/ops docs/legacy docs/archive; do
+for dir in docs/work docs/prd docs/active docs/history docs/design/decisions docs/ops docs/legacy docs/archive; do
   [ -d "$dir" ] || fail "缺少目录：$dir"
 done
 
@@ -32,15 +32,33 @@ validate_change() {
   done
 }
 
+validate_dev() {
+  dev="$1"
+  [ -f "$dev" ] || fail "DEV 文件不存在：$dev"
+  grep -Eq '^id: DEV-[0-9]{8}-[0-9]{6}-[a-z0-9]{4}-.+' "$dev" || fail "$dev 缺少有效 id"
+  for section in '需求基线' '实现计划' '问题与决策' '验收矩阵' '执行进度' 'Git 记录'; do
+    grep -q "^## ${section}$" "$dev" || fail "$dev 缺少${section}"
+  done
+}
+
 if [ "$mode" = "--staged" ] || [ "$mode" = "staged" ]; then
+  while IFS= read -r dev; do
+    [ -n "$dev" ] || continue
+    validate_dev "$dev"
+  done < <(git diff --cached --name-only --diff-filter=AM | grep -E '^docs/work/[0-9]{4}/[0-9]{2}/DEV-.*\.md$' || true)
   while IFS= read -r change; do
     [ -n "$change" ] || continue
     validate_change "$change"
   done < <(git diff --cached --name-only --diff-filter=AM | grep -E '^docs/changes/[0-9]{4}/[0-9]{2}/CHG-.*\.md$' || true)
 else
-  while IFS= read -r change; do
-    validate_change "$change"
-  done < <(find docs/changes -type f -name 'CHG-*.md' | sort)
+  while IFS= read -r dev; do
+    validate_dev "$dev"
+  done < <(find docs/work -type f -name 'DEV-*.md' | sort)
+  if [ -d docs/changes ]; then
+    while IFS= read -r change; do
+      validate_change "$change"
+    done < <(find docs/changes -type f -name 'CHG-*.md' | sort)
+  fi
 fi
 
 if git rev-parse --git-dir >/dev/null 2>&1; then

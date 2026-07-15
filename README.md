@@ -1,6 +1,6 @@
 # dev-workflow
 
-轻量开发工作流：默认直接开发，只在跨会话或高风险时升级。普通 Bug 和功能不创建配套文档，提交时把修改内容写入 Git history。
+轻量开发工作流：普通修改只用结构化 Git history，复杂任务只维护一个 DEV 生命周期文档。
 
 ## 安装
 
@@ -37,7 +37,7 @@ rsync -a --delete --exclude .git ./ "${CODEX_HOME:-$HOME/.codex}/skills/dev-work
 定向调查 -> 实现 -> 测试 -> 真实验证 -> 代码审查 -> 人工批准提交
 ```
 
-- 开发过程新增文档 0 个；正式提交时新增 1 个精简 CHG。
+- 普通任务和正式提交都不强制新增文档。
 - 不运行 harness、Loop 或索引。
 - 最终只输出代码变更、验证结果、待提交文件和风险。
 
@@ -47,7 +47,7 @@ rsync -a --delete --exclude .git ./ "${CODEX_HOME:-$HOME/.codex}/skills/dev-work
 
 ### 严格模式
 
-PRD 改版、多模块、接口契约、数据迁移、权限、支付、部署等高风险变更，编码前建立并人工确认 `REQ` 和验收矩阵。
+PRD 改版、多模块、接口契约、数据迁移、权限、支付、部署等高风险变更，只建立一个 `docs/work/YYYY/MM/DEV-*.md`，在同一文件中维护需求、计划、问题、进度和验收。
 
 ## 真实验证
 
@@ -55,28 +55,28 @@ mock、fixture、stub、MSW 和 Playwright route mock 可用于快速反馈，�
 
 ## 精确提交
 
-默认不自动 commit。当用户请求提交时，agent 才会生成临时提交清单：
+每个线程使用稳定 TASK_KEY。Agent 在修改文件前后台增量记录本线程文件，用户无须操作：
+
+```bash
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/commit-scope.sh" track TASK_KEY -- src/current.ts
+```
+
+后续发现文件继续 track；同一文件已被其他线程记录时在编码前停止。旧对话仍可在请求提交时生成任务独立清单：
 
 ```bash
 "${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/commit-scope.sh" prepare TASK_KEY --all
-# 共享工作区要分类其他任务
-"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/commit-scope.sh" prepare TASK_KEY -- src/current.ts --other src/other.ts
-"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/commit-scope.sh" show
+# 共享工作区只列本任务文件，不需要列其他任务
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/commit-scope.sh" prepare TASK_KEY -- src/current.ts
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/commit-scope.sh" show TASK_KEY
 ```
 
-人工明确批准后才 stage 和 commit。存在清单时 hooks 会检查遗漏和混入；没有清单时，hooks 不强迫普通人工提交走 skill 流程。
+Agent 必须一次性展示文件范围、完整 commit message 和验证结果；使用 DEV 时再展示 DEV 变化。用户确认后立即提交，不得重复确认。脚本通过 `git commit --only`只提交当前任务文件。
 
-### 提交即留痕
+正常情况下仍由当前线程直接提交，不要求用户寻找统一收口线程。只有 commit 成功、HEAD 变化、提交文件与本线程记录完全一致且无残留时，才能报告提交成功。
 
-普通 Bug、功能完善和维护不新建 REQ、TASK、BUG 或 ACC。正式提交审核时只生成一个精简记录：
+### Git 留痕
 
-```text
-docs/changes/YYYY/MM/CHG-YYYYMMDD-HHMMSS-xxxx-short-title.md
-```
-
-CHG 的 YAML 仅包含 `id / type / module / created_at / files / related`，正文仅包含原因、变更、验证和影响。它和代码同 commit，不维护共享索引，也不在普通任务中配套生成其他文档。
-
-同时，agent 根据实际 diff 和验证结果自动起草 commit message：
+普通 Bug、功能完善、重构和维护不创建 CHG、REQ、TASK、BUG 或 ACC。Agent 根据实际 diff 和验证结果起草结构化 commit message：
 
 ```text
 fix(dashboard): 修正未连接店铺时的 Step 2 跳转
@@ -87,7 +87,7 @@ fix(dashboard): 修正未连接店铺时的 Step 2 跳转
 影响: 仅影响 Dashboard Step 2 导航，不改变店铺连接和授权逻辑。
 ```
 
-用户审核的是“待提交文件 + CHG + commit message”。提交后可使用：
+用户审核的是“待提交文件 + commit message + 验证结果”；复杂任务再包含 DEV 变化。提交后可使用：
 
 ```bash
 rg -l '关键词' docs/changes
@@ -121,7 +121,7 @@ git show COMMIT
 /dev-workflow check
 /dev-workflow active list|start|current|resolve|finish
 /dev-workflow loop start|step|verify|decide|status
-/dev-workflow commit prepare|show|stage|check|verify-head|clear
+/dev-workflow commit track|prepare|show|list|stage|check|commit|verify-head|clear
 /dev-workflow history <关键词|文件>
 ```
 
@@ -135,14 +135,15 @@ Git hooks 是项目级配置：
 git config core.hooksPath .githooks
 ```
 
-- 有 commit manifest：pre-commit 检查精确范围，post-commit 核对 HEAD 并清理。
-- 有 commit manifest 且包含代码：pre-commit 要求恰好新增一个完整 CHG。
-- 有 commit manifest：commit-msg 必须包含结构化摘要和“原因/变更/验证/影响”四项记录。
+- 有任务 manifest：pre-commit 检查当前任务范围，post-commit 只清理当前任务清单。
+- 有任务 manifest：pre-commit 只核对当前任务文件范围。
+- 有任务 manifest：commit-msg 必须包含结构化摘要和“原因/变更/验证/影响”四项记录。
+- 多个任务并行时必须使用 `commit-scope.sh commit TASK_KEY ...`，直接 `git commit` 会因任务上下文不明确而阻断。
 - 无 commit manifest：允许普通人工提交。
 - 仅当本次暂存了 `docs/` 或 `AGENTS.md` 时才检查文档。
 - commit message 缺少追踪编号时只警告，不阻断。
 
-临时提交或用户明确说“不留文档”时，agent 可在 commit 时设置 `DEV_WORKFLOW_SKIP_CHG=1`；commit message 仍保留结构化记录。
+旧 CHG、REQ、TASK、BUG、ACC 文件继续保留和检索，但新任务不再默认创建。
 
 ## 版本管理
 

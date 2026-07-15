@@ -7,17 +7,21 @@ shift || true
 usage() {
   cat <<'EOF'
 usage:
+  commit-scope.sh track TASK_KEY -- FILE [FILE...]
   commit-scope.sh prepare TASK_KEY --all
-  commit-scope.sh prepare TASK_KEY -- FILE [FILE...] [--other FILE...]
-  commit-scope.sh show
-  commit-scope.sh stage
-  commit-scope.sh check
-  commit-scope.sh verify-head
-  commit-scope.sh clear
+  commit-scope.sh prepare TASK_KEY -- FILE [FILE...]
+  commit-scope.sh show [TASK_KEY]
+  commit-scope.sh list
+  commit-scope.sh stage [TASK_KEY]
+  commit-scope.sh check [TASK_KEY]
+  commit-scope.sh commit TASK_KEY GIT_COMMIT_ARGS...
+  commit-scope.sh verify-head [TASK_KEY]
+  commit-scope.sh clear [TASK_KEY]
 
-独立 worktree 可用 --all；共享工作区必须把每个变更文件归类为本任务或 --other。
-prepare 在人工审核前记录分类结果，不执行暂存。
-人工明确批准提交后才运行 stage；提交后立即运行 verify-head。
+每个任务使用 .dev-workflow/commits/TASK_KEY.txt 独立清单。
+Agent 在修改文件前用 track 增量记录本线程文件；用户无须管理清单。
+commit 使用 git commit --only 精确提交，保留其他线程状态。
+只有不同任务清单包含同一文件时才阻断。TASK_KEY 仅允许字母、数字、点、下划线和短横线。
 EOF
 }
 
@@ -29,44 +33,95 @@ fail() {
 repo_root="$(git rev-parse --show-toplevel 2>/dev/null)" || fail "当前目录不是 Git 仓库"
 cd "$repo_root"
 
-manifest=".dev-workflow/commit-manifest.txt"
+manifest_dir=".dev-workflow/commits"
+legacy_manifest=".dev-workflow/commit-manifest.txt"
+manifest=""
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"' EXIT
 
-require_manifest() {
-  [ -f "$manifest" ] || fail "缺少提交清单；先运行 commit-scope.sh prepare"
+validate_task_key() {
+  task_key="$1"
+  case "$task_key" in
+    ""|*[!A-Za-z0-9._-]*) fail "TASK_KEY 仅允许字母、数字、点、下划线和短横线：$task_key" ;;
+  esac
+}
+
+manifest_path_for_task() {
+  validate_task_key "$1"
+  printf '%s/%s.txt\n' "$manifest_dir" "$1"
+}
+
+manifest_task_from_file() {
+  sed -n 's/^# task=//p' "$1" | head -n 1
+}
+
+list_manifest_files() {
+  if [ -f "$legacy_manifest" ]; then
+    printf '%s\n' "$legacy_manifest"
+  fi
+  if [ -d "$manifest_dir" ]; then
+    find "$manifest_dir" -maxdepth 1 -type f -name '*.txt' -print | LC_ALL=C sort
+  fi
+}
+
+select_manifest() {
+  requested_task="${1:-}"
+  if [ -n "${DEV_WORKFLOW_MANIFEST:-}" ]; then
+    manifest="$DEV_WORKFLOW_MANIFEST"
+  elif [ -n "$requested_task" ]; then
+    manifest="$(manifest_path_for_task "$requested_task")"
+    if [ ! -f "$manifest" ] && [ -f "$legacy_manifest" ] \
+      && [ "$(manifest_task_from_file "$legacy_manifest")" = "$requested_task" ]; then
+      manifest="$legacy_manifest"
+    fi
+  else
+    manifests="$tmp_dir/manifests"
+    list_manifest_files > "$manifests"
+    count="$(awk 'NF {count++} END {print count+0}' "$manifests")"
+    [ "$count" -gt 0 ] || fail "缺少提交清单；先运行 commit-scope.sh prepare"
+    [ "$count" -eq 1 ] || fail "存在多个任务提交清单；请指定 TASK_KEY"
+    manifest="$(sed -n '1p' "$manifests")"
+  fi
+  [ -f "$manifest" ] || fail "找不到提交清单：$manifest"
 }
 
 require_local_state_ignored() {
-  git check-ignore -q --no-index "$manifest" \
+  candidate="${manifest:-$manifest_dir/probe.txt}"
+  git check-ignore -q --no-index "$candidate" \
     || fail ".dev-workflow/ 未被忽略；请先运行 /dev-workflow init"
 }
 
 manifest_task() {
-  sed -n 's/^# task=//p' "$manifest" | head -n 1
+  manifest_task_from_file "$manifest"
 }
 
 manifest_base_head() {
   sed -n 's/^# base_head=//p' "$manifest" | head -n 1
 }
 
+refresh_manifest_base_head() {
+  refreshed="$tmp_dir/refreshed-manifest"
+  awk -v head="$(current_head)" '
+    /^# base_head=/ { print "# base_head=" head; next }
+    { print }
+  ' "$manifest" > "$refreshed"
+  mv "$refreshed" "$manifest"
+}
+
 current_head() {
   git rev-parse --verify HEAD 2>/dev/null || echo "NONE"
 }
 
-write_manifest_paths() {
+write_paths_from_manifest() {
+  source_manifest="$1"
   awk '
     substr($0, 1, 2) == "S\t" { print substr($0, 3); next }
-    substr($0, 1, 2) == "O\t" { next }
-    $0 !~ /^#/ && $0 !~ /^[[:space:]]*$/ { print }
-  ' "$manifest" | LC_ALL=C sort -u
+    $0 !~ /^#/ && $0 !~ /^[[:space:]]*$/ && substr($0, 1, 2) != "O\t" { print }
+  ' "$source_manifest" | LC_ALL=C sort -u
 }
 
-write_manifest_other_paths() {
-  awk '
-    substr($0, 1, 2) == "O\t" { print substr($0, 3); next }
-    /^# other=/ { sub(/^# other=/, ""); print }
-  ' "$manifest" | LC_ALL=C sort -u
+write_manifest_paths() {
+  write_paths_from_manifest "$manifest"
 }
 
 normalize_path() {
@@ -74,7 +129,6 @@ normalize_path() {
   while [[ "$path" == ./* ]]; do
     path="${path#./}"
   done
-
   case "$path" in
     ""|/*|..|../*|*/..|*/../*) fail "文件路径必须是仓库根目录下的普通相对路径：$1" ;;
   esac
@@ -91,13 +145,6 @@ write_staged_paths() {
   done < <(git diff --cached --name-only --no-renames --diff-filter=ACMRTD -z)
 }
 
-write_head_paths() {
-  git rev-parse --verify HEAD >/dev/null 2>&1 || fail "仓库还没有可核验的 HEAD 提交"
-  while IFS= read -r -d '' path; do
-    printf '%s\n' "$path"
-  done < <(git diff-tree --root --no-commit-id --name-only --no-renames -r -z HEAD)
-}
-
 write_unstaged_paths() {
   while IFS= read -r -d '' path; do
     printf '%s\n' "$path"
@@ -112,130 +159,80 @@ write_workspace_paths() {
   done < <(git ls-files --others --exclude-standard -z)
 }
 
-report_other_workspace_changes() {
-  other="$tmp_dir/reported-other"
-  write_manifest_other_paths > "$other"
-  if [ -s "$other" ]; then
-    echo "dev-workflow: other_workspace_changes（已明确归为其他任务，保持未暂存）："
-    sed 's/^/  /' "$other"
-  else
-    echo "dev-workflow: other_workspace_changes: none"
-  fi
+write_head_paths() {
+  git rev-parse --verify HEAD >/dev/null 2>&1 || fail "仓库还没有可核验的 HEAD 提交"
+  while IFS= read -r -d '' path; do
+    printf '%s\n' "$path"
+  done < <(git diff-tree --root --no-commit-id --name-only --no-renames -r -z HEAD)
 }
 
-validate_classification_files() {
-  scope_file="$1"
-  other_file="$2"
-  workspace="$tmp_dir/classification-workspace"
-  classified="$tmp_dir/classification-all"
-  overlap="$tmp_dir/classification-overlap"
-  unclassified="$tmp_dir/classification-unclassified"
-  stale="$tmp_dir/classification-stale"
-  staged="$tmp_dir/classification-staged"
-  other_staged="$tmp_dir/classification-other-staged"
-
-  write_workspace_paths | LC_ALL=C sort -u > "$workspace"
-  {
-    cat "$scope_file"
-    cat "$other_file"
-  } | LC_ALL=C sort -u > "$classified"
-  comm -12 "$scope_file" "$other_file" > "$overlap"
-  comm -23 "$workspace" "$classified" > "$unclassified"
-  comm -13 "$workspace" "$classified" > "$stale"
-  write_staged_paths | LC_ALL=C sort -u > "$staged"
-  comm -12 "$other_file" "$staged" > "$other_staged"
-
+check_manifest_overlap() {
+  current="$tmp_dir/current-paths"
+  write_manifest_paths > "$current"
   failed="0"
-  if [ -s "$overlap" ]; then
-    echo "dev-workflow: classification_overlap（文件不能同时属于本任务和其他任务）：" >&2
-    sed 's/^/  /' "$overlap" >&2
-    failed="1"
-  fi
-  if [ -s "$unclassified" ]; then
-    echo "dev-workflow: unclassified_workspace_changes（以下文件尚未归类，禁止提交）：" >&2
-    sed 's/^/  /' "$unclassified" >&2
-    failed="1"
-  fi
-  if [ -s "$stale" ]; then
-    echo "dev-workflow: stale_classification（已归类但当前没有变更）：" >&2
-    sed 's/^/  /' "$stale" >&2
-    failed="1"
-  fi
-  if [ -s "$other_staged" ]; then
-    echo "dev-workflow: other_task_staged（其他任务文件必须先取消暂存）：" >&2
-    sed 's/^/  /' "$other_staged" >&2
-    failed="1"
-  fi
+  while IFS= read -r other_manifest; do
+    [ "$other_manifest" != "$manifest" ] || continue
+    other="$tmp_dir/other-paths"
+    overlap="$tmp_dir/overlap"
+    write_paths_from_manifest "$other_manifest" > "$other"
+    comm -12 "$current" "$other" > "$overlap"
+    if [ -s "$overlap" ]; then
+      echo "dev-workflow: task_file_overlap（与任务 $(manifest_task_from_file "$other_manifest") 修改同一文件）：" >&2
+      sed 's/^/  /' "$overlap" >&2
+      failed="1"
+    fi
+  done < <(list_manifest_files)
   [ "$failed" = "0" ]
 }
 
-check_workspace_classification() {
-  scope_file="$tmp_dir/manifest-scope"
-  other_file="$tmp_dir/manifest-other"
-  write_manifest_paths > "$scope_file"
-  write_manifest_other_paths > "$other_file"
-  validate_classification_files "$scope_file" "$other_file"
-}
-
-check_remaining_other_classification() {
-  other="$tmp_dir/remaining-other"
-  workspace="$tmp_dir/remaining-workspace"
-  unclassified="$tmp_dir/remaining-unclassified"
-  stale="$tmp_dir/remaining-stale"
-  staged="$tmp_dir/remaining-staged"
-  other_staged="$tmp_dir/remaining-other-staged"
-  write_manifest_other_paths > "$other"
-  write_workspace_paths | LC_ALL=C sort -u > "$workspace"
-  comm -23 "$workspace" "$other" > "$unclassified"
-  comm -13 "$workspace" "$other" > "$stale"
-  write_staged_paths | LC_ALL=C sort -u > "$staged"
-  comm -12 "$other" "$staged" > "$other_staged"
-
-  failed="0"
-  if [ -s "$unclassified" ]; then
-    echo "dev-workflow: post_commit_unclassified_changes（提交后出现未归类文件）：" >&2
-    sed 's/^/  /' "$unclassified" >&2
-    failed="1"
-  fi
-  if [ -s "$stale" ]; then
-    echo "dev-workflow: post_commit_other_changed（其他任务文件状态已变化）：" >&2
-    sed 's/^/  /' "$stale" >&2
-    failed="1"
-  fi
-  if [ -s "$other_staged" ]; then
-    echo "dev-workflow: post_commit_other_staged（其他任务文件仍在暂存区）：" >&2
-    sed 's/^/  /' "$other_staged" >&2
-    failed="1"
-  fi
-  [ "$failed" = "0" ]
-}
-
-check_expected_fully_staged() {
+check_manifest_paths_exist_in_workspace() {
   expected="$tmp_dir/expected"
-  unstaged="$tmp_dir/unstaged"
-  missed="$tmp_dir/unstaged-expected"
+  workspace="$tmp_dir/workspace"
+  stale="$tmp_dir/stale"
   write_manifest_paths > "$expected"
-  write_unstaged_paths | LC_ALL=C sort -u > "$unstaged"
-  comm -12 "$expected" "$unstaged" > "$missed"
-
-  if [ -s "$missed" ]; then
-    echo "dev-workflow: current_task_unstaged（暂存后又发生变更）：" >&2
-    sed 's/^/  /' "$missed" >&2
+  write_workspace_paths | LC_ALL=C sort -u > "$workspace"
+  comm -23 "$expected" "$workspace" > "$stale"
+  if [ -s "$stale" ]; then
+    echo "dev-workflow: stale_scope（清单文件当前没有变更）：" >&2
+    sed 's/^/  /' "$stale" >&2
     return 1
   fi
 }
 
-check_expected_clean_after_commit() {
+check_expected_staged() {
   expected="$tmp_dir/expected"
-  workspace="$tmp_dir/workspace"
-  changed="$tmp_dir/post-commit-expected"
+  staged="$tmp_dir/staged"
+  missing="$tmp_dir/missing-staged"
+  unstaged="$tmp_dir/unstaged"
+  changed_after_stage="$tmp_dir/changed-after-stage"
   write_manifest_paths > "$expected"
-  write_workspace_paths | LC_ALL=C sort -u > "$workspace"
-  comm -12 "$expected" "$workspace" > "$changed"
+  write_staged_paths | LC_ALL=C sort -u > "$staged"
+  comm -23 "$expected" "$staged" > "$missing"
+  if [ -s "$missing" ]; then
+    echo "dev-workflow: current_task_unstaged（本任务文件尚未精确暂存）：" >&2
+    sed 's/^/  /' "$missing" >&2
+    return 1
+  fi
+  write_unstaged_paths | LC_ALL=C sort -u > "$unstaged"
+  comm -12 "$expected" "$unstaged" > "$changed_after_stage"
+  if [ -s "$changed_after_stage" ]; then
+    echo "dev-workflow: current_task_changed_after_stage（暂存后又发生变更）：" >&2
+    sed 's/^/  /' "$changed_after_stage" >&2
+    return 1
+  fi
+}
 
-  if [ -s "$changed" ]; then
-    echo "dev-workflow: current_task_post_commit_changes（提交后仍有清单文件变更）：" >&2
-    sed 's/^/  /' "$changed" >&2
+check_exact_staged_when_not_isolated() {
+  [ "${DEV_WORKFLOW_COMMIT_ONLY:-0}" = "1" ] && return 0
+  expected="$tmp_dir/expected"
+  staged="$tmp_dir/staged"
+  extra="$tmp_dir/extra-staged"
+  write_manifest_paths > "$expected"
+  write_staged_paths | LC_ALL=C sort -u > "$staged"
+  comm -13 "$expected" "$staged" > "$extra"
+  if [ -s "$extra" ]; then
+    echo "dev-workflow: other_task_staged（请使用 commit-scope.sh commit TASK_KEY 精确提交，不要直接 git commit）：" >&2
+    sed 's/^/  /' "$extra" >&2
     return 1
   fi
 }
@@ -246,7 +243,6 @@ verify_head_transition() {
   head="$(current_head)"
   [ "$head" != "NONE" ] || fail "尚未产生可核验的提交"
   [ "$head" != "$base_head" ] || fail "HEAD 没有变化；请先完成当前任务提交"
-
   parent_line="$(git rev-list --parents -n 1 "$head")"
   set -- $parent_line
   if [ "$base_head" = "NONE" ]; then
@@ -257,51 +253,54 @@ verify_head_transition() {
   fi
 }
 
-compare_scope() {
-  actual_writer="$1"
-  actual_label="$2"
+compare_head_scope() {
   expected="$tmp_dir/expected"
   actual="$tmp_dir/actual"
   missing="$tmp_dir/missing"
   extra="$tmp_dir/extra"
-
   write_manifest_paths > "$expected"
-  "$actual_writer" | LC_ALL=C sort -u > "$actual"
+  write_head_paths | LC_ALL=C sort -u > "$actual"
   comm -23 "$expected" "$actual" > "$missing"
   comm -13 "$expected" "$actual" > "$extra"
-
   failed="0"
   if [ -s "$missing" ]; then
-    echo "dev-workflow: current_task_missed（清单中存在但${actual_label}缺少）：" >&2
+    echo "dev-workflow: current_task_missed（提交缺少清单文件）：" >&2
     sed 's/^/  /' "$missing" >&2
     failed="1"
   fi
   if [ -s "$extra" ]; then
-    echo "dev-workflow: out_of_scope_${actual_label}（不在当前任务清单）：" >&2
+    echo "dev-workflow: out_of_scope_HEAD（提交混入清单外文件）：" >&2
     sed 's/^/  /' "$extra" >&2
     failed="1"
   fi
   [ "$failed" = "0" ]
 }
 
+check_expected_clean_after_commit() {
+  expected="$tmp_dir/expected"
+  workspace="$tmp_dir/workspace"
+  changed="$tmp_dir/post-commit-expected"
+  write_manifest_paths > "$expected"
+  write_workspace_paths | LC_ALL=C sort -u > "$workspace"
+  comm -12 "$expected" "$workspace" > "$changed"
+  if [ -s "$changed" ]; then
+    echo "dev-workflow: current_task_post_commit_changes（提交后本任务文件仍有变更）：" >&2
+    sed 's/^/  /' "$changed" >&2
+    return 1
+  fi
+}
+
 prepare_scope() {
   require_local_state_ignored
   task_key="${1:-}"
-  [ -n "$task_key" ] || fail "prepare 需要 TASK_KEY"
-  case "$task_key" in
-    *$'\n'*) fail "TASK_KEY 不能包含换行" ;;
-  esac
+  validate_task_key "$task_key"
   shift
-
-  if [ -f "$manifest" ]; then
-    existing_task="$(manifest_task)"
-    [ "$existing_task" = "$task_key" ] || fail "已有其他任务提交清单：$existing_task；先完成或 clear"
+  manifest="$(manifest_path_for_task "$task_key")"
+  if [ -f "$legacy_manifest" ] && [ "$(manifest_task_from_file "$legacy_manifest")" = "$task_key" ]; then
+    rm -f "$legacy_manifest"
   fi
-
   paths="$tmp_dir/prepare-scope"
-  other_paths="$tmp_dir/prepare-other"
   : > "$paths"
-  : > "$other_paths"
 
   if [ "${1:-}" = "--all" ]; then
     shift
@@ -312,70 +311,127 @@ prepare_scope() {
     shift
     [ "$#" -gt 0 ] || fail "prepare 至少需要一个本任务文件"
     mode="scope"
+    ignored_other="0"
     for input_path in "$@"; do
       if [ "$input_path" = "--other" ]; then
         mode="other"
         continue
       fi
-      path="$(normalize_path "$input_path")"
       if [ "$mode" = "scope" ]; then
-        printf '%s\n' "$path" >> "$paths"
+        normalize_path "$input_path" >> "$paths"
       else
-        printf '%s\n' "$path" >> "$other_paths"
+        ignored_other="1"
       fi
     done
     LC_ALL=C sort -u "$paths" -o "$paths"
-    LC_ALL=C sort -u "$other_paths" -o "$other_paths"
+    if [ "$ignored_other" = "1" ]; then
+      echo "dev-workflow: --other 已兼容忽略；新版本只需列出本任务文件"
+    fi
   fi
 
+  if [ -f "$manifest" ]; then
+    write_paths_from_manifest "$manifest" >> "$paths"
+    LC_ALL=C sort -u "$paths" -o "$paths"
+  fi
   [ -s "$paths" ] || fail "提交清单至少需要一个本任务文件"
-  validate_classification_files "$paths" "$other_paths"
-
-  mkdir -p "$(dirname "$manifest")"
+  mkdir -p "$manifest_dir"
   draft="$tmp_dir/manifest"
   {
     printf '# task=%s\n' "$task_key"
     printf '# created_at=%s\n' "$(date +%Y-%m-%dT%H:%M:%S%z)"
     printf '# base_head=%s\n' "$(current_head)"
     while IFS= read -r path; do
-      printf 'O\t%s\n' "$path"
-    done < "$other_paths"
-    while IFS= read -r path; do
       printf 'S\t%s\n' "$path"
     done < "$paths"
   } > "$draft"
   mv "$draft" "$manifest"
 
-  echo "dev-workflow: 已准备提交清单（尚未暂存）：$task_key"
+  check_manifest_paths_exist_in_workspace
+  check_manifest_overlap
+  echo "dev-workflow: 已准备任务独立提交清单（尚未暂存）：$task_key"
   sed 's/^/  /' "$paths"
-  report_other_workspace_changes
+}
+
+track_scope() {
+  require_local_state_ignored
+  task_key="${1:-}"
+  validate_task_key "$task_key"
+  shift
+  [ "${1:-}" = "--" ] || fail "track 需要使用 -- 分隔文件"
+  shift
+  [ "$#" -gt 0 ] || fail "track 至少需要一个文件"
+  manifest="$(manifest_path_for_task "$task_key")"
+  mkdir -p "$manifest_dir"
+  paths="$tmp_dir/track-paths"
+  : > "$paths"
+  if [ -f "$manifest" ]; then
+    write_paths_from_manifest "$manifest" > "$paths"
+  fi
+  for input_path in "$@"; do
+    normalize_path "$input_path" >> "$paths"
+  done
+  LC_ALL=C sort -u "$paths" -o "$paths"
+
+  backup="$tmp_dir/track-backup"
+  had_manifest="0"
+  if [ -f "$manifest" ]; then
+    cp "$manifest" "$backup"
+    had_manifest="1"
+  fi
+  created_at="$(date +%Y-%m-%dT%H:%M:%S%z)"
+  if [ "$had_manifest" = "1" ]; then
+    existing_created_at="$(sed -n 's/^# created_at=//p' "$backup" | head -n 1)"
+    [ -z "$existing_created_at" ] || created_at="$existing_created_at"
+  fi
+  {
+    printf '# task=%s\n' "$task_key"
+    printf '# created_at=%s\n' "$created_at"
+    printf '# base_head=%s\n' "$(current_head)"
+    while IFS= read -r path; do
+      printf 'S\t%s\n' "$path"
+    done < "$paths"
+  } > "$manifest"
+
+  if ! check_manifest_overlap; then
+    if [ "$had_manifest" = "1" ]; then
+      mv "$backup" "$manifest"
+    else
+      rm -f "$manifest"
+    fi
+    return 1
+  fi
+  echo "dev-workflow: 已更新本线程文件记录：$task_key"
+  sed 's/^/  /' "$paths"
 }
 
 show_scope() {
-  require_manifest
+  select_manifest "${1:-}"
   printf 'task: %s\n' "$(manifest_task)"
+  printf 'manifest: %s\n' "$manifest"
   echo "files:"
   write_manifest_paths | sed 's/^/  /'
-  echo "other_files:"
-  if [ -n "$(write_manifest_other_paths)" ]; then
-    write_manifest_other_paths | sed 's/^/  /'
-  else
-    echo "  none"
-  fi
+}
+
+list_scopes() {
+  found="0"
+  while IFS= read -r scope_manifest; do
+    found="1"
+    printf '%s\t%s\n' "$(manifest_task_from_file "$scope_manifest")" "$scope_manifest"
+  done < <(list_manifest_files)
+  [ "$found" = "1" ] || echo "dev-workflow: 当前没有任务提交清单"
 }
 
 check_scope() {
-  require_manifest
-  check_workspace_classification
-  compare_scope write_staged_paths "staged"
-  check_expected_fully_staged
-  echo "dev-workflow: 当前任务暂存范围与提交清单一致"
-  report_other_workspace_changes
+  select_manifest "${1:-}"
+  check_manifest_overlap
+  check_expected_staged
+  check_exact_staged_when_not_isolated
+  echo "dev-workflow: 当前任务文件已精确暂存：$(manifest_task)"
 }
 
 stage_scope() {
-  require_manifest
-  check_workspace_classification
+  select_manifest "${1:-}"
+  check_manifest_overlap
   while IFS= read -r path; do
     if [ -e "$path" ] || [ -L "$path" ] || git ls-files --error-unmatch -- "$path" >/dev/null 2>&1; then
       git add -A -- "$path"
@@ -385,50 +441,57 @@ stage_scope() {
       fail "无法暂存清单路径：$path"
     fi
   done < <(write_manifest_paths)
-  check_scope
+  DEV_WORKFLOW_COMMIT_ONLY=1 check_expected_staged
+  echo "dev-workflow: 已暂存本任务文件，其他任务暂存状态保持不变"
+}
+
+commit_scope() {
+  task_key="${1:-}"
+  validate_task_key "$task_key"
+  shift
+  [ "$#" -gt 0 ] || fail "commit 需要 Git commit 参数，例如 -m 提交信息"
+  select_manifest "$task_key"
+  stage_scope "$task_key"
+  refresh_manifest_base_head
+  paths=()
+  while IFS= read -r path; do
+    paths+=("$path")
+  done < <(write_manifest_paths)
+  DEV_WORKFLOW_MANIFEST="$manifest" DEV_WORKFLOW_COMMIT_ONLY=1 \
+    git commit --only "$@" -- "${paths[@]}"
+  if [ -f "$manifest" ]; then
+    verify_head_scope "$task_key"
+  fi
 }
 
 verify_head_scope() {
-  require_manifest
+  select_manifest "${1:-}"
   verify_head_transition
-  compare_scope write_head_paths "HEAD"
+  compare_head_scope
   check_expected_clean_after_commit
-  check_remaining_other_classification
-  echo "dev-workflow: HEAD 提交范围与当前任务清单一致"
-  report_other_workspace_changes
+  echo "dev-workflow: HEAD 提交范围与任务清单一致：$(manifest_task)"
   rm -f "$manifest"
-  echo "dev-workflow: 已清理提交清单"
+  echo "dev-workflow: 已清理当前任务提交清单，其他任务不受影响"
+  echo "dev-workflow: commit_created=true current_task_clean=true"
 }
 
 clear_scope() {
+  select_manifest "${1:-}"
+  task="$(manifest_task)"
   rm -f "$manifest"
-  echo "dev-workflow: 已清理提交清单"
+  echo "dev-workflow: 已清理任务提交清单：$task"
 }
 
 case "$cmd" in
-  prepare)
-    prepare_scope "$@"
-    ;;
-  show)
-    show_scope
-    ;;
-  stage)
-    stage_scope
-    ;;
-  check)
-    check_scope
-    ;;
-  verify-head)
-    verify_head_scope
-    ;;
-  clear)
-    clear_scope
-    ;;
-  help|-h|--help)
-    usage
-    ;;
-  *)
-    usage
-    exit 1
-    ;;
+  track) track_scope "$@" ;;
+  prepare) prepare_scope "$@" ;;
+  show) show_scope "$@" ;;
+  list) list_scopes ;;
+  stage) stage_scope "$@" ;;
+  check) check_scope "$@" ;;
+  commit) commit_scope "$@" ;;
+  verify-head) verify_head_scope "$@" ;;
+  clear) clear_scope "$@" ;;
+  help|-h|--help) usage ;;
+  *) usage; exit 1 ;;
 esac
