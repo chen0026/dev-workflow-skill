@@ -11,11 +11,16 @@ usage() {
 usage:
   active-work.sh start short-title
   active-work.sh list
+  active-work.sh current
+  active-work.sh bind ACTIVE_FILE
+  active-work.sh unbind
+  active-work.sh resolve keyword [keyword...]
   active-work.sh match keyword [keyword...]
   active-work.sh template
   active-work.sh finish ACTIVE_FILE module-name [--keep-active] < summary.md
 
-多个 ACTIVE 命中时，match 会返回 ambiguous_active 并退出 2，禁止自动猜。
+start 会自动绑定当前对话；resolve 优先返回绑定，只在无绑定时执行 match 并保存唯一结果。
+多个 ACTIVE 命中时，match/resolve 会返回 ambiguous_active 并退出 2，禁止自动猜。
 finish summary 最多 8 个非空行。完成折叠前必须已通过人工审核。
 EOF
 }
@@ -48,6 +53,67 @@ current_branch() {
 
 stamp_now() {
   date +%Y-%m-%dT%H:%M:%S%z
+}
+
+context_key() {
+  context_id="${DEV_WORKFLOW_CONTEXT_ID:-${CODEX_THREAD_ID:-}}"
+  [ -n "$context_id" ] || fail "缺少对话标识；请设置 DEV_WORKFLOW_CONTEXT_ID"
+  key="$(printf '%s' "$context_id" | git hash-object --stdin)" \
+    || fail "对话标识无法生成绑定键"
+  printf '%s\n' "$key"
+}
+
+binding_file() {
+  printf '.dev-workflow/bindings/%s.active\n' "$(context_key)"
+}
+
+bind_active() {
+  active_file="${1:-}"
+  [ -n "$active_file" ] || fail "bind 需要 ACTIVE_FILE"
+  case "$active_file" in
+    docs/active/ACTIVE-*.md) ;;
+    *) fail "只能绑定 docs/active/ACTIVE-*.md" ;;
+  esac
+  [ -f "$active_file" ] || fail "找不到 ACTIVE 文件：$active_file"
+
+  file="$(binding_file)"
+  mkdir -p "$(dirname "$file")"
+  printf '%s\n' "$active_file" > "$file"
+  echo "$active_file"
+}
+
+current_active() {
+  file="$(binding_file)"
+  if [ ! -f "$file" ]; then
+    echo "dev-workflow: no_active_binding" >&2
+    return 1
+  fi
+
+  active_file="$(sed -n '1p' "$file")"
+  if [ ! -f "$active_file" ]; then
+    rm -f "$file"
+    echo "dev-workflow: stale_active_binding" >&2
+    return 1
+  fi
+
+  printf '%s\n' "$active_file"
+}
+
+unbind_active() {
+  file="$(binding_file)"
+  rm -f "$file"
+  echo "dev-workflow: 已解除当前对话 ACTIVE 绑定"
+}
+
+remove_bindings_for_active() {
+  active_file="$1"
+  [ -d ".dev-workflow/bindings" ] || return 0
+
+  while IFS= read -r file; do
+    if [ "$(sed -n '1p' "$file")" = "$active_file" ]; then
+      rm -f "$file"
+    fi
+  done < <(find .dev-workflow/bindings -type f -name '*.active' 2>/dev/null)
 }
 
 hydrate_active() {
@@ -99,6 +165,7 @@ start_active() {
     fail "找不到 new-doc.sh"
   fi
   hydrate_active "$active_file"
+  bind_active "$active_file" >/dev/null
   echo "$active_file"
 }
 
@@ -178,6 +245,25 @@ match_active() {
   printf '%b' "$matches" | awk -F '\t' '{print $4}'
 }
 
+resolve_active() {
+  [ "$#" -gt 0 ] || fail "resolve 需要 keyword"
+
+  if active_file="$(current_active 2>/dev/null)"; then
+    printf '%s\n' "$active_file"
+    return 0
+  fi
+
+  if active_file="$(match_active "$@")"; then
+    bind_active "$active_file" >/dev/null
+    printf '%s\n' "$active_file"
+    return 0
+  else
+    status="$?"
+    printf '%s\n' "$active_file"
+    return "$status"
+  fi
+}
+
 summary_template() {
   cat <<'EOF'
 - 类型：
@@ -239,6 +325,7 @@ finish_active() {
   if [ "$keep_active" = "1" ]; then
     echo "dev-workflow: 已写入 ${history_file}，保留 ${active_file}"
   else
+    remove_bindings_for_active "$active_file"
     rm -f "$active_file"
     echo "dev-workflow: 已写入 ${history_file}，并清理 ${active_file}"
   fi
@@ -250,6 +337,18 @@ case "$cmd" in
     ;;
   list)
     list_active
+    ;;
+  current)
+    current_active
+    ;;
+  bind)
+    bind_active "$@"
+    ;;
+  unbind)
+    unbind_active
+    ;;
+  resolve)
+    resolve_active "$@"
     ;;
   match)
     match_active "$@"

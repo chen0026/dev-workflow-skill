@@ -24,6 +24,7 @@ known_scripts="
 scripts/check-dev-docs.sh
 scripts/check-dev-workflow.sh
 scripts/active-work.sh
+scripts/commit-scope.sh
 scripts/clean-project-scripts.sh
 scripts/clean-templates.sh
 scripts/dev-workflow-harness.sh

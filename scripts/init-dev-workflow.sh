@@ -47,94 +47,31 @@ if [ ! -f "AGENTS.md" ]; then
     cat > "AGENTS.md" <<'EOF'
 # AGENTS.md
 
-## Dev Workflow
+## Dev Workflow Lite
 
-所有新功能、Bug 修复、重构、维护、PRD、改版和需求类任务必须遵守 `docs/workflow.md`。
-
-## Harness-first
-
-开发任务不要求用户记命令。收到自然语言任务后，先运行：
-
-```bash
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" run "用户任务描述"
-```
-
-按输出的 `flow / docs_allowed / pre_code_gate / code_allowed / loop_phase / loop_next_decision / next_action` 执行。`code_allowed: false` 时，只能准备门禁文档，等待人工确认。
-
-完成前运行：
-
-```bash
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" verify "用户任务描述"
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" check
-```
-
-`standard` 编码前默认先确认一个 ACTIVE；复杂或高风险任务才使用 TASK 或 BUG；`strict` 编码前必须先确认 REQ。确认标记统一为 `编码前确认：已确认`。
-
-standard / strict 编码前必须确认测试用例清单，标记为 `测试用例确认：已确认`；用例必须从 ACTIVE / REQ / BUG 行为倒推，包含前置状态、操作、期望结果、真实验证路径和 RED 失败记录。
-
-普通任务只保留一个 `docs/active/ACTIVE-*.md` 作为进行中交接文件；完成后把 8 行以内摘要折叠到 `docs/history/<module>.md`，再清理 ACTIVE。
-
-大需求使用 Adaptive Loop：先按需求文档结构、代码边界、风险点和可验证粒度切片，不套固定业务分类。
-
-最终验收必须使用真实后端、真实接口、真实运行环境、本地联调、测试环境或人工实测证据；mock 数据、Playwright route mock、接口拦截、fixture、stub、MSW 只能做辅助测试，不能作为最终验收或降级验收。
-
-`verify` 只检查完整性；需求是否一致必须等待人工审核确认。未经用户批准，不得提交代码。
+普通开发任务默认直接调查、实现、测试和审查，不强制写过程文档或运行 harness。跨会话或交接时只使用一个 ACTIVE；PRD 改版或高风险变更编码前确认 REQ 和验收项。最终验收必须有真实证据，mock 只能辅助。普通 Bug / 功能正式提交时只新增一个精简 CHG，并用 Git message 记录原因、变更、验证和影响。未经用户明确批准不得 commit。
 EOF
   fi
   echo "dev-workflow: 已创建 AGENTS.md"
-elif ! grep -Eq "Dev Workflow|Harness-first|开发工作流强约束" "AGENTS.md"; then
-  if [ -f "$skill_root/assets/agents-rule.md" ]; then
-    {
-      printf '\n\n'
-      cat "$skill_root/assets/agents-rule.md"
-    } >> "AGENTS.md"
-  else
-    cat >> "AGENTS.md" <<'EOF'
-
-
-## Dev Workflow
-
-所有新功能、Bug 修复、重构、维护、PRD、改版和需求类任务必须遵守 `docs/workflow.md`。
-
-收到自然语言开发任务后，先运行已安装 skill 的 `dev-workflow-harness.sh run "用户任务描述"`；如果输出 `code_allowed: false`，先准备并确认门禁文档和测试用例清单，标记 `编码前确认：已确认` 与 `测试用例确认：已确认` 后再编码。普通任务默认使用一个 `docs/active/ACTIVE-*.md` 作为进行中交接文件，复杂或高风险任务才升级为 TASK / BUG；完成后把 8 行以内摘要折叠到 `docs/history/<module>.md`，再清理 ACTIVE。测试用例必须从 ACTIVE / REQ / BUG 行为倒推，包含前置状态、操作、期望结果、真实验证路径和 RED 失败记录。大需求按 Adaptive Loop 切成可验证 slice，不套固定业务分类。最终验收必须使用真实后端、真实接口、真实运行环境、本地联调、测试环境或人工实测证据；mock 数据、Playwright route mock、接口拦截、fixture、stub、MSW 只能做辅助测试，不能作为最终验收或降级验收。完成前运行 `dev-workflow-harness.sh verify "用户任务描述"` 和 `dev-workflow-harness.sh check`。未经用户批准，不得提交代码。
-EOF
-  fi
-  echo "dev-workflow: 已追加 AGENTS.md 规则"
-else
-  echo "dev-workflow: AGENTS.md 已包含工作流规则"
 fi
 
-if ! grep -q "ambiguous_active" "AGENTS.md"; then
+if ! grep -q "Dev Workflow Lite" "AGENTS.md"; then
+  {
+    printf '\n\n'
+    cat "$skill_root/assets/agents-rule.md"
+  } >> "AGENTS.md"
+  echo "dev-workflow: 已追加 Lite 覆盖规则到 AGENTS.md"
+fi
+
+if ! grep -q "Dev Workflow CHG Record" "AGENTS.md"; then
   cat >> "AGENTS.md" <<'EOF'
 
 
-## Dev Workflow Active Isolation
+### Dev Workflow CHG Record
 
-多个 `docs/active/ACTIVE-*.md` 同时存在时，必须先运行已安装 skill 的 `active-work.sh match 关键词` 锁定唯一 ACTIVE。若返回 `ambiguous_active`，必须停止并让用户确认 exact ACTIVE 文件；禁止按模块名、最近时间或猜测读取、修改、回填任何候选 ACTIVE，避免多个线程任务串台。
+普通 Bug / 功能不新建 REQ、TASK、BUG 或 ACC 留痕。正式提交时恰好新增一个精简 `docs/changes/YYYY/MM/CHG-*.md`，并根据实际 diff 生成 `fix/feat(scope): 摘要`，正文记录原因、变更、验证和影响。用户同时确认待提交文件、CHG 和 commit message 后才 commit。历史先搜索 `docs/changes/`，再用 Git 追查真实 diff。
 EOF
-  echo "dev-workflow: 已追加 ACTIVE 隔离规则到 AGENTS.md"
-fi
-
-if ! grep -q "loop-work.sh step" "AGENTS.md"; then
-  cat >> "AGENTS.md" <<'EOF'
-
-
-## Dev Workflow Loop Guard
-
-standard / strict 进入编码后，每一轮必须用 `loop-work.sh step ACTIVE_FILE "本轮目标" "关联验收项"` 记录目标和验收项，用 `loop-work.sh verify ACTIVE_FILE "真实验证证据"` 记录证据，再用 `loop-work.sh decide ACTIVE_FILE continue|retry|rescope|wait_human|stop "原因"` 决策。`continue / retry / rescope` 前必须已有本轮真实验证证据；`wait_human / stop` 后不得继续编码。
-EOF
-  echo "dev-workflow: 已追加 Loop Guard 到 AGENTS.md"
-fi
-
-if ! grep -q "Comment Guard" "AGENTS.md"; then
-  cat >> "AGENTS.md" <<'EOF'
-
-
-## Dev Workflow Comment Guard
-
-新增或修改业务代码时，关键逻辑默认写简短中文注释：说明这段代码负责什么、为什么这样处理、边界或限制是什么。quick 只在不注释会看不懂时补；standard 的关键业务逻辑必须补；strict 的关键规则注释应关联 REQ / 验收项。禁止逐行翻译代码、空泛注释和长背景。
-EOF
-  echo "dev-workflow: 已追加 Comment Guard 到 AGENTS.md"
+  echo "dev-workflow: 已追加 CHG 修改记录规则到 AGENTS.md"
 fi
 
 if [ -d "docs" ] && [ ! -f "docs/workflow.md" ]; then
@@ -164,6 +101,7 @@ mkdir -p \
   docs/tasks \
   docs/bugs \
   docs/active \
+  docs/changes \
   docs/history \
   docs/design/decisions \
   docs/acceptance \
@@ -172,6 +110,7 @@ mkdir -p \
   docs/archive \
   .dev-workflow/index \
   .dev-workflow/session \
+  .dev-workflow/bindings \
   .githooks
 
 if [ "$with_templates" = "1" ]; then
@@ -181,6 +120,7 @@ if [ "$with_templates" = "1" ]; then
     "$template_dir/tasks" \
     "$template_dir/bugs" \
     "$template_dir/active" \
+    "$template_dir/changes" \
     "$template_dir/history" \
     "$template_dir/design" \
     "$template_dir/acceptance" \
@@ -193,6 +133,7 @@ fi
 rsync -a --ignore-existing "$template_dir/.githooks/" .githooks/
 rsync -a "$template_dir/.githooks/pre-commit" .githooks/pre-commit
 rsync -a "$template_dir/.githooks/commit-msg" .githooks/commit-msg
+rsync -a "$template_dir/.githooks/post-commit" .githooks/post-commit
 
 if [ "$with_scripts" = "1" ]; then
   mkdir -p scripts
@@ -200,15 +141,15 @@ if [ "$with_scripts" = "1" ]; then
   echo "dev-workflow: 已复制脚本到项目 scripts/"
 fi
 
-chmod +x .githooks/pre-commit .githooks/commit-msg 2>/dev/null || true
+chmod +x .githooks/pre-commit .githooks/commit-msg .githooks/post-commit 2>/dev/null || true
 if [ "$with_scripts" = "1" ]; then
   chmod +x scripts/*.sh 2>/dev/null || true
 fi
 
 touch .gitignore
-if ! grep -qxF ".dev-workflow/index/" .gitignore; then
-  printf '\n.dev-workflow/index/\n' >> .gitignore
-  echo "dev-workflow: 已把 .dev-workflow/index/ 加入 .gitignore"
+if ! grep -qxF ".dev-workflow/" .gitignore; then
+  printf '\n.dev-workflow/\n' >> .gitignore
+  echo "dev-workflow: 已把 .dev-workflow/ 加入 .gitignore"
 fi
 if ! grep -qxF "docs/index.md" .gitignore; then
   printf 'docs/index.md\n' >> .gitignore

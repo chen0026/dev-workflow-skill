@@ -1,3 +1,4 @@
-display_name: 开发工作流
-short_description: 用 harness、ACTIVE 隔离、loop 和注释门禁，把开发任务转成可接力、可验证、可审核的闭环。
-default_prompt: /dev-workflow init；后续描述 Bug、功能、PRD 或改版任务，先跑 harness，锁定 ACTIVE，用 loop 小步验证，关键业务代码补中文注释。
+interface:
+  display_name: "开发工作流"
+  short_description: "轻量开发、真实验证、精简 CHG 和精确提交"
+  default_prompt: "使用 $dev-workflow Lite：默认直接开发，普通修改不建配套文档，正式提交时生成一个精简 CHG 和结构化 Git 记录，等待人工批准。"

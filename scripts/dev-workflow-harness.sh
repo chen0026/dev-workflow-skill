@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-harness_version="0.29.0"
+harness_version="0.34.0"
 cmd="${1:-run}"
 shift || true
 
@@ -30,12 +30,12 @@ version() {
 classify() {
   text="$(printf '%s ' "$@" | tr '[:upper:]' '[:lower:]')"
 
-  if printf '%s\n' "$text" | grep -Eq 'prd|需求|产品文档|改版|重构架构|多模块|接口|api|数据|权限|支付|订单|登录|部署|回滚|高风险|strict'; then
+  if printf '%s\n' "$text" | grep -Eq 'prd|产品文档|改版|多模块|接口契约|数据迁移|权限|支付|部署|回滚|高风险|strict'; then
     echo "strict"
     return
   fi
 
-  if printf '%s\n' "$text" | grep -Eq 'bug|修复|功能|用户行为|根因|追溯|standard'; then
+  if printf '%s\n' "$text" | grep -Eq '跨会话|换[[:space:]]*agent|交接|续作|继续|接着|并行任务|长期任务|standard'; then
     echo "standard"
     return
   fi
@@ -55,13 +55,13 @@ flow_reason() {
     fi
   }
 
-  if printf '%s\n' "$text" | grep -Eq 'prd|需求|产品文档'; then
+  if printf '%s\n' "$text" | grep -Eq 'prd|产品文档'; then
     append_reason "strict:prd_or_requirements"
   fi
-  if printf '%s\n' "$text" | grep -Eq '改版|重构架构|多模块|高风险|strict'; then
+  if printf '%s\n' "$text" | grep -Eq '改版|多模块|高风险|strict'; then
     append_reason "strict:scope_or_risk"
   fi
-  if printf '%s\n' "$text" | grep -Eq '接口|api|数据|权限|支付|订单|登录|部署|回滚'; then
+  if printf '%s\n' "$text" | grep -Eq '接口契约|数据迁移|权限|支付|部署|回滚'; then
     append_reason "strict:critical_surface"
   fi
 
@@ -70,11 +70,8 @@ flow_reason() {
     return
   fi
 
-  if printf '%s\n' "$text" | grep -Eq 'bug|修复|根因|追溯'; then
-    append_reason "standard:bug_or_trace"
-  fi
-  if printf '%s\n' "$text" | grep -Eq '功能|用户行为|standard'; then
-    append_reason "standard:feature_or_behavior"
+  if printf '%s\n' "$text" | grep -Eq '跨会话|换[[:space:]]*agent|交接|续作|继续|接着|并行任务|长期任务|standard'; then
+    append_reason "standard:handoff_or_continuation"
   fi
 
   if [ -n "$reason" ]; then
@@ -90,7 +87,7 @@ docs_allowed_for() {
       echo "0"
       ;;
     standard)
-      echo "active+history_or_1_formal"
+      echo "1_ACTIVE"
       ;;
     strict)
       echo "full"
@@ -107,10 +104,10 @@ pre_code_gate_for() {
       echo "not_required"
       ;;
     standard)
-      echo "confirm_ACTIVE_or_TASK_or_BUG_and_test_cases_before_code"
+      echo "resolve_or_create_ACTIVE_for_handoff"
       ;;
     strict)
-      echo "confirm_REQ_and_test_cases_before_code"
+      echo "confirm_REQ_implementation_map_and_test_cases_before_code"
       ;;
     *)
       echo "unknown"
@@ -124,7 +121,7 @@ pre_code_doc_for() {
       echo "none"
       ;;
     standard)
-      echo "ACTIVE_or_TASK_or_BUG"
+      echo "ACTIVE"
       ;;
     strict)
       echo "REQ"
@@ -137,10 +134,10 @@ pre_code_doc_for() {
 
 code_allowed_for() {
   case "$1" in
-    quick)
+    quick|standard)
       echo "true"
       ;;
-    standard|strict)
+    strict)
       echo "false"
       ;;
     *)
@@ -155,10 +152,10 @@ max_iterations_for() {
       echo "1"
       ;;
     standard)
-      echo "3"
+      echo "1"
       ;;
     strict)
-      echo "5"
+      echo "3"
       ;;
     *)
       echo "unknown"
@@ -172,7 +169,7 @@ initial_loop_phase_for() {
       echo "implement"
       ;;
     standard)
-      echo "pre_code_doc"
+      echo "implement"
       ;;
     strict)
       echo "slice"
@@ -189,7 +186,7 @@ slice_strategy_for() {
       echo "none"
       ;;
     standard)
-      echo "adaptive_if_scope_expands"
+      echo "on_demand"
       ;;
     strict)
       echo "adaptive_required"
@@ -206,7 +203,7 @@ stop_condition_for() {
       echo "targeted_verification_complete_or_blocked"
       ;;
     standard)
-      echo "confirmed_doc_then_targeted_verification_complete_or_blocked"
+      echo "handoff_updated_and_verification_complete_or_blocked"
       ;;
     strict)
       echo "confirmed_slices_and_REQ_then_each_slice_verified_or_blocked"
@@ -219,10 +216,10 @@ stop_condition_for() {
 
 initial_loop_decision_for() {
   case "$1" in
-    quick)
+    quick|standard)
       echo "continue"
       ;;
-    standard|strict)
+    strict)
       echo "wait_human"
       ;;
     *)
@@ -236,6 +233,44 @@ docs_index_tracked() {
     echo "true"
   else
     echo "false"
+  fi
+}
+
+local_state_ignored() {
+  if ! git rev-parse --git-dir >/dev/null 2>&1; then
+    echo "false"
+    return
+  fi
+
+  for probe in \
+    .dev-workflow/ \
+    .dev-workflow/privacy-probe \
+    .dev-workflow/index/docs.jsonl \
+    .dev-workflow/bindings/probe.active \
+    .dev-workflow/session/probe.json \
+    .dev-workflow/commit-manifest.txt; do
+    if ! git check-ignore -q --no-index "$probe"; then
+      echo "false"
+      return
+    fi
+  done
+  echo "true"
+}
+
+local_state_tracked() {
+  if git rev-parse --git-dir >/dev/null 2>&1 \
+    && [ -n "$(git ls-files -- .dev-workflow 2>/dev/null)" ]; then
+    echo "true"
+  else
+    echo "false"
+  fi
+}
+
+commit_manifest_status() {
+  if [ -f ".dev-workflow/commit-manifest.txt" ]; then
+    echo "present"
+  else
+    echo "missing"
   fi
 }
 
@@ -393,6 +428,53 @@ test_case_quality_count() {
   esac
 }
 
+count_implementation_map_files() {
+  dir="$1"
+  pattern="$2"
+  marker='编码前确认[^：:]{0,12}[：:][[:space:]]*已确认|pre_code_confirmed[：:][[:space:]]*true'
+
+  if [ ! -d "$dir" ]; then
+    echo "0"
+    return
+  fi
+
+  {
+    while IFS= read -r file; do
+      if grep -Eq "$marker" "$file" \
+        && grep -Eq '实现地图' "$file" \
+        && grep -Eq '计划修改|计划动作' "$file" \
+        && grep -Eq '受影响不改|影响[[:space:]]*/[[:space:]]*回归' "$file" \
+        && grep -Eq '复用决策' "$file" \
+        && grep -Eq '拆分决策|文件健康' "$file"; then
+        printf '%s\n' "$file"
+      fi
+    done < <(find "$dir" -type f -name "$pattern" 2>/dev/null)
+  } | wc -l | tr -d ' '
+}
+
+implementation_map_count() {
+  flow="$1"
+
+  case "$flow" in
+    quick)
+      echo "0"
+      ;;
+    standard)
+      {
+        count_implementation_map_files docs/active 'ACTIVE-*.md';
+        count_implementation_map_files docs/tasks 'TASK-*.md';
+        count_implementation_map_files docs/bugs 'BUG-*.md';
+      } | awk '{sum += $1} END {print sum + 0}'
+      ;;
+    strict)
+      count_implementation_map_files docs/requirements 'REQ-*.md'
+      ;;
+    *)
+      echo "0"
+      ;;
+  esac
+}
+
 count_matching_records() {
   regex="$1"
   {
@@ -429,48 +511,30 @@ check() {
     exit 1
   fi
 
+  if git rev-parse --git-dir >/dev/null 2>&1 && [ "$(local_state_ignored)" != "true" ]; then
+    echo "dev-workflow: .dev-workflow/ 未整体忽略，请重新运行 /dev-workflow init"
+    exit 1
+  fi
+
+  if [ "$(local_state_tracked)" = "true" ]; then
+    echo "dev-workflow: .dev-workflow/ 仍被 Git 跟踪，请审核后执行：git rm --cached -r .dev-workflow"
+    exit 1
+  fi
+
   echo "dev-workflow: harness check passed"
 }
 
 report() {
   flow="$(classify "$@")"
-  docs_allowed="$(docs_allowed_for "$flow")"
-  pre_code_gate="$(pre_code_gate_for "$flow")"
-
   printf 'version: %s\n' "$(version)"
-  printf 'installed_skill_version: %s\n' "$(installed_skill_version)"
   printf 'flow: %s\n' "$flow"
   printf 'flow_reason: %s\n' "$(flow_reason "$@")"
-  printf 'docs_allowed: %s\n' "$docs_allowed"
-  printf 'pre_code_gate: %s\n' "$pre_code_gate"
+  printf 'docs_allowed: %s\n' "$(docs_allowed_for "$flow")"
   printf 'pre_code_doc: %s\n' "$(pre_code_doc_for "$flow")"
-  printf 'pre_code_confirmation_marker: %s\n' '编码前确认：已确认'
-  printf 'test_case_confirmation_marker: %s\n' '测试用例确认：已确认'
   printf 'code_allowed: %s\n' "$(code_allowed_for "$flow")"
-  printf 'active_policy: %s\n' 'one_ACTIVE_file_per_in_progress_task'
-  printf 'active_isolation_policy: %s\n' 'exact_ACTIVE_required_ambiguous_match_stops'
-  printf 'history_policy: %s\n' 'fold_completed_standard_work_to_docs_history_module'
-  printf 'formal_doc_policy: %s\n' 'TASK_or_BUG_only_for_complex_or_high_risk_standard_work'
-  printf 'history_entry_limit: %s\n' '8_lines'
-  printf 'loop_phase: %s\n' "$(initial_loop_phase_for "$flow")"
-  printf 'loop_next_decision: %s\n' "$(initial_loop_decision_for "$flow")"
-  printf 'loop_policy: %s\n' 'acceptance_driven_step_verify_decide'
-  printf 'loop_tool: %s\n' 'loop-work.sh'
-  printf 'max_iterations: %s\n' "$(max_iterations_for "$flow")"
-  printf 'stop_condition: %s\n' "$(stop_condition_for "$flow")"
-  printf 'slice_strategy: %s\n' "$(slice_strategy_for "$flow")"
-  printf 'slice_inputs: %s\n' 'requirement_structure,code_boundaries,risk_points,testability'
-  printf 'test_case_policy: %s\n' 'requirement_behavior_first_confirm_before_code'
-  printf 'test_case_required_fields: %s\n' 'ACTIVE_or_REQ_or_BUG,scenario,precondition,action,expected_result,test_type,real_verification_path,mock_policy,red_failure'
-  printf 'comment_policy: %s\n' 'key_business_logic_short_zh_comments'
-  printf 'comment_budget: %s\n' 'quick_if_needed_standard_key_logic_strict_REQ_link'
+  printf 'harness_policy: %s\n' 'on_demand_only'
   printf 'verification_policy: %s\n' 'real_final_evidence_required'
-  printf 'mock_policy: %s\n' 'development_or_supplement_only_never_final'
-  printf 'final_evidence_required: %s\n' 'real_backend_or_real_api_or_real_runtime_or_human_manual_verification'
-  printf 'docs_changed: %s\n' "$(docs_changed_count)"
-  printf 'docs_index_tracked: %s\n' "$(docs_index_tracked)"
   printf 'human_review_required: true\n'
-  printf 'commit_allowed: false\n'
 }
 
 run() {
@@ -482,14 +546,12 @@ run() {
       printf 'next_action: implement_minimal_change_then_verify\n'
       ;;
     standard)
-      printf 'next_action: draft_ACTIVE_or_formal_doc_with_test_cases_then_wait_for_human_confirmation\n'
+      printf 'next_action: resolve_or_create_one_ACTIVE_then_continue\n'
       ;;
     strict)
-      printf 'next_action: draft_REQ_with_test_matrix_then_wait_for_human_confirmation\n'
+      printf 'next_action: draft_REQ_with_implementation_map_and_test_matrix_then_wait_for_human_confirmation\n'
       ;;
   esac
-  printf 'verify_command: %s/scripts/dev-workflow-harness.sh verify "%s"\n' "$skill_root" "$*"
-  printf 'check_command: %s/scripts/dev-workflow-harness.sh check\n' "$skill_root"
 }
 
 doctor() {
@@ -516,7 +578,7 @@ doctor() {
     [ -d "docs/history" ] || add_missing "docs/history"
   fi
 
-  project_script_probe="$(find scripts -maxdepth 1 -type f \( -name 'dev-workflow-harness.sh' -o -name 'active-work.sh' -o -name 'loop-work.sh' -o -name 'search-dev-docs.sh' -o -name 'reindex-dev-docs.sh' -o -name 'new-doc.sh' -o -name 'new-doc-id.sh' -o -name 'check-dev-docs.sh' -o -name 'check-dev-workflow.sh' -o -name 'clean-templates.sh' -o -name 'clean-project-scripts.sh' -o -name 'session-state.sh' -o -name 'init-dev-workflow.sh' \) -print -quit 2>/dev/null || true)"
+  project_script_probe="$(find scripts -maxdepth 1 -type f \( -name 'dev-workflow-harness.sh' -o -name 'active-work.sh' -o -name 'commit-scope.sh' -o -name 'loop-work.sh' -o -name 'search-dev-docs.sh' -o -name 'reindex-dev-docs.sh' -o -name 'new-doc.sh' -o -name 'new-doc-id.sh' -o -name 'check-dev-docs.sh' -o -name 'check-dev-workflow.sh' -o -name 'clean-templates.sh' -o -name 'clean-project-scripts.sh' -o -name 'session-state.sh' -o -name 'init-dev-workflow.sh' \) -print -quit 2>/dev/null || true)"
   if [ -n "$project_script_probe" ]; then
     project_scripts_present="true"
   fi
@@ -552,9 +614,12 @@ doctor() {
   elif [ "$(docs_index_tracked)" = "true" ]; then
     doctor_status="blocked"
     next_action="git rm --cached docs/index.md"
-  elif [ "$local_index" = "missing" ]; then
+  elif [ "$(local_state_tracked)" = "true" ]; then
+    doctor_status="blocked"
+    next_action="git rm --cached -r .dev-workflow"
+  elif [ "$(local_state_ignored)" != "true" ]; then
     doctor_status="review"
-    next_action="/dev-workflow check"
+    next_action="/dev-workflow init"
   fi
 
   [ -n "$missing_required" ] || missing_required="none"
@@ -568,6 +633,9 @@ doctor() {
   printf 'upgrade_needed: %s\n' "$upgrade_needed"
   printf 'missing_required: %s\n' "$missing_required"
   printf 'docs_index_tracked: %s\n' "$(docs_index_tracked)"
+  printf 'local_state_ignored: %s\n' "$(local_state_ignored)"
+  printf 'local_state_tracked: %s\n' "$(local_state_tracked)"
+  printf 'commit_manifest_status: %s\n' "$(commit_manifest_status)"
   printf 'local_index: %s\n' "$local_index"
   printf 'hooks_path: %s\n' "$hooks_path"
   printf 'hooks_enabled: %s\n' "$hooks_enabled"
@@ -591,6 +659,7 @@ verify() {
   pre_code_confirmed="$(confirmed_pre_code_count "$flow")"
   test_case_confirmed="$(test_case_confirmed_count "$flow")"
   test_case_quality_records="$(test_case_quality_count "$flow")"
+  implementation_map_records="$(implementation_map_count "$flow")"
   requirements_with_acceptance="$(count_matching_files docs/requirements 'REQ-*.md' '验收方式|手工验收|可自动化测试|测试状态')"
   records_with_evidence="$(
     {
@@ -609,6 +678,7 @@ verify() {
   evidence_status="ok"
   verification_source_status="ok"
   test_case_status="ok"
+  implementation_map_status="ok"
   machine_gate="pass"
 
   if [ "$flow" = "quick" ] && [ "$code_changed" -gt 0 ] && [ "$docs_changed" -gt 0 ]; then
@@ -616,28 +686,13 @@ verify() {
     machine_gate="review"
   fi
 
-  if [ "$flow" = "standard" ] && [ "$code_changed" -gt 0 ] && [ "$docs_changed" -gt 2 ]; then
+  if [ "$flow" = "standard" ] && [ "$code_changed" -gt 0 ] && [ "$docs_changed" -gt 1 ]; then
     docs_budget_status="over_budget"
     machine_gate="review"
   fi
 
-  if [ "$flow" = "standard" ] && [ "$code_changed" -gt 0 ] && [ "$standard_pre_code_records" -eq 0 ]; then
-    pre_code_status="missing_ACTIVE_or_TASK_or_BUG"
-    machine_gate="blocked"
-  fi
-
-  if [ "$flow" = "standard" ] && [ "$code_changed" -gt 0 ] && [ "$standard_pre_code_records" -gt 0 ] && [ "$pre_code_confirmed" -eq 0 ]; then
-    pre_code_status="missing_pre_code_confirmation"
-    machine_gate="blocked"
-  fi
-
-  if [ "$flow" = "standard" ] && [ "$code_changed" -gt 0 ] && [ "$standard_pre_code_records" -gt 0 ] && [ "$test_case_confirmed" -eq 0 ]; then
-    test_case_status="missing_test_case_confirmation"
-    machine_gate="blocked"
-  fi
-
-  if [ "$flow" = "standard" ] && [ "$code_changed" -gt 0 ] && [ "$test_case_confirmed" -gt 0 ] && [ "$test_case_quality_records" -eq 0 ]; then
-    test_case_status="missing_test_case_quality_fields"
+  if [ "$flow" = "standard" ] && [ "$code_changed" -gt 0 ] && [ "$active_files" -eq 0 ]; then
+    pre_code_status="missing_ACTIVE_for_handoff"
     machine_gate="blocked"
   fi
 
@@ -667,6 +722,11 @@ verify() {
     machine_gate="blocked"
   fi
 
+  if [ "$flow" = "strict" ] && [ "$code_changed" -gt 0 ] && [ "$pre_code_confirmed" -gt 0 ] && [ "$implementation_map_records" -eq 0 ]; then
+    implementation_map_status="missing_implementation_map_or_reuse_file_health_fields"
+    machine_gate="blocked"
+  fi
+
   if [ "$flow" != "quick" ] && [ "$code_changed" -gt 0 ] && [ "$records_with_evidence" -eq 0 ]; then
     evidence_status="missing_evidence"
     if [ "$machine_gate" = "pass" ]; then
@@ -688,7 +748,7 @@ verify() {
   loop_next_decision="$(initial_loop_decision_for "$flow")"
   if [ "$machine_gate" = "blocked" ]; then
     loop_next_decision="stop"
-    if [ "$pre_code_status" != "ok" ] || [ "$requirement_status" != "ok" ] || [ "$test_case_status" != "ok" ]; then
+    if [ "$pre_code_status" != "ok" ] || [ "$requirement_status" != "ok" ] || [ "$test_case_status" != "ok" ] || [ "$implementation_map_status" != "ok" ]; then
       loop_phase="pre_code_doc"
     else
       loop_phase="verify"
@@ -706,60 +766,19 @@ verify() {
   fi
 
   printf 'version: %s\n' "$(version)"
-  printf 'installed_skill_version: %s\n' "$(installed_skill_version)"
   printf 'flow: %s\n' "$flow"
-  printf 'flow_reason: %s\n' "$(flow_reason "$@")"
-  printf 'docs_allowed: %s\n' "$docs_allowed"
-  printf 'pre_code_gate: %s\n' "$(pre_code_gate_for "$flow")"
-  printf 'pre_code_doc: %s\n' "$(pre_code_doc_for "$flow")"
-  printf 'pre_code_confirmation_marker: %s\n' '编码前确认：已确认'
-  printf 'pre_code_confirmed_records: %s\n' "$pre_code_confirmed"
   printf 'pre_code_status: %s\n' "$pre_code_status"
-  printf 'test_case_confirmation_marker: %s\n' '测试用例确认：已确认'
-  printf 'test_case_confirmed_records: %s\n' "$test_case_confirmed"
-  printf 'test_case_quality_records: %s\n' "$test_case_quality_records"
   printf 'test_case_status: %s\n' "$test_case_status"
-  printf 'loop_phase: %s\n' "$loop_phase"
-  printf 'loop_next_decision: %s\n' "$loop_next_decision"
-  printf 'loop_policy: %s\n' 'acceptance_driven_step_verify_decide'
-  printf 'loop_tool: %s\n' 'loop-work.sh'
-  printf 'max_iterations: %s\n' "$(max_iterations_for "$flow")"
-  printf 'stop_condition: %s\n' "$(stop_condition_for "$flow")"
-  printf 'slice_strategy: %s\n' "$(slice_strategy_for "$flow")"
-  printf 'test_case_policy: %s\n' 'requirement_behavior_first_confirm_before_code'
-  printf 'test_case_required_fields: %s\n' 'ACTIVE_or_REQ_or_BUG,scenario,precondition,action,expected_result,test_type,real_verification_path,mock_policy,red_failure'
-  printf 'comment_policy: %s\n' 'key_business_logic_short_zh_comments'
-  printf 'comment_budget: %s\n' 'quick_if_needed_standard_key_logic_strict_REQ_link'
-  printf 'verification_policy: %s\n' 'real_final_evidence_required'
-  printf 'mock_policy: %s\n' 'development_or_supplement_only_never_final'
-  printf 'final_evidence_required: %s\n' 'real_backend_or_real_api_or_real_runtime_or_human_manual_verification'
-  printf 'active_policy: %s\n' 'one_ACTIVE_file_per_in_progress_task'
-  printf 'active_isolation_policy: %s\n' 'exact_ACTIVE_required_ambiguous_match_stops'
-  printf 'history_policy: %s\n' 'fold_completed_standard_work_to_docs_history_module'
-  printf 'formal_doc_policy: %s\n' 'TASK_or_BUG_only_for_complex_or_high_risk_standard_work'
-  printf 'history_entry_limit: %s\n' '8_lines'
+  printf 'implementation_map_status: %s\n' "$implementation_map_status"
   printf 'docs_changed: %s\n' "$docs_changed"
   printf 'code_changed: %s\n' "$code_changed"
   printf 'docs_budget_status: %s\n' "$docs_budget_status"
-  printf 'requirements_files: %s\n' "$requirements_files"
-  printf 'requirements_with_acceptance: %s\n' "$requirements_with_acceptance"
   printf 'requirement_status: %s\n' "$requirement_status"
-  printf 'active_files: %s\n' "$active_files"
-  printf 'history_files: %s\n' "$history_files"
-  printf 'task_files: %s\n' "$task_files"
-  printf 'bug_files: %s\n' "$bug_files"
-  printf 'standard_pre_code_records: %s\n' "$standard_pre_code_records"
-  printf 'acceptance_files: %s\n' "$acceptance_files"
-  printf 'records_with_evidence: %s\n' "$records_with_evidence"
   printf 'real_final_evidence_records: %s\n' "$real_final_evidence"
-  printf 'mock_final_evidence_records: %s\n' "$mock_final_evidence"
   printf 'verification_source_status: %s\n' "$verification_source_status"
   printf 'evidence_status: %s\n' "$evidence_status"
-  printf 'docs_index_tracked: %s\n' "$(docs_index_tracked)"
   printf 'machine_gate: %s\n' "$machine_gate"
   printf 'requirement_match: pending-human-review\n'
-  printf 'human_review_required: true\n'
-  printf 'commit_allowed: false\n'
 
   [ "$machine_gate" != "blocked" ]
 }

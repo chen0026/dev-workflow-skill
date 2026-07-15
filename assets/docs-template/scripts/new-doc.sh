@@ -27,6 +27,10 @@ case "$type" in
     dir="docs/active"
     template_rel="active/TEMPLATE.md"
     ;;
+  CHG)
+    dir="docs/changes/$(date +%Y)/$(date +%m)"
+    template_rel="changes/TEMPLATE.md"
+    ;;
   ADR)
     dir="docs/design/decisions"
     template_rel="design/decisions/TEMPLATE.md"
@@ -44,12 +48,16 @@ case "$type" in
     template_rel="legacy/TEMPLATE.md"
     ;;
   *)
-    echo "dev-workflow: TYPE 必须是 PRD/REQ/TASK/BUG/ACTIVE/ADR/ACC/OPS/LEGACY"
+    echo "dev-workflow: TYPE 必须是 PRD/REQ/TASK/BUG/ACTIVE/CHG/ADR/ACC/OPS/LEGACY"
     exit 1
     ;;
 esac
 
-local_template="$dir/TEMPLATE.md"
+if [ "$type" = "CHG" ]; then
+  local_template="docs/changes/TEMPLATE.md"
+else
+  local_template="$dir/TEMPLATE.md"
+fi
 skill_template="$skill_root/assets/docs-template/$template_rel"
 installed_template="${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/assets/docs-template/$template_rel"
 
@@ -77,4 +85,15 @@ target="$dir/$id.md"
 
 mkdir -p "$dir"
 cp "$template" "$target"
+if [ "$type" = "CHG" ]; then
+  created_at="$(date +%Y-%m-%dT%H:%M:%S%z)"
+  tmp="$(mktemp)"
+  awk -v id="$id" -v title="$title" -v created_at="$created_at" '
+    /^id:/ { print "id: " id; next }
+    /^created_at:/ { print "created_at: " created_at; next }
+    /^# / { print "# " title; next }
+    { print }
+  ' "$target" > "$tmp"
+  mv "$tmp" "$target"
+fi
 echo "$target"

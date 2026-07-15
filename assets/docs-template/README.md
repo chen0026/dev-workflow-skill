@@ -1,184 +1,22 @@
-# 项目文档
+# 项目开发文档
 
-本目录用于沉淀项目开发历史。目标是关键变更可追溯，小任务不被文档拖住。
-
-## 目录导航
-
-| 目录 | 放什么 | 谁来写 |
-|------|--------|--------|
-| `workflow.md` | 开发工作流、门禁规则、完成标准 | 开发负责人 |
-| `index.md` | 可选的人类可读生成索引；默认不提交 | 开发 |
-| `prd/` | 产品需求文档，含变更记录 | 产品 + 开发补充 |
-| `requirements/` | PRD 需求项追踪矩阵，连接原文、任务、验收和测试 | 产品 + 开发 |
-| `design/` | 架构设计、技术方案 | 开发 |
-| `design/decisions/` | ADR，重要技术决策记录 | 开发 |
-| `active/` | 进行中任务交接文件，任务完成后清理 | 开发 |
-| `history/` | 模块级短历史，每条最多 8 行 | 开发 |
-| `tasks/` | 任务拆解、开发日志、AI 协作记录 | 开发 |
-| `bugs/` | Bug 复盘、根因分析 | 开发 |
-| `acceptance/` | 验收记录、验证结果、完成结论 | 开发 / 测试 |
-| `ops/` | 部署、监控、应急手册 | 开发 / 运维 |
-| `legacy/` | 已有项目接入时的现状快照和补录记录 | 开发 |
-| `archive/` | 接入 workflow 前的旧文档归档，只作历史参考 | 开发 |
-
-## 文档维护原则
-
-1. **代码改了，文档跟着改**：跟随 PR 一起提交
-2. **决策只追加不覆盖**：ADR 是历史记录，不是当前状态
-3. **PRD 变更走变更记录**：保留原始版本，追加变更日志
-4. **AI 协作有痕迹**：关键 prompt 和决策过程要记录
-5. **双人工门禁**：standard / strict 先确认门禁文档再编码，完成后再审核实现
-6. **自适应 loop**：大需求先切成可验证 slice，不套固定业务分类
-7. **验收就近记录**：quick 写最终摘要，standard 写 ACTIVE / 主记录，strict 才单独写 ACC
-8. **测试用例先确认**：standard / strict 编码前先确认测试用例清单，避免测偏返工
-9. **真实验证优先**：mock 数据、Playwright route mock、接口拦截只能做辅助测试，不能作为最终或降级验收
-10. **提交前必须人工审核**：验证和文档同步通过后，先等待人工审核；用户批准后才提交
-11. **索引可重建**：多分支开发时不要手工维护共享索引，使用本地索引脚本检索
-12. **进行中可接力**：中断或换 agent 时保留 ACTIVE，完成后折叠到模块 history
-
-## Git hooks
-
-`.githooks/` 是可选门禁模板，默认不自动启用。正式项目建议启用，临时项目可以不启用。
-
-启用方式见 [`workflow.md`](workflow.md) 的“Git hooks 门禁”。
-
-## 脚本
-
-通用脚本默认保存在已安装的 dev-workflow skill 中，不复制到项目目录。执行时以项目根目录为当前目录：
-
-```bash
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" doctor
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/active-work.sh" list
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/search-dev-docs.sh" 关键词
-```
-
-只有项目需要完全自包含时，才使用 `/dev-workflow init --with-scripts`。
-
-也可以让 Codex 使用快捷提示：
-
-```text
-/dev-workflow init
-/dev-workflow init --hooks
-/dev-workflow check
-/dev-workflow clean-templates
-/dev-workflow version
-/dev-workflow doctor
-/dev-workflow 初始化项目
-/dev-workflow 初始化项目并启用 hooks
-/dev-workflow 检查文档
-修复登录态过期后没有刷新
-根据 PRD 改版文件管理器
-```
-
-开发任务不需要记子命令。agent 应先运行 skill 中的 `dev-workflow-harness.sh run "任务描述"`，完成前运行 `verify` 和 `check`。
-
-如果项目脚本可能过期或环境不确定，先运行 skill 中的 `dev-workflow-harness.sh doctor`，重点看 `upgrade_needed / missing_required / doctor_status / next_action`。
+本项目使用 Dev Workflow Lite。普通 Bug、功能、重构和维护默认直接开发，不为每个任务创建文档。
 
 ## 何时写文档
 
-- 项目首次接入：检查 `AGENTS.md` 和 `docs/`，必要时归档旧文档并初始化目录
-- quick 小改：默认不写正式文档，只在最终回复摘要
-- standard Bug：默认编码前确认一个 ACTIVE 和测试用例清单；复杂或高风险才升级 BUG
-- standard 功能 / 维护：默认编码前确认一个 ACTIVE 和测试用例清单；复杂或高风险才升级 TASK
-- strict PRD 改版 / 高风险新功能：先写 REQ 需求追踪矩阵，人工确认后再编码
-- 合并 PR 前：按流程级别更新对应主记录和必要架构文档
-- 修复高风险 Bug 后：必要时写完整 Bug 复盘和 ACC
-- 需求变更时：在原文档追加变更记录，必要时新建 ADR
-- 技术选型时：写 ADR
-- 每次任务完成前：运行 skill 脚本 `dev-workflow-harness.sh verify "任务描述"` 和 `dev-workflow-harness.sh check`，再等待人工审核
+- 跨会话、换 agent、多人并行或需要交接：只写一个 `active/ACTIVE-*.md`。
+- PRD 改版、多模块、接口契约、数据迁移、权限、支付、部署等高风险变更：编码前写并确认 `requirements/REQ-*.md`。
+- 需要长期追溯的设计决策、故障复盘或运维流程：按需写 ADR、BUG 或 OPS。
 
-## 执行策略
+TASK、BUG、ACC 不是配套文档，没有独立长期价值就不创建。
 
-- 默认自动分级：从 `quick` 起步，按风险升级到 `standard / strict`，不要求用户手动选择。
-- 推荐入口：skill 脚本 `dev-workflow-harness.sh run "任务描述"`。
-- 诊断入口：skill 脚本 `dev-workflow-harness.sh doctor`。
-- 大需求按 Adaptive Loop 推进：先按需求文档结构、代码边界、风险点和可验证粒度切片。
-- standard / strict 编码后用 `loop-work.sh` 按验收项执行 step -> verify -> decide，避免一口气做偏。
-- 新增 / 修改关键业务逻辑时默认补简短中文注释，说明职责、业务原因、边界或需求关联。
-- quick 默认不创建正式文档；standard 编码前确认一个 ACTIVE 和测试用例清单；strict 才拆完整链路。
-- PRD、产品文档、现有功能改版、多模块、高风险、接口/数据/权限/支付/订单/登录/部署变化，自动使用 `strict`。
-- 分级优先级：硬门禁 > 风险自动升级 > 文档预算 > 用户指定 > 默认 quick。
-- 文档预算：quick 0 个文档；standard 默认 1 个 ACTIVE，完成后折叠到 1 条 history；strict 才允许完整链路。
-- 编码前确认标记统一为 `编码前确认：已确认`。
-- 测试用例确认标记统一为 `测试用例确认：已确认`。
-- 默认禁止全量读取历史文档；先用 `search-dev-docs.sh` 检索候选，再按当前任务读取相关文档。
+## 核心规则
 
-ACTIVE 生命周期脚本：
+- 修改前定向确认真实调用链、影响范围、可复用能力和回归测试。
+- 最终验收使用真实后端、真实接口、真实环境或人工实测证据；mock 只能辅助。
+- 默认不自动 commit，人工批准后才提交。
+- 普通 Bug / 功能不新建 REQ、TASK、BUG 或 ACC 留痕；正式提交时只新增一个精简 CHG，并用结构化 Git message 记录原因、变更、验证和影响。
+- 需要历史时才运行 `search-dev-docs.sh`，不在每个任务前重建索引。
+- `.dev-workflow/` 和 `docs/index.md` 是可重建本地状态，不提交。
 
-```bash
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/active-work.sh" start file-manager-rename
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/active-work.sh" list
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/active-work.sh" match file-manager rename
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/active-work.sh" finish docs/active/ACTIVE-xxx.md file-manager < summary.md
-```
-
-`finish` 只在人工审核通过后使用；摘要最多 8 个非空行。
-
-如果 `match` 返回 `ambiguous_active`，说明多个线程/任务都像当前任务，不能自动选择；先让用户确认 exact ACTIVE 文件。
-
-## 需求一致性
-
-`verify` 只检查完整性，不直接宣称需求一致。重点看 `requirement_status / evidence_status / machine_gate / requirement_match`；最终是否符合 PRD / REQ 由人工审核确认。
-
-## 本地索引和多分支合并
-
-`docs/index.md` 不再作为人工维护的总索引，也不是必需文件。多电脑、多分支并行时，每个进行中任务只更新自己的 ACTIVE，完成后折叠到模块 history。日常直接运行：
-
-```bash
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/search-dev-docs.sh" 关键词
-```
-
-如果机器索引缺失或真实文档更新，搜索脚本会自动重建：
-
-```text
-.dev-workflow/index/docs.jsonl
-```
-
-该目录和 `docs/index.md` 默认加入 `.gitignore`，不提交。这样合并代码时不会因为所有分支都修改同一个索引文件而频繁冲突。
-
-已经被 Git 跟踪的旧项目，可执行：
-
-```bash
-git rm --cached docs/index.md
-```
-
-## 命名规范
-
-统一使用 `类型-创建时间-随机码-英文短标题.md`：
-
-```text
-TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md
-```
-
-- `YYYYMMDD-HHMMSS` 使用创建文档时的本地时间。
-- `XXXX` 使用 4 位小写随机码，避免多电脑、多分支同秒创建时冲突。
-- 合并后按文件名即可看出大致创建顺序。
-
-- `prd/PRD-20260528-153000-a1b2-user-login.md`
-- `requirements/REQ-20260529-101500-a1b2-member-revamp.md`
-- `tasks/TASK-20260528-153500-b2c3-login-api.md`
-- `bugs/BUG-20260528-154000-c3d4-token-expired.md`
-- `active/ACTIVE-20260528-154100-f6a7-file-manager-rename.md`
-- `design/decisions/ADR-20260528-154500-d4e5-use-jwt-auth.md`
-- `acceptance/ACC-20260528-155000-e5f6-user-login.md`
-- `legacy/LEGACY-20260528-160000-a7b8-current-system-summary.md`
-
-## 模板保护
-
-`docs/**/TEMPLATE.md` 是母版，只能复制，不能作为任务文档直接填写。
-
-默认初始化不会把模板或脚本复制到项目目录。模板保存在已安装的 dev-workflow Skill 中，skill 脚本 `new-doc.sh` 会从 Skill 模板创建新文档。
-
-如果项目需要自包含模板，使用：
-
-```bash
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/init-dev-workflow.sh" --with-templates
-```
-
-新建文档时使用：
-
-```bash
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/new-doc.sh" TASK login-api
-```
-
-只有明确提出“修改模板”或“升级 dev-workflow 模板”时，才允许改 `TEMPLATE.md`。
+详细规则见 [`workflow.md`](workflow.md)。

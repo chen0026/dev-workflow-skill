@@ -1,5 +1,48 @@
 # Changelog
 
+## 0.34.0 - 2026-07-15
+
+- 新增精简 `CHG` 记录：正式代码提交默认恰好新增一个 `docs/changes/YYYY/MM/CHG-*.md`，不配套创建 REQ、TASK、BUG 或 ACC。
+- CHG 仅包含 `id / type / module / created_at / files / related` 元数据和“原因/变更/验证/影响”四项正文，与代码和结构化 commit message 同一提交。
+- `new-doc.sh` / `new-doc-id.sh` 支持 CHG 和按年月存放；命名使用时间戳加随机 ID，避免多电脑、多分支冲突。
+- 精确提交门禁对代码提交校验一个新 CHG 及其完整字段；临时提交或用户明确不留文档时可用 `DEV_WORKFLOW_SKIP_CHG=1` 跳过。
+- hooks 只检查本次 staged CHG，不扫描全部历史，也不在提交时重建索引；知识图谱仅预留字段，暂不生成数据库。
+
+## 0.33.0 - 2026-07-15
+
+- 增加“提交即留痕”：普通 Bug、功能完善和维护不新建 REQ、TASK、BUG 或 ACC，在提交审核时根据实际 diff 生成结构化 Git commit message。
+- 提交记录固定包含类型/模块摘要、原因、变更、验证和影响；人工审核同时确认文件范围和记录内容。
+- 新增 `/dev-workflow history <关键词|文件>` 语义，使用 `git log / blame / show` 追查历史，不维护额外的普通变更文档索引。
+
+## 0.32.0 - 2026-07-14
+
+- 改为 Dev Workflow Lite：普通 Bug、功能、重构和维护默认直接调查、实现、测试和审查，不再自动运行 harness、Loop、索引或创建任务文档。
+- ACTIVE 只用于跨会话、换 agent、多人并行或明确交接；REQ 只用于 PRD 改版和高风险变更。
+- harness 分类不再把“Bug / 修复 / 功能”自动升级 standard，输出精简为可直接决策的状态；索引缺失不再导致 doctor 建议每次 check。
+- Git hooks 改为可选审计：只在存在 commit manifest 时强制精确范围，只在暂存 docs / AGENTS.md 时检查文档，commit message 缺少追踪编号只警告。
+- 大幅精简 `SKILL.md`、references、README 和项目文档模板；旧项目重新 init 时追加 Lite 覆盖规则，不需要删除原有文档。
+
+## 0.31.0 - 2026-07-14
+
+- 新增对话级 ACTIVE 本地绑定：选择顺序固定为 exact 路径、当前对话绑定、唯一关键词匹配，长对话和并行任务不再反复猜测自己的文档。
+- `active-work.sh` 新增 `current / bind / unbind / resolve`，`start` 自动绑定，`finish` 自动清理失效绑定；Codex 使用 `CODEX_THREAD_ID`，其他 agent 可传 `DEV_WORKFLOW_CONTEXT_ID`。
+- 新增 `commit-scope.sh` 精确提交清单，支持 `prepare / show / stage / check / verify-head / clear`；完整覆盖 staged、unstaged、untracked 文件，拦截未分类文件、其他任务暂存、漏文件、额外暂存、暂存后再修改，并核对提交前后 HEAD。
+- 明确禁止用 `git add .`、`git add -u`、`git commit -am` 代替任务清单；并行任务优先独立 Git worktree，共享工作区的其他文件必须逐项确认归属。
+- 启用 hooks 后，pre-commit 强制要求任务清单并核对暂存范围；同时支持已暂存重命名和 `#` 开头文件名，提交后通过 `verify-head` 核对 HEAD 文件集合并清理清单。
+- 新增 `post-commit` hook，commit 成功后自动执行 `verify-head` 并清理已完成任务的提交清单，避免阻塞下一个并行任务。
+- `/dev-workflow init` 现在整体忽略 `.dev-workflow/`，并给老项目补充任务绑定与提交范围规则；harness doctor/check 会提示重新初始化或移除旧的 Git 跟踪状态。
+- 更新 Codex `agents/openai.yaml` 为 `interface` 元数据格式，并同步 README、workflow、references 和自包含脚本模板。
+
+## 0.30.0 - 2026-07-12
+
+- 新增编码前实现地图：standard / strict 必须列出真实调用链、计划修改、受影响不改和测试/回归文件，范围扩大时暂停并重新确认。
+- 新增复用决策：先搜索并复用或扩展已有能力，只有真实调用方、业务语义和稳定契约满足条件时才抽公共函数、类或组件。
+- 新增前端大文件治理：500 行触发职责评估，800 行或新增独立职责时必须写拆分决策；组件、hook/composable、service/api、模块 utils 和 CSS 按职责拆分。
+- ACTIVE、TASK、BUG、REQ 模板新增实现地图、复用评估、文件健康和计划偏差字段，不增加新的文档类型。
+- 修正 ACTIVE 测试表头与 harness 质量检查不一致的问题，避免已确认测试用例被误判为缺少关联字段。
+- harness 新增 `implementation_map_policy / reuse_policy / file_health_policy / scope_expansion_policy`，`verify` 会阻断缺少实现地图关键字段的 standard / strict 代码变更。
+- `/dev-workflow init` 会给旧项目 AGENTS.md 补充 Implementation Map Guard；默认仍不自动提交代码。
+
 ## 0.29.0 - 2026-06-25
 
 - 新增轻量注释策略：新增或修改关键业务代码时默认补简短中文注释，说明职责、业务原因、边界或需求关联。

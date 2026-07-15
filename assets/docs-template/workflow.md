@@ -1,562 +1,79 @@
-# 开发工作流
+# Dev Workflow Lite
 
-目标：让每次开发都能追踪“为什么做、改了什么、怎么验收、是否通过人工审核、提交在哪”，同时避免文档成为负担。
+## 默认开发
 
-## 一、轻量原则
-
-- 小任务只写必要信息，不补无关文档。
-- 文档跟随代码一起改，完成时一次性补齐事实。
-- 只有影响架构、接口、数据、部署、长期维护时，才写 ADR / design / ops。
-- 已有项目不补全历史，只在当前改动需要时补 LEGACY 或补录 ADR。
-- 没有文档同步和人工审核，不声明最终完成。
-
-### Harness-first 执行入口
-
-开发任务不要求用户记命令。收到自然语言任务后，先运行：
-
-```bash
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" run "用户任务描述"
-```
-
-如果项目脚本可能过期、hooks 不确定、或初始化状态不明，先运行：
-
-```bash
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" doctor
-```
-
-按输出的 `flow / docs_allowed / pre_code_gate / code_allowed / loop_phase / loop_next_decision / next_action` 执行。`code_allowed: false` 时，只能准备门禁文档，等待人工确认。
-
-完成前运行：
-
-```bash
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" verify "用户任务描述"
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" check
-```
-
-`verify` 只检查完整性；需求是否一致必须由人工审核确认。
-
-## 二、项目接入检查
-
-使用本工作流前先检查：
-
-- 是否存在 `AGENTS.md`。
-- 是否存在 `docs/`。
-- `docs/` 是否已有旧文档。
-- 是否已有 `docs/workflow.md`、`docs/active/`、`docs/history/`、必要子目录和本地索引脚本；`docs/index.md` 不是必需文件。
-
-处理规则：
-
-- 没有 `AGENTS.md`：创建，并写入开发工作流强约束和文档查找优先级。
-- 已有 `AGENTS.md`：保留原内容，只追加或更新工作流规则。
-- 没有 `docs/`：创建标准目录骨架。
-- 已有 `docs/` 但不是本工作流结构：把旧文档移动到 `docs/archive/legacy-docs-YYYYMMDD/`，再创建新结构。
-- 已有本工作流结构：沿用，不覆盖已有文档。
-
-旧文档归档后只作为历史参考，不作为当前实现依据。
-
-初始化脚本：
-
-```bash
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/init-dev-workflow.sh"
-```
-
-默认初始化不会把 `TEMPLATE.md` 或通用脚本复制到项目目录，只创建文档目录和 Git hooks 入口。
-
-如果项目需要自包含模板：
-
-```bash
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/init-dev-workflow.sh" --with-templates
-```
-
-Codex 快捷提示：
+普通 Bug、功能、重构和维护：
 
 ```text
-/dev-workflow init
-/dev-workflow 初始化项目
+定向调查 -> 实现 -> 测试 -> 真实验证 -> 代码审查 -> 人工批准提交
 ```
 
-初始化并启用 Git hooks：
+默认不创建任务文档，不运行 harness、Loop 或索引脚本。最终只列代码变更、验证结果、待提交文件和风险。
+
+## 续作
+
+跨会话、换 agent、多人并行或需要交接时，每个任务只使用一个 `active/ACTIVE-*.md`，记录：
+
+- 目标与范围。
+- 当前进度与相关文件。
+- 下一步和阻塞项。
+- 测试与真实验证结果。
+
+选择顺序为 exact ACTIVE > 当前对话绑定 > 唯一关键词匹配。无绑定且多候选时请用户确认，不猜测。
+
+## 严格模式
+
+PRD 改版、多模块、接口契约、数据迁移、权限、支付、部署、回滚或其他高风险变更，编码前建立 `requirements/REQ-*.md`，包含：
+
+- 需求来源、现状、目标行为和范围外。
+- 影响面、验收项、测试和真实验证方式。
+- `编码前确认：已确认`。
+
+REQ 和验收矩阵未经人工确认时不编码。
+
+## 验证和审查
+
+- 测试覆盖主路径、边界、失败路径和受影响回归路径。
+- mock、fixture、stub、MSW 和 Playwright route mock 不得作为最终验收。
+- 完成前检查遗漏调用方、行为回归、重复实现、公共抽象边界、性能和安全。
+- 只在不注释难以理解的关键业务逻辑处补简短中文注释。
+
+## 精确提交
+
+默认不自动 commit。请求提交时才创建临时清单：
 
 ```bash
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/init-dev-workflow.sh" --enable-hooks
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/commit-scope.sh" prepare TASK_KEY --all
+# 共享工作区使用 --other 分类其他任务文件
+"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/commit-scope.sh" show
 ```
 
-Codex 快捷提示：
+用户批准后才运行 `stage` 并 commit。存在清单时 hooks 核对范围；不存在清单时允许普通人工提交。
+
+普通 Bug / 功能不新建 REQ、TASK、BUG 或 ACC 用于留痕。正式提交前先生成一个 `changes/YYYY/MM/CHG-*.md`，YAML 只包含 `id / type / module / created_at / files / related`，正文只包含原因、变更、验证和影响。
+
+然后根据实际 diff 起草并展示 commit message：
 
 ```text
-/dev-workflow init --hooks
-/dev-workflow 初始化项目并启用 hooks
+fix/feat(scope): 用户可见摘要
+
+原因: 问题或需求背景
+变更: 实际修改的行为和关键实现
+验证: 已运行测试和真实验证
+影响: 影响范围与风险
 ```
 
-## 三、文档查找优先级
+用户同时确认文件范围、CHG 和 commit message 后才 commit。历史先用 `rg` 定向搜索 `docs/changes/`，再通过 `git log --follow -- FILE`、`git blame` 和 `git show` 追查真实 diff。
+存在精确提交清单且包含代码时，pre-commit 要求恰好新增一个完整 CHG，commit-msg 会阻断缺少上述四项的记录；普通人工提交不强制。
 
-处理需求、开发、修复、维护前，按以下顺序查找上下文：
+## 索引与命名
 
-1. `AGENTS.md`
-2. `docs/workflow.md`
-3. skill 脚本 `search-dev-docs.sh` 的候选结果，或 `.dev-workflow/index/docs.jsonl`
-4. 用 `active-work.sh match 关键词` 锁定的唯一 ACTIVE；未锁定或多候选时不得读取候选内容
-5. `docs/history/<module>.md` 的最近相关条目
-6. 当前任务关联的 `PRD / REQ / TASK / BUG / ADR / ACC`
-7. `docs/design/` 和 `docs/ops/`
-8. `docs/legacy/`
-9. `docs/archive/`
-10. 代码和测试
+只在需要历史时运行 `rg` 或 `search-dev-docs.sh 关键词`，不在每个任务前重建索引。`.dev-workflow/` 和 `docs/index.md` 不提交。CHG 的结构化字段为未来可选的本地知识图谱预留，现在不生成图数据库。
 
-如果当前代码与 `docs/archive/` 中的旧文档冲突，以当前代码和当前链路文档为准。
-
-## 四、文档读取预算
-
-默认只读：
-
-- `AGENTS.md`
-- `docs/workflow.md`
-- skill 脚本 `search-dev-docs.sh` 的候选结果，或 `.dev-workflow/index/docs.jsonl` 中的少量匹配行
-- 用户当前提供的 PRD / 需求 / Bug 描述
-- 与当前任务直接相关的文档，优先 `active` 和模块 `history`
-
-默认禁止全量读取：
-
-- `docs/archive/**`
-- 全部 PRD
-- 全部 REQ
-- 全部 TASK
-- 全部 BUG
-- 全部 ACC
-- 全部 ADR
-
-先用 skill 脚本 `search-dev-docs.sh` 根据当前任务关键词、模块名、功能名、编号筛选候选文档。候选过多时，先列候选和选择依据。
-
-## 五、本地索引
-
-`.dev-workflow/index/docs.jsonl` 是可重建机器索引，默认不提交。
-
-日常检索：
-
-```bash
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/search-dev-docs.sh" login
-```
-
-索引缺失或真实文档更新时，`search-dev-docs.sh` 会自动重建。需要手动重建时执行：
-
-```bash
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/reindex-dev-docs.sh"
-```
-
-`docs/index.md` 只是可选的人类可读生成文件，不再作为每次任务必须手工更新的共享索引。如果需要临时生成可读索引，可执行：
-
-```bash
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/reindex-dev-docs.sh" --write-md
-```
-
-`docs/index.md` 默认加入 `.gitignore`，不要提交，避免多分支合并冲突。
-
-## 六、自动流程分级
-
-默认自动选择流程强度，不要求用户手动指定。先用 skill 脚本 `dev-workflow-harness.sh run "任务描述"` 获取初始护栏和 `flow_reason`。默认从 `quick` 起步，只有发现明确风险信号才升级：
-
-- `quick`：文案、样式、小配置、小功能、小 Bug、单文件或低风险改动。少读历史，默认只写摘要。
-- `standard`：普通 Bug、普通功能调整、单模块功能。编码前默认确认一个 `ACTIVE` 交接文件及测试用例清单；复杂或高风险才使用 `TASK` / `BUG`。
-- `strict`：PRD、产品文档、现有功能改版、多模块、高风险、接口/数据/权限/支付/订单/登录/部署变化。编码前先确认 `REQ` 和测试用例矩阵，再进入完整链路。
-
-优先级：硬门禁 > 风险自动升级 > 文档预算 > 用户指定 > 默认 quick。
-
-如果用户指定 `quick` 但出现 PRD、改版、接口、数据、核心链路等风险，必须自动升级并说明原因。任务类型不确定但未发现明确风险时，默认 `quick`；发现用户行为影响、需要追溯或跨少量文件时，升级为 `standard`。
-
-文档预算：
-
-- quick：新增文档 0 个；最终回复摘要即留痕。
-- quick 且用户要求留痕：最多 1 个 ACTIVE 或 TASK。
-- standard：默认新增 1 个 ACTIVE；复杂或高风险才使用 BUG / TASK；完成时追加 1 条模块 history。
-- standard 不创建 ACC；验收结论写进 ACTIVE / BUG / TASK，完成摘要写进 history。
-- strict 才允许完整链路；普通任务不得同时创建 `TASK + BUG + ACC`。
-- `docs/index.md` 不作为任务产物，不因完成任务而手工更新；默认加入 `.gitignore`，不要提交。
-
-## 七、命名规则
-
-统一使用时间戳编号，避免多电脑、多分支并行时产生序号冲突：
+文档命名：
 
 ```text
-TYPE-YYYYMMDD-HHMMSS-XXXX-short-title.md
+TYPE-YYYYMMDD-HHMMSS-xxxx-short-title.md
 ```
 
-- `TYPE`：`PRD / REQ / TASK / BUG / ACTIVE / ADR / ACC / OPS / LEGACY`。
-- `YYYYMMDD-HHMMSS`：创建文档时的本地时间。
-- `XXXX`：4 位小写随机码。
-- `short-title`：英文短标题，使用小写和连字符。
-
-示例：
-
-```text
-tasks/TASK-20260528-153500-b2c3-login-api.md
-requirements/REQ-20260529-101500-a1b2-member-revamp.md
-bugs/BUG-20260528-154000-c3d4-token-expired.md
-active/ACTIVE-20260528-154100-f6a7-file-manager-rename.md
-acceptance/ACC-20260528-155000-e5f6-user-login.md
-```
-
-旧项目中的 `TASK-0001` 这类编号继续有效，但新文档一律使用时间戳编号。
-
-## 八、模板保护
-
-`docs/**/TEMPLATE.md` 是母版，只能复制，不能作为任务文档直接填写。
-
-默认模板保存在已安装的 dev-workflow Skill 中，不放进项目目录。
-
-新建文档时优先使用：
-
-```bash
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/new-doc.sh" TASK login-api
-```
-
-如果没有脚本，先复制对应 `TEMPLATE.md` 到带编号的新文件，再填写新文件。
-
-如果项目需要自包含模板，使用 skill 脚本 `init-dev-workflow.sh --with-templates`。
-
-已经初始化过的旧项目如需清理模板：
-
-```bash
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/clean-templates.sh"
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/clean-templates.sh" --apply
-```
-
-日常开发、Bug 修复、验收、改版时，禁止直接修改任何 `TEMPLATE.md`。只有明确提出“修改模板”或“升级 dev-workflow 模板”时，才允许改模板。
-
-## 九、最小闭环
-
-### 编码前门禁
-
-- quick：`pre_code_gate: not_required`，低风险小改可直接实现。
-- standard：`pre_code_gate: confirm_ACTIVE_or_TASK_or_BUG_and_test_cases_before_code`，默认先写并确认一个 ACTIVE 及测试用例清单；复杂或高风险才使用 TASK / BUG。
-- strict：`pre_code_gate: confirm_REQ_and_test_cases_before_code`，先写并确认 REQ 及测试用例清单。
-
-确认标记统一为：
-
-```text
-编码前确认：已确认
-```
-
-用户在对话中明确确认门禁文档后，才允许把标记改为 `已确认` 并开始编码。
-
-standard / strict 还必须确认测试用例清单：
-
-```text
-测试用例确认：已确认
-```
-
-测试用例清单必须从 ACTIVE / REQ / BUG 行为倒推，包含关联需求、场景、前置状态、用户操作或触发、期望结果、测试类型、真实验证路径、mock 使用限制和 RED 失败记录。没有该确认标记，不编码。
-
-### Adaptive Loop
-
-Loop 是执行节奏控制，不是新的重文档模板。每轮只做一个可验证动作：
-
-```text
-理解当前状态 -> 选择一个小动作 -> 执行 -> 验证证据 -> 决定继续 / 修正 / 停止 / 等人确认
-```
-
-harness 字段：
-
-- `loop_phase`：当前阶段。
-- `loop_next_decision`：继续、重试、等待人工或停止。
-- `loop_policy`：验收项驱动的 step -> verify -> decide。
-- `max_iterations`：quick 1，standard 3，strict 5。
-- `stop_condition`：本轮停止条件。
-- `slice_strategy`：是否需要自适应切片。
-
-自适应切片：
-
-1. 优先按需求文档自身结构切片。
-2. 再按项目代码边界切片。
-3. 再按风险点切片。
-4. 最后按可独立验证的粒度切片。
-
-每个 slice 必须写清：目标、不做什么、改动范围、验收方式、验证证据、停止条件。不套固定业务分类。
-
-standard / strict 进入编码后，用 `loop-work.sh` 管住每轮执行：
-
-```bash
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/loop-work.sh" start ACTIVE_FILE 3
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/loop-work.sh" step ACTIVE_FILE "本轮目标" "关联验收项"
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/loop-work.sh" verify ACTIVE_FILE "真实验证证据"
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/loop-work.sh" decide ACTIVE_FILE continue "原因"
-```
-
-`continue / retry / rescope` 前必须已有本轮 verify；`wait_human / stop` 后不得继续编码。
-
-### 注释策略
-
-新增或修改业务代码时，关键逻辑默认写简短中文注释：
-
-- quick：只在不注释会看不懂时补。
-- standard：新增 / 修改的关键业务逻辑、复杂条件、状态变化、权限、金额、订单、文件、目录、数据一致性必须补。
-- strict：关键规则注释应关联 REQ / 验收项。
-- 注释说明职责、业务原因、边界或限制；禁止逐行翻译代码、空泛注释和长背景。
-
-### 真实验证门禁
-
-最终验收必须来自真实后端、真实接口、真实运行环境、本地前后端联调、测试环境、真实数据链路或人工实测记录。
-
-mock 数据、fixture、stub、MSW、Playwright route mock、接口拦截和模拟接口只能做开发辅助或补充测试，不能作为最终验收，也不能作为真实环境不可用时的降级验收。
-
-如果真实环境不可用，结论只能是 `blocked` 或 `pending-real-verification`。ACTIVE / TASK / BUG / ACC 和最终回复必须写清最终验收来源、最终验收证据、是否存在辅助模拟测试。
-
-### ACTIVE / history 交接
-
-standard 默认使用 `docs/active/ACTIVE-*.md` 承载进行中状态。一个任务只保留一个 ACTIVE，不使用全局 `current-work.md`。
-
-ACTIVE 写清目标、范围、下一步、阻塞、测试用例、真实验证证据和代码审查。任务未完成时保留 ACTIVE，方便换 agent、换电脑或换线程继续。
-
-任务完成并通过人工审核后，把 8 行以内摘要追加到 `docs/history/<module>.md`，再删除 ACTIVE。history 只写完成结论、验证、提交和关联编号，不写长过程。
-
-多个 ACTIVE 同时存在时，必须先锁定唯一 ACTIVE。`active-work.sh match` 只命中 1 个时才可读取和回填；返回 `ambiguous_active` 时停止并让用户确认，禁止按模块名、最近时间或标题相似度猜。
-
-辅助脚本：
-
-```bash
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/active-work.sh" start file-manager-rename
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/active-work.sh" list
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/active-work.sh" match file-manager rename
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/active-work.sh" template
-```
-
-完成并通过人工审核后，用 `active-work.sh finish ACTIVE_FILE module-name < summary.md` 折叠到 history；摘要最多 8 个非空行。
-
-### quick 小改
-
-必需：最终回复摘要
-
-按需：一个 `ACTIVE` 或 `TASK`
-
-流程：
-
-1. 少读历史，只看当前任务和必要代码。
-2. 修改并做最小验证。
-3. 自查需求是否偏离、是否有无关改动。
-4. 最终回复列出改动、验证、待审核文件。
-5. 不默认创建 TASK / BUG / ACC。
-
-### standard Bug
-
-必需：一个 `ACTIVE` 交接文件；复杂或高风险时升级为 `BUG` 主记录
-
-按需：`TASK / ACC / ADR / design / ops`
-
-流程：
-
-1. ACTIVE 写清现象、复现、根因假设、修复方案和不做什么。
-2. 写清验收项、测试方式和测试用例清单。
-3. 等待人工确认，并把 `编码前确认` 和 `测试用例确认` 改为 `已确认`。
-4. 先写复现测试，记录 RED 失败证据；无法自动化时记录原因和手工验收项。
-5. 修复并验证。
-6. 在 ACTIVE 或 BUG 中记录验证结果、代码审查和验收结论。
-7. 需要复杂验收或高风险时，再创建 ACC。
-8. 进入提交前人工审核。
-9. 人工审核通过后，把摘要折叠到模块 history，并清理 ACTIVE。
-
-### standard 功能 / 维护 / 重构
-
-必需：一个 `ACTIVE` 交接文件；复杂或高风险时升级为 `TASK` 主记录
-
-按需：`BUG / ACC / ADR / design / ops`
-
-流程：
-
-1. ACTIVE 写清目标、非目标、改动范围。
-2. 写清验收项、测试方式和测试用例清单。
-3. 等待人工确认，并把 `编码前确认` 和 `测试用例确认` 改为 `已确认`。
-4. 先写目标行为测试，记录 RED 失败证据；无法自动化时记录原因和手工验收项。
-5. 修改并验证。
-6. 在 ACTIVE 或 TASK 中记录实际改动、验证结果、代码审查和验收结论。
-7. 需要复杂验收或高风险时，再创建 ACC。
-8. 进入提交前人工审核。
-9. 人工审核通过后，把摘要折叠到模块 history，并清理 ACTIVE。
-
-### strict 新功能 / PRD 改版 / 已有功能改版
-
-必需：`PRD + REQ + TASK + ACC`
-
-按需：`ADR / design / ops / LEGACY`
-
-门禁：
-
-- 没有 REQ 需求追踪矩阵，不编码。
-- REQ 未经人工确认，不编码。
-- REQ 的 `编码前确认` 未标记为 `已确认`，不编码。
-- REQ 的 `测试用例确认` 未标记为 `已确认`，不编码。
-- 每个 TASK 必须关联一个或多个 REQ。
-- 每个 ACC 必须验收对应 REQ。
-- 有测试框架时优先 TDD；没有测试框架时必须写手工验收项和无法自动化原因。
-
-流程：
-
-1. 阅读 PRD 原文，保留原文依据。
-2. 查找历史 PRD / REQ / TASK / BUG / ADR / ACC。
-3. 阅读现有代码，定位当前实现路径。
-4. 输出当前实现与 PRD 目标行为差异。
-5. 创建 REQ 需求追踪矩阵。
-6. 为每个 REQ 写验收方式、测试计划和测试用例矩阵。
-7. 列出待确认问题。
-8. 等待人工确认。
-9. 把 REQ 的 `编码前确认` 和 `测试用例确认` 改为 `已确认`。
-10. 确认后再创建 TASK 并进入 TDD 实现。
-
-## 十、什么时候写 ADR
-
-满足任一条件才写：
-
-- 改变架构或模块边界。
-- 改变接口契约或数据模型。
-- 做技术选型。
-- 放弃过一个看似合理的方案，未来可能再次被提出。
-- Bug 根因来自历史设计问题。
-
-## 十一、什么时候更新 ops
-
-满足任一条件才更新：
-
-- 部署方式变化。
-- 配置项变化。
-- 监控、告警、日志定位方式变化。
-- 回滚方式变化。
-- 应急处理步骤变化。
-
-## 十二、已有项目接入
-
-首次接入只需要一份现状快照：
-
-```text
-legacy/LEGACY-20260528-160000-a7b8-current-system-summary.md
-```
-
-之后从当前任务开始追踪。当前改到哪个模块，就补哪个模块需要的历史，不做全量补档。
-
-## 十三、完成前检查
-
-最终回复前必须确认：
-
-- 如环境不确定，已运行 skill 脚本 `dev-workflow-harness.sh doctor`。
-- 已运行 skill 脚本 `dev-workflow-harness.sh verify "任务描述"`。
-- 已运行 skill 脚本 `dev-workflow-harness.sh check`。
-- 已按流程级别创建或更新文档；quick 可无正式文档。
-- PRD / 改版任务已建立并确认 REQ 需求追踪矩阵。
-- standard 的 ACTIVE / TASK / BUG 写明编码前确认、测试用例确认、实际改动、验证结果、代码审查和验收结论。
-- standard 完成后已把 ACTIVE 摘要折叠到模块 history，或明确说明仍需保留 ACTIVE 的原因。
-- standard / strict 的测试用例清单已覆盖 ACTIVE / REQ / BUG、前置状态、操作、期望结果、真实验证路径和 RED 失败记录。
-- strict 的 ACC 写明验收结论，并覆盖对应 REQ / BUG。
-- 有测试框架时已优先使用 TDD；无法自动化时已记录原因和手工验收项。
-- 必要的 ADR / design / ops 已处理，或明确“不需要”。
-- 本地索引已重建或可重建。
-- 已列出待人工审核内容和待提交文件。
-
-可执行脚本检查：
-
-```bash
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/check-dev-docs.sh"
-```
-
-Codex 快捷提示：
-
-```text
-/dev-workflow check
-/dev-workflow 检查文档
-```
-
-## 十四、代码审查规则
-
-代码审查是完成前门禁，但保持轻量：
-
-- 小任务：执行自查，重点看需求偏离、无关改动、错误处理、测试缺口、文档同步。
-- 复杂 / 高风险任务：使用 subagent 或人工做独立 review。
-- 审查发现的问题必须先修复，或记录为遗留问题并关联后续 TASK。
-- 审查结论回填到主记录；quick 可只在最终回复列出。
-
-## 十四、TDD 规则
-
-新功能、PRD 改版、Bug 修复默认优先使用 TDD：
-
-- 编码前先写测试用例清单，再写测试或手工验收项。
-- 每个测试或验收项必须关联 ACTIVE / REQ / BUG，不能只关联实现文件或函数名。
-- 测试用例必须描述用户行为或业务规则，包含场景、前置状态、操作、期望结果、测试类型、真实验证路径、mock 使用限制和 RED 失败记录。
-- 有测试框架时，先确认目标测试失败，再编码让测试通过。
-- 已有功能改版时，先记录当前行为，再写 PRD 目标行为测试。
-- 没有测试框架或不适合自动化时，在最终摘要、主记录或 strict 的 ACC 里记录原因，并写手工验收项。
-- 如果测试用例无法从 ACTIVE / REQ / BUG 推导，说明需求仍不清楚，先停止并列待确认问题。
-
-PRD 改版时，TDD 的输入必须来自 REQ 需求追踪矩阵，而不是模糊摘要。
-
-## 十五、提交前人工审核
-
-默认不自动提交代码。
-
-完成开发、验证、必要自查和文档同步后，必须先进入人工审核：
-
-- 列出代码变更摘要。
-- 列出验证结果。
-- 列出代码审查结论。
-- 列出文档同步清单。
-- 列出 ACTIVE 是否已折叠到 history，或仍需保留的原因。
-- 列出待提交文件。
-- 等待用户明确回复“批准提交”或“确认提交”。
-
-只有收到明确批准后，才提交代码和文档。
-
-## 十六、提交规则
-
-提交必须聚焦，只包含本次任务相关文件。
-
-commit message 引用主编号：
-
-```text
-TASK-20260528-153500-b2c3 implement login api
-BUG-20260528-154000-c3d4 fix token refresh failure
-PRD-20260528-153000-a1b2 add user login workflow
-```
-
-## 十七、Subagent 使用规则
-
-默认不使用 subagent。满足以下任一条件时才使用：
-
-- 任务涉及多个独立模块。
-- Bug 根因不明确。
-- 需要并行调查代码路径、测试、文档或影响范围。
-- 改动影响范围较大。
-- 完成前需要独立 review 或 QA 检查。
-
-subagent 的结论必须回填到对应文档：
-
-- quick：最终回复列出关键结论。
-- standard：结论写入 ACTIVE；复杂或高风险时写入 TASK 或 BUG 主记录。
-- strict：结论写入 PRD / REQ / TASK / BUG / ACC / ADR 中的对应位置。
-
-## 十八、Git hooks 门禁
-
-`.githooks/` 是可选门禁模板，默认不自动启用。正式项目建议启用，临时项目可以不启用。
-
-启用后，每次 `git commit` 都会执行轻量检查：
-
-- `pre-commit`：默认检查文档结构并重建索引。
-- `commit-msg`：提交信息建议包含追踪编号；quick 可使用 `[quick]`。
-- 需要强制代码变更伴随文档时，设置 `DEV_WORKFLOW_REQUIRE_DOCS=1`。
-
-启用方式：
-
-```bash
-git config core.hooksPath .githooks
-chmod +x .githooks/pre-commit .githooks/commit-msg
-```
-
-确认是否启用：
-
-```bash
-git config core.hooksPath
-```
-
-输出 `.githooks` 表示已启用。
-
-关闭方式：
-
-```bash
-git config --unset core.hooksPath
-```
-
-跳过规则仅用于纯文档、临时实验或紧急情况。跳过后必须补一条 TASK 或 BUG 记录说明原因。
+`xxxx` 是随机短 ID，避免多电脑、多分支同秒冲突。

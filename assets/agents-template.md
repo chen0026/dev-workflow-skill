@@ -1,76 +1,34 @@
 # AGENTS.md
 
-## Dev Workflow
+## Dev Workflow Lite
 
-所有新功能、Bug 修复、重构、维护、PRD、改版和需求类任务必须遵守 `docs/workflow.md`。
+普通 Bug、功能、重构和维护任务默认直接调查、实现、测试和审查；不强制创建文档、运行 harness、Loop 或索引脚本。
 
-## Harness-first
+### 按需升级
 
-开发任务不要求用户记命令。收到自然语言任务后，先运行：
+- 跨会话、换 agent、多人并行或明确交接时，只使用一个 `docs/active/ACTIVE-*.md`记录目标、进度、相关文件、下一步和验证结果。
+- PRD 改版、多模块、接口契约、数据迁移、权限、支付、部署或其他高风险变更，编码前建立并人工确认 `REQ` 和验收矩阵。
+- 只在需求不清、验证失败或复杂任务需要切片时使用 harness 或 Loop。
 
-```bash
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" run "用户任务描述"
-```
+### 开发与验收
 
-按输出的 `flow / docs_allowed / pre_code_gate / code_allowed / loop_phase / loop_next_decision / next_action` 执行。`code_allowed: false` 时，只能准备门禁文档，等待人工确认。完成前运行：
+- 修改前定向确认真实调用链、影响范围、可复用能力和回归测试，不为普通任务撰写长文档。
+- 最终验收使用真实后端、真实接口、真实环境或人工实测证据；mock、fixture、stub 和 Playwright route mock 只能作为辅助测试。
+- 关键业务代码只在不注释难以理解时补简短中文注释，不逐行翻译代码。
+- 最终回复只列代码变更、验证结果、待提交文件、风险或未完成项。
 
-```bash
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" verify "用户任务描述"
-"${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/dev-workflow-harness.sh" check
-```
+### 提交
 
-`verify` 只检查完整性；需求是否一致必须等待人工审核确认。
+- 默认不自动 commit；只有用户明确批准后才提交。
+- 请求提交时才用已安装 skill 的 `commit-scope.sh prepare`生成临时清单，批准后精确 stage/check。
 
-## Hard Gates
+### Dev Workflow CHG Record
 
-- 默认不自动提交代码；只有用户明确回复“批准提交”或“确认提交”后才能 commit。
-- quick 默认新增文档 0 个；standard 编码前默认先确认一个 ACTIVE，复杂或高风险才使用 TASK / BUG；strict 编码前必须先确认 REQ。
-- 编码前确认标记统一为 `编码前确认：已确认`；没有该标记不得修改业务代码。
-- standard / strict 编码前必须确认测试用例清单，标记为 `测试用例确认：已确认`；用例必须从 ACTIVE / REQ / BUG 行为倒推，包含前置状态、操作、期望结果、真实验证路径和 RED 失败记录。
-- standard 进行中任务使用 `docs/active/ACTIVE-*.md`；完成并通过人工审核后，把 8 行以内摘要折叠到 `docs/history/<module>.md`，再清理 ACTIVE。
-- 多个 ACTIVE 同时存在时，必须先用 `active-work.sh match 关键词` 锁定唯一文件；返回 `ambiguous_active` 时停止并让用户确认，禁止按模块名、最近时间或猜测选择。
-- 大需求使用 Adaptive Loop：先按需求文档结构、代码边界、风险点和可验证粒度切片，不套固定业务分类。
-- standard / strict 进入编码后，每轮用 `loop-work.sh step -> verify -> decide`；`continue / retry / rescope` 前必须有真实验证证据，`wait_human / stop` 后不得继续编码。
-- 新增或修改关键业务代码时默认补简短中文注释，说明职责、业务原因、边界或需求关联；禁止逐行翻译代码和空泛注释。
-- 最终验收必须使用真实后端、真实接口、真实运行环境、本地联调、测试环境或人工实测证据；mock 数据、Playwright route mock、接口拦截、fixture、stub、MSW 只能做辅助测试，不能作为最终验收或降级验收。
-- 普通任务禁止同时新建 `TASK + BUG + ACC`。
-- 不手工维护或提交 `docs/index.md`；使用 `.dev-workflow/index/docs.jsonl` 本地索引。
-- `docs/**/TEMPLATE.md` 是母版，日常任务禁止直接修改。
+- 普通 Bug / 功能不新建 REQ、TASK、BUG 或 ACC 留痕。正式提交时恰好新增一个 `docs/changes/YYYY/MM/CHG-*.md`，只记录元数据、原因、变更、验证和影响。
+- 同时根据实际 diff 生成结构化 Git 记录：`fix/feat(scope): 摘要`，正文包含原因、变更、验证和影响。
+- CHG 和 commit message 不得包含密钥、token、客户隐私或生产数据。
+- 审核时同时展示待提交文件、CHG 和 commit message；用户确认三者后才 commit。
+- 并行任务优先独立 Git worktree；共享工作区时使用 `--other` 分类其他任务文件。
+- `.dev-workflow/` 是本地状态，必须忽略且不提交。
 
-## Context Budget
-
-默认只读：
-
-1. `AGENTS.md`
-2. `docs/workflow.md`
-3. skill 脚本 `search-dev-docs.sh` 的候选结果或 `.dev-workflow/index/docs.jsonl`
-4. 用户当前提供的 PRD / 需求 / Bug 描述
-5. 用 `active-work.sh match 关键词` 锁定的唯一 ACTIVE；未锁定或多候选时不得读取候选内容
-6. `docs/history/<module>.md` 的最近相关条目
-7. 当前任务直接相关的文档、代码和测试
-
-默认不全量读取 `docs/archive/**`、全部 PRD、全部 REQ、全部 TASK、全部 BUG、全部 ACC、全部 ADR。
-
-## Flow Meaning
-
-- quick：低风险改动，最终回复摘要即可。
-- standard：普通 Bug / 功能 / 维护，默认先确认一个 `ACTIVE`；复杂或高风险才使用 `TASK` / `BUG`。
-- strict：PRD / 改版 / 多模块 / 高风险 / 接口、数据、权限、支付、订单、登录、部署变化，先确认 REQ。
-
-## Requirement Match
-
-需求一致性按 `PRD -> REQ -> ACTIVE/TASK/BUG -> 测试用例清单 -> 真实验证证据 -> 人工审核 -> history -> 提交` 闭环执行。最终回复必须列出测试覆盖、真实验证证据、待审核内容和待提交文件。
-
-## Comment Guard
-
-新增或修改业务代码时，关键逻辑默认写简短中文注释：说明这段代码负责什么、为什么这样处理、边界或限制是什么。quick 只在不注释会看不懂时补；standard 的关键业务逻辑必须补；strict 的关键规则注释应关联 REQ / 验收项。禁止逐行翻译代码、空泛注释和长背景。
-
-## Git Hooks
-
-`.githooks` 是可选项目门禁。正式项目建议启用：
-
-```bash
-git config core.hooksPath .githooks
-```
-
-hooks 只做最低限度拦截，不能替代需求确认、代码审查和人工审核。
+追查时先用 `rg` 定向搜索 `docs/changes/`，再用 `git log --follow -- FILE`、`git blame` 和 `git show COMMIT` 查真实 diff。不在每个任务前全量读取 CHG。
