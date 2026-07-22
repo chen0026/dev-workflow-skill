@@ -1,150 +1,108 @@
 # dev-workflow
 
-轻量开发工作流：普通修改只用结构化 Git history，复杂任务只维护一个 DEV 生命周期文档。
-
-## 安装
-
-推荐把本仓库作为源码目录，用 `rsync` 同步到 Codex：
-
-```bash
-cd /Users/imc/work/skills/dev-workflow-skill
-rsync -a --delete --exclude .git ./ "${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/"
-```
-
-该命令只复制 skill 仓库内容，不会上传项目代码、对话或本地文档。
+面向 Codex、Claude 等现代开发 Agent 的轻量工作流。它不替 Agent 规划或循环，只提供四件事：需求不跑偏、真实验证、一次人工审核、可追溯提交。
 
 ## 日常使用
 
 直接描述任务即可：
 
 ```text
-修复文件夹重命名问题
-增加会员过期提醒
-根据这份 PRD 改版订单模块
-继续 ACTIVE-... 的任务
-提交代码
+修复购物车无效价格商品仍能加入的问题，完成真实验证，先不要提交。
 ```
 
-普通 Bug、功能、重构和维护会直接调查、实现、测试和审查，默认不生成开发文档。
-
-## 三种路径
-
-### 默认开发
-
-适用于大多数日常任务：
+也可以显式调用：
 
 ```text
-定向调查 -> 实现 -> 测试 -> 真实验证 -> 代码审查 -> 人工批准提交
+/dev-workflow 修复这个 Bug
+/dev-workflow 根据 PRD 改版订单模块
+/dev-workflow review 当前修改
+/dev-workflow history 购物车价格校验
 ```
 
-- 普通任务和正式提交都不强制新增文档。
-- 不运行 harness、Loop 或索引。
-- 最终只输出代码变更、验证结果、待提交文件和风险。
+普通 Bug、小功能、重构和维护默认直接执行：调查 -> 实现 -> 测试 -> 真实验证 -> diff 审查。不会自动创建 REQ、TASK、BUG、CHG 或 ACC。
 
-### 续作模式
+## 复杂任务
 
-仅在跨会话、换 agent、多人并行或需要交接时，使用一个 `docs/active/ACTIVE-*.md`。ACTIVE 只记录目标、进度、相关文件、下一步和验证结果。
-
-### 严格模式
-
-PRD 改版、多模块、接口契约、数据迁移、权限、支付、部署等高风险变更，只建立一个 `docs/work/YYYY/MM/DEV-*.md`，在同一文件中维护需求、计划、问题、进度和验收。
-
-## 真实验证
-
-mock、fixture、stub、MSW 和 Playwright route mock 可用于快速反馈，但不能作为最终验收。最终结论必须来自真实后端、真实接口、真实运行环境或人工实测。
-
-## 精确提交
-
-每个线程使用稳定 TASK_KEY。Agent 在修改文件前后台增量记录本线程文件，用户无须操作：
-
-```bash
-"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/commit-scope.sh" track TASK_KEY -- src/current.ts
-```
-
-后续发现文件继续 track；同一文件已被其他线程记录时在编码前停止。旧对话仍可在请求提交时生成任务独立清单：
-
-```bash
-"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/commit-scope.sh" prepare TASK_KEY --all
-# 共享工作区只列本任务文件，不需要列其他任务
-"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/commit-scope.sh" prepare TASK_KEY -- src/current.ts
-"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/commit-scope.sh" show TASK_KEY
-```
-
-Agent 必须一次性展示文件范围、完整 commit message 和验证结果；使用 DEV 时再展示 DEV 变化。用户确认后立即提交，不得重复确认。脚本通过 `git commit --only`只提交当前任务文件。
-
-正常情况下仍由当前线程直接提交，不要求用户寻找统一收口线程。只有 commit 成功、HEAD 变化、提交文件与本线程记录完全一致且无残留时，才能报告提交成功。
-
-### Git 留痕
-
-普通 Bug、功能完善、重构和维护不创建 CHG、REQ、TASK、BUG 或 ACC。Agent 根据实际 diff 和验证结果起草结构化 commit message：
+需求模糊、多模块、接口、数据迁移、权限、支付、部署或回滚等任务，优先使用 Codex/宿主原生 Plan mode。需要跨会话、换 Agent 或长期追溯时，只维护一个：
 
 ```text
-fix(dashboard): 修正未连接店铺时的 Step 2 跳转
-
-原因: Dashboard 直接打开连接弹窗，与新的平台选择流程不一致。
-变更: Step 2 改为跳转 /app/stores/connect，删除 Dashboard 中不再使用的弹窗分支。
-验证: 定向测试通过；未连接、已连接和 Shopify 选择流程实测通过。
-影响: 仅影响 Dashboard Step 2 导航，不改变店铺连接和授权逻辑。
+docs/work/YYYY/MM/DEV-YYYYMMDD-HHMMSS-xxxx-short-title.md
 ```
 
-用户审核的是“待提交文件 + commit message + 验证结果”；复杂任务再包含 DEV 变化。提交后可使用：
+DEV 同时记录目标、需求基线、关键决策、进度、验收证据和关联 commits，不再拆成多份配套文档。
 
-```bash
-rg -l '关键词' docs/changes
-git log --all --grep='关键词' --regexp-ignore-case
-git log --follow -- path/to/file
-git blame path/to/file
-git show COMMIT
-```
+## Agent 协作
 
-## 项目初始化
+- 主 Agent 负责决策、最终代码写入、验证汇总和完成声明。
+- subagent 优先用于代码检索、影响分析、日志、测试和审查。
+- 默认不进行开发前文件认领，不因其他线程计划修改文件而阻断。
+- 同文件并行修改要提示风险；无法可靠拆分时联合验证并联合提交，或使用宿主原生隔离。
+- Skill 不固定模型。复杂任务可使用当前强模型，扫描类 subagent 可使用更快模型。
+
+## 提交
+
+默认不自动 commit。Agent 必须先一次性展示：
+
+- 待提交文件；
+- 完整 commit message；
+- 验证结果；
+- 风险或未完成项。
+
+回复“提交代码 / 确认提交 / 批准提交”后立即提交，不应重复确认。
+
+`commit-scope.sh`仅保留给确实需要显式文件清单的特殊共享工作区，不在普通开发中自动运行，也不用于开发前锁文件。
+
+## 初始化或迁移项目
+
+在项目目录执行：
 
 ```text
 /dev-workflow init
+```
+
+它会：
+
+- 创建或更新简短的 `AGENTS.md`工作流区块；
+- 删除旧版由 dev-workflow 写入的 TASK_KEY、track、manifest、harness 和 Loop 规则；
+- 保留项目已有的其他 `AGENTS.md`内容；
+- 确保 `.dev-workflow/`是本地忽略目录；
+- 不移动已有 docs，不复制模板，不安装项目脚本。
+
+可选启用轻量 Git hooks：
+
+```text
 /dev-workflow init --hooks
 ```
 
-默认创建或补齐：
+hooks 只检查已修改文档和提示 commit message 格式，不再根据 manifest 阻断提交。
 
-- `AGENTS.md`
-- `docs/`
-- `.githooks/`
-- `.dev-workflow/` 忽略规则
+老项目建议重新执行一次 init 完成规则迁移。旧文档不会被删除或搬迁。
 
-默认不复制模板或通用脚本到项目。旧项目可重复执行 init，它会追加 Lite 覆盖规则，使旧 Harness-first 约束失效。
+如果 init 提示存在旧版项目脚本，审核后可清理：
 
-## 按需命令
+```bash
+"${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/scripts/clean-project-scripts.sh" --apply
+```
+
+清理脚本只处理已知的 dev-workflow 脚本名，并先支持不带 `--apply`的预览模式。
+
+## 安装与同步
+
+源码目录与 Codex 安装目录分离。开发完成后同步时排除 Git 元数据：
+
+```bash
+rsync -a --delete --exclude .git ./ "${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow/"
+```
+
+不要在公开文档中写死个人用户名、绝对路径、仓库凭据或客户信息。
+
+## 可选命令
 
 ```text
-/dev-workflow version
-/dev-workflow doctor
 /dev-workflow check
-/dev-workflow active list|start|current|resolve|finish
-/dev-workflow loop start|step|verify|decide|status
-/dev-workflow commit track|prepare|show|list|stage|check|commit|verify-head|clear
+/dev-workflow doctor
+/dev-workflow version
 /dev-workflow history <关键词|文件>
 ```
 
-`doctor / harness / Loop / search-dev-docs.sh` 都是诊断或复杂任务工具，不在每个任务中自动执行。
-
-## Git hooks
-
-Git hooks 是项目级配置：
-
-```bash
-git config core.hooksPath .githooks
-```
-
-- 有任务 manifest：pre-commit 检查当前任务范围，post-commit 只清理当前任务清单。
-- 有任务 manifest：pre-commit 只核对当前任务文件范围。
-- 有任务 manifest：commit-msg 必须包含结构化摘要和“原因/变更/验证/影响”四项记录。
-- 多个任务并行时必须使用 `commit-scope.sh commit TASK_KEY ...`，直接 `git commit` 会因任务上下文不明确而阻断。
-- 无 commit manifest：允许普通人工提交。
-- 仅当本次暂存了 `docs/` 或 `AGENTS.md` 时才检查文档。
-- commit message 缺少追踪编号时只警告，不阻断。
-
-旧 CHG、REQ、TASK、BUG、ACC 文件继续保留和检索，但新任务不再默认创建。
-
-## 版本管理
-
-源码在 `/Users/imc/work/skills/dev-workflow-skill`，安装副本在 `${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow`。只修改源码仓库，验证后再 `rsync`。
+`check`和`doctor`按需使用，不要求每个任务执行。历史查询先看 Git diff，只有 Git 无法解释背景时才读取关联 DEV。

@@ -1,29 +1,23 @@
-# 运维变更: [标题]
+---
+id: OPS-YYYYMMDD-HHMMSS-XXXX-short-title
+status: draft
+created_at: YYYY-MM-DDTHH:MM:SS+0800
+related: []
+---
 
-> 文件命名：`OPS-20260528-155500-f6a7-deploy-login-service.md`
+# 运维事项
 
-## 基本信息
-
-- **编号**：OPS-20260528-155500-f6a7
-- **状态**：draft / active / deprecated
-- **关联任务**：TASK-20260528-153500-b2c3
-- **关联验收**：ACC-20260528-155000-e5f6
-- **关联提交**：
-
-## 一、变化
+## 变化
 
 - 配置：
 - 部署：
 - 监控：
-- 回滚：
 
-## 二、操作
+## 操作
 
 1. 
-2. 
-3. 
 
-## 三、验证和回滚
+## 验证与回滚
 
 - 验证方式：
 - 回滚条件：

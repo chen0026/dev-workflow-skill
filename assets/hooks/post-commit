@@ -2,8 +2,5 @@
 set -euo pipefail
 
 checker="${DEV_WORKFLOW_SKILL_ROOT:-${CODEX_HOME:-$HOME/.codex}/skills/dev-workflow}/scripts/check-dev-workflow.sh"
-[ -x "$checker" ] || {
-  echo "dev-workflow: 未找到已安装的检查脚本，跳过可选检查。"
-  exit 0
-}
-exec "$checker" pre-commit
+[ -x "$checker" ] || exit 0
+exec "$checker" post-commit

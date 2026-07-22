@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.0 - 2026-07-22
+
+- 重构为 Native Agent 工作流：普通任务直接调查、实现、验证和审查，复杂任务使用宿主原生 Plan mode，不再自建规划器或 Loop。
+- 删除默认 TASK_KEY、文件 track、manifest 和开发前同文件阻断；`commit-scope.sh`仅保留为显式特殊工具。
+- subagent 默认用于检索、日志、测试和审查，主 Agent 负责共享工作区的最终写入与完成声明。
+- 普通任务只使用结构化 Git commit 留痕；跨会话、高风险或长期追溯任务只维护一个 DEV。
+- Git hooks 不再读取 manifest 或阻断多个线程，只校验实际修改的 DEV，并提示提交信息格式。
+- `init`会迁移旧版 AGENTS 规则，不移动已有 docs，不默认创建目录、复制模板、安装脚本或启用 hooks。
+- 删除 harness、Loop、ACTIVE 会话状态、本地索引及旧 REQ/TASK/BUG/CHG/ACC 模板和脚本镜像，Skill 文件总量显著下降。
+- Skill 不固定模型或推理级别，可由 Codex、Claude 或其他宿主按任务选择当前能力。
+
 ## 0.37.0 - 2026-07-15
 
 - 恢复“本线程提交本线程文件”的默认体验：新增 `commit-scope.sh track TASK_KEY -- FILE...`，由 Agent 在修改前后台增量记录，用户无须管理清单。
